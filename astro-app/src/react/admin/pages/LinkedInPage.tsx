@@ -90,18 +90,18 @@ async function generateLIImage(text: string): Promise<Blob> {
 
   // Text area
   const { textX, textY, textW, textH } = LI_TEMPLATE;
-  const padding = 40;
+  const padding = 20;
   const innerW = textW - padding * 2;
   const innerH = textH - padding * 2;
 
-  // Determine font size (try from large to small)
+  // Determine font size (try from large to small) — start big to fill the box
   const upperText = text.toUpperCase();
-  let fontSize = 72;
+  let fontSize = 120;
   let lines: string[] = [];
 
   ctx.font = `900 ${fontSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
 
-  for (fontSize = 72; fontSize >= 28; fontSize -= 2) {
+  for (fontSize = 120; fontSize >= 36; fontSize -= 2) {
     ctx.font = `900 ${fontSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
     lines = wrapText(ctx, upperText, innerW);
     const lineHeight = fontSize * 1.2;
@@ -291,51 +291,7 @@ export default function LinkedInPage() {
         )}
       </div>
 
-      {/* Blog posts grid */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#032149] mb-4">Seleccionar blog posts</h2>
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 text-[#0077B5] animate-spin" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {availablePosts.map((post) => {
-              const inQueue = queue.some((q) => q.post.slug === post.slug);
-              return (
-                <div
-                  key={post.id}
-                  className={`bg-white rounded-xl border p-4 transition-all ${
-                    inQueue
-                      ? 'border-[#0077B5] bg-blue-50 opacity-60'
-                      : 'border-slate-200 hover:border-[#0077B5] hover:shadow-md cursor-pointer'
-                  }`}
-                  onClick={() => !inQueue && addToQueue(post)}
-                >
-                  <div className="flex items-start gap-3">
-                    {post.image ? (
-                      <img src={post.image} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <ImageIcon className="w-6 h-6 text-slate-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm text-[#032149] line-clamp-2">{post.title}</h3>
-                      <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">
-                        {post.category}
-                      </span>
-                    </div>
-                    {inQueue && <CheckCircle2 className="w-5 h-5 text-[#0077B5] flex-shrink-0" />}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Queue */}
+      {/* Queue — always on top */}
       {queue.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-[#032149] mb-4">
@@ -471,6 +427,50 @@ export default function LinkedInPage() {
           </div>
         </div>
       )}
+
+      {/* Blog posts grid */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-[#032149] mb-4">Seleccionar blog posts</h2>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 text-[#0077B5] animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {availablePosts.map((post) => {
+              const inQueue = queue.some((q) => q.post.slug === post.slug);
+              return (
+                <div
+                  key={post.id}
+                  className={`bg-white rounded-xl border p-4 transition-all ${
+                    inQueue
+                      ? 'border-[#0077B5] bg-blue-50 opacity-60'
+                      : 'border-slate-200 hover:border-[#0077B5] hover:shadow-md cursor-pointer'
+                  }`}
+                  onClick={() => !inQueue && addToQueue(post)}
+                >
+                  <div className="flex items-start gap-3">
+                    {post.image ? (
+                      <img src={post.image} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        <ImageIcon className="w-6 h-6 text-slate-400" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm text-[#032149] line-clamp-2">{post.title}</h3>
+                      <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">
+                        {post.category}
+                      </span>
+                    </div>
+                    {inQueue && <CheckCircle2 className="w-5 h-5 text-[#0077B5] flex-shrink-0" />}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Empty state */}
       {queue.length === 0 && !loading && (

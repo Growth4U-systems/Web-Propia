@@ -1009,8 +1009,8 @@ export default function CameraPage() {
           </div>
         )}
 
-        {/* Posts grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[600px] overflow-y-auto">
+        {/* Posts grid — compact cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
           {filtered.map((post) => {
             const isSelected = selectedPosts.has(post.id);
             const isInQueue = scheduleItems.some((i) => i.post.id === post.id);
@@ -1022,57 +1022,53 @@ export default function CameraPage() {
                 key={post.id}
                 onClick={() => !isDisabled && togglePost(post.id)}
                 disabled={isDisabled}
-                className={`relative rounded-xl overflow-hidden border-2 transition-all text-left ${
+                className={`rounded-xl border-2 transition-all text-left p-3 ${
                   isAlreadyPublished
                     ? 'border-green-300 opacity-40 cursor-not-allowed'
                     : isInQueue
                       ? 'border-blue-300 opacity-50 cursor-not-allowed'
                       : isSelected
-                        ? 'border-[#6351d5] shadow-lg ring-2 ring-[#6351d5]/20'
-                        : 'border-transparent hover:border-slate-300'
+                        ? 'border-[#6351d5] shadow-lg ring-2 ring-[#6351d5]/20 bg-purple-50/50'
+                        : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
-                <div className="aspect-square bg-slate-100 overflow-hidden">
+                <div className="flex items-start gap-3">
                   {post.image ? (
                     <img
                       src={post.image}
                       alt={post.title}
-                      className="w-full h-full object-cover"
+                      className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1] flex items-center justify-center">
-                      <ImageIcon className="w-8 h-8 text-white/30" />
+                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-[#032149] to-[#0faec1] flex items-center justify-center flex-shrink-0">
+                      <ImageIcon className="w-5 h-5 text-white/30" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-[#032149] line-clamp-2 leading-tight">
+                      {post.title}
+                    </p>
+                    <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">
+                      {post.category}
+                    </span>
+                  </div>
+                  {isSelected && (
+                    <div className="w-5 h-5 bg-[#6351d5] rounded-full flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  )}
+                  {isAlreadyPublished && !isInQueue && (
+                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  )}
+                  {isInQueue && (
+                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Clock className="w-3.5 h-3.5 text-white" />
                     </div>
                   )}
                 </div>
-
-                <div className="p-2">
-                  <p className="text-xs font-medium text-[#032149] line-clamp-2 leading-tight">
-                    {post.title}
-                  </p>
-                  <span className="text-[10px] text-slate-400 mt-1 block">
-                    {post.category}
-                  </span>
-                </div>
-
-                {isSelected && (
-                  <div className="absolute top-2 right-2 w-6 h-6 bg-[#6351d5] rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-4 h-4 text-white" />
-                  </div>
-                )}
-
-                {isAlreadyPublished && !isInQueue && (
-                  <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-4 h-4 text-white" />
-                  </div>
-                )}
-
-                {isInQueue && (
-                  <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Clock className="w-4 h-4 text-white" />
-                  </div>
-                )}
               </button>
             );
           })}
