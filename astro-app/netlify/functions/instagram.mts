@@ -5,10 +5,9 @@ const ACCESS_TOKEN = process.env.META_IG_ACCESS_TOKEN;
 const GRAPH_API = "https://graph.instagram.com/v21.0";
 
 interface PublishRequest {
-  action: "publish" | "schedule";
+  action: "publish";
   image_url: string;
   caption: string;
-  scheduled_publish_time?: number; // Unix timestamp
 }
 
 interface IGContainerResponse {

@@ -21,7 +21,12 @@ import {
   RefreshCw,
   ExternalLink,
 } from 'lucide-react';
-import { getAllPosts } from '../../../lib/firebase-client';
+import {
+  getAllPosts,
+  getIGScheduledPosts,
+  createIGScheduledPost,
+  deleteIGScheduledPost,
+} from '../../../lib/firebase-client';
 
 interface BlogPost {
   id: string;
@@ -36,12 +41,26 @@ interface BlogPost {
 interface ScheduleItem {
   post: BlogPost;
   caption: string;
-  igImageUrl: string; // Cloudinary URL of generated IG image
+  igImageUrl: string;
   scheduledDate: string;
   scheduledTime: string;
   status: 'generating' | 'draft' | 'publishing' | 'scheduled' | 'published' | 'error';
   error?: string;
   mediaId?: string;
+  firestoreId?: string; // ID in Firestore once scheduled
+}
+
+interface SavedScheduledPost {
+  id: string;
+  imageUrl: string;
+  caption: string;
+  blogTitle: string;
+  blogSlug: string;
+  scheduledAt: Date;
+  status: string;
+  error: string;
+  mediaId: string;
+  createdAt: Date | null;
 }
 
 const FUNCTION_URL = '/.netlify/functions/instagram';
@@ -200,9 +219,12 @@ export default function CameraPage() {
   const [metrics, setMetrics] = useState<{ account: IGAccount; media: IGMedia[] } | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [metricsError, setMetricsError] = useState('');
+  const [savedPosts, setSavedPosts] = useState<SavedScheduledPost[]>([]);
+  const [publishedSlugs, setPublishedSlugs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadPosts();
+    loadSavedPosts();
   }, []);
 
   async function loadPosts() {
@@ -213,6 +235,23 @@ export default function CameraPage() {
       console.error('Error loading posts:', e);
     }
     setLoading(false);
+  }
+
+  async function loadSavedPosts() {
+    try {
+      const saved = await getIGScheduledPosts();
+      setSavedPosts(saved as SavedScheduledPost[]);
+      // Track slugs that are already scheduled or published
+      const slugs = new Set<string>();
+      for (const p of saved) {
+        if (p.status === 'pending' || p.status === 'published' || p.status === 'publishing') {
+          slugs.add(p.blogSlug);
+        }
+      }
+      setPublishedSlugs(slugs);
+    } catch (e) {
+      console.error('Error loading saved posts:', e);
+    }
   }
 
   async function loadMetrics() {
@@ -348,6 +387,12 @@ export default function CameraPage() {
     setScheduleItems((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function updateSchedule(index: number, field: 'scheduledDate' | 'scheduledTime', value: string) {
+    setScheduleItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  }
+
   async function publishItem(index: number, immediate: boolean) {
     setScheduleItems((prev) =>
       prev.map((item, i) =>
@@ -358,48 +403,67 @@ export default function CameraPage() {
     const item = scheduleItems[index];
 
     try {
-      const body: Record<string, unknown> = {
-        action: immediate ? 'publish' : 'schedule',
-        image_url: item.igImageUrl,
-        caption: item.caption,
-      };
+      if (immediate) {
+        // Publish now via Netlify Function → Instagram API
+        const res = await fetch(FUNCTION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'publish',
+            image_url: item.igImageUrl,
+            caption: item.caption,
+          }),
+        });
 
-      if (!immediate) {
-        const dateTime = new Date(
-          `${item.scheduledDate}T${item.scheduledTime}:00`
+        const text = await res.text();
+        let data: Record<string, unknown>;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error(`Función no disponible (${res.status}). ¿Está desplegada?`);
+        }
+
+        if (!res.ok) {
+          throw new Error((data.error as string) || `Error ${res.status}: ${text.slice(0, 200)}`);
+        }
+
+        // Also save to Firebase as published for tracking
+        await createIGScheduledPost({
+          imageUrl: item.igImageUrl,
+          caption: item.caption,
+          blogTitle: item.post.title,
+          blogSlug: item.post.slug,
+          scheduledAt: new Date(),
+        });
+
+        setScheduleItems((prev) =>
+          prev.map((it, i) =>
+            i === index
+              ? { ...it, status: 'published' as const, mediaId: String(data.media_id || '') }
+              : it
+          )
         );
-        body.scheduled_publish_time = Math.floor(dateTime.getTime() / 1000);
+        setPublishedSlugs((prev) => new Set([...prev, item.post.slug]));
+      } else {
+        // Schedule for later — save to Firebase, cron will publish
+        const dateTime = new Date(`${item.scheduledDate}T${item.scheduledTime}:00`);
+        const firestoreId = await createIGScheduledPost({
+          imageUrl: item.igImageUrl,
+          caption: item.caption,
+          blogTitle: item.post.title,
+          blogSlug: item.post.slug,
+          scheduledAt: dateTime,
+        });
+
+        setScheduleItems((prev) =>
+          prev.map((it, i) =>
+            i === index
+              ? { ...it, status: 'scheduled' as const, firestoreId }
+              : it
+          )
+        );
+        setPublishedSlugs((prev) => new Set([...prev, item.post.slug]));
       }
-
-      const res = await fetch(FUNCTION_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      const text = await res.text();
-      let data: Record<string, unknown>;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(`Función no disponible (${res.status}). ¿Está desplegada?`);
-      }
-
-      if (!res.ok) {
-        throw new Error((data.error as string) || `Error ${res.status}: ${text.slice(0, 200)}`);
-      }
-
-      setScheduleItems((prev) =>
-        prev.map((it, i) =>
-          i === index
-            ? {
-                ...it,
-                status: immediate ? 'published' as const : 'scheduled' as const,
-                mediaId: String(data.media_id || data.container_id || ''),
-              }
-            : it
-        )
-      );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setScheduleItems((prev) =>
@@ -414,9 +478,25 @@ export default function CameraPage() {
     for (let i = 0; i < scheduleItems.length; i++) {
       if (scheduleItems[i].status === 'draft') {
         await publishItem(i, true);
-        // Wait between calls to respect rate limits
         await new Promise((r) => setTimeout(r, 5000));
       }
+    }
+  }
+
+  async function cancelScheduled(id: string, index: number) {
+    try {
+      await deleteIGScheduledPost(id);
+      const item = scheduleItems[index];
+      setScheduleItems((prev) =>
+        prev.map((it, i) => (i === index ? { ...it, status: 'draft' as const, firestoreId: undefined } : it))
+      );
+      setPublishedSlugs((prev) => {
+        const next = new Set(prev);
+        next.delete(item.post.slug);
+        return next;
+      });
+    } catch (e) {
+      console.error('Error cancelling:', e);
     }
   }
 
@@ -737,19 +817,55 @@ export default function CameraPage() {
                           rows={3}
                           className="w-full mt-2 text-xs text-slate-600 border border-slate-200 rounded-lg p-2 resize-none focus:outline-none focus:border-[#6351d5]"
                         />
-                        <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <button
                             onClick={() => publishItem(index, true)}
                             className="text-xs bg-[#6351d5] text-white px-4 py-1.5 rounded-lg hover:bg-[#5040c0] transition-colors font-medium"
                           >
                             Publicar ahora
                           </button>
+                          <div className="flex items-center gap-2 ml-auto">
+                            <input
+                              type="date"
+                              value={item.scheduledDate}
+                              onChange={(e) => updateSchedule(index, 'scheduledDate', e.target.value)}
+                              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#6351d5]"
+                            />
+                            <input
+                              type="time"
+                              value={item.scheduledTime}
+                              onChange={(e) => updateSchedule(index, 'scheduledTime', e.target.value)}
+                              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#6351d5]"
+                            />
+                            <button
+                              onClick={() => publishItem(index, false)}
+                              className="text-xs text-[#6351d5] border border-[#6351d5] px-3 py-1.5 rounded-lg hover:bg-[#6351d5]/10 transition-colors"
+                            >
+                              Programar
+                            </button>
+                          </div>
                         </div>
                       </>
                     )}
 
                     {item.status === 'error' && (
                       <p className="text-xs text-red-500 mt-2">{item.error}</p>
+                    )}
+
+                    {item.status === 'scheduled' && (
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-blue-600">
+                          Programado para {item.scheduledDate} a las {item.scheduledTime}
+                        </p>
+                        {item.firestoreId && (
+                          <button
+                            onClick={() => cancelScheduled(item.firestoreId!, index)}
+                            className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </div>
                     )}
 
                     {item.status === 'published' && (
@@ -821,18 +937,22 @@ export default function CameraPage() {
           {filtered.map((post) => {
             const isSelected = selectedPosts.has(post.id);
             const isInQueue = scheduleItems.some((i) => i.post.id === post.id);
+            const isAlreadyPublished = publishedSlugs.has(post.slug);
+            const isDisabled = isInQueue || isAlreadyPublished;
 
             return (
               <button
                 key={post.id}
-                onClick={() => !isInQueue && togglePost(post.id)}
-                disabled={isInQueue}
+                onClick={() => !isDisabled && togglePost(post.id)}
+                disabled={isDisabled}
                 className={`relative rounded-xl overflow-hidden border-2 transition-all text-left ${
-                  isInQueue
-                    ? 'border-green-300 opacity-50 cursor-not-allowed'
-                    : isSelected
-                      ? 'border-[#6351d5] shadow-lg ring-2 ring-[#6351d5]/20'
-                      : 'border-transparent hover:border-slate-300'
+                  isAlreadyPublished
+                    ? 'border-green-300 opacity-40 cursor-not-allowed'
+                    : isInQueue
+                      ? 'border-blue-300 opacity-50 cursor-not-allowed'
+                      : isSelected
+                        ? 'border-[#6351d5] shadow-lg ring-2 ring-[#6351d5]/20'
+                        : 'border-transparent hover:border-slate-300'
                 }`}
               >
                 <div className="aspect-square bg-slate-100 overflow-hidden">
@@ -865,8 +985,14 @@ export default function CameraPage() {
                   </div>
                 )}
 
-                {isInQueue && (
+                {isAlreadyPublished && !isInQueue && (
                   <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4 text-white" />
+                  </div>
+                )}
+
+                {isInQueue && (
+                  <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                     <Clock className="w-4 h-4 text-white" />
                   </div>
                 )}

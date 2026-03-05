@@ -445,4 +445,54 @@ export async function deleteFeedback(id: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// Instagram Scheduled Posts
+export interface IGScheduledPost {
+  imageUrl: string;
+  caption: string;
+  blogTitle: string;
+  blogSlug: string;
+  scheduledAt: Date;
+  status: 'pending' | 'publishing' | 'published' | 'error';
+  error?: string;
+  mediaId?: string;
+  createdAt?: Date;
+}
+
+export async function getIGScheduledPosts() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'ig_scheduled_posts');
+  const q = query(ref, orderBy('scheduledAt', 'asc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      imageUrl: data.imageUrl || '',
+      caption: data.caption || '',
+      blogTitle: data.blogTitle || '',
+      blogSlug: data.blogSlug || '',
+      scheduledAt: data.scheduledAt?.toDate() || new Date(),
+      status: data.status || 'pending',
+      error: data.error || '',
+      mediaId: data.mediaId || '',
+      createdAt: data.createdAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createIGScheduledPost(post: Omit<IGScheduledPost, 'status' | 'createdAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'ig_scheduled_posts');
+  const docRef = await addDoc(ref, {
+    ...post,
+    scheduledAt: post.scheduledAt,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function deleteIGScheduledPost(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'ig_scheduled_posts', id);
+  await deleteDoc(ref);
+}
+
 export { db, auth, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, limit, where, serverTimestamp };
