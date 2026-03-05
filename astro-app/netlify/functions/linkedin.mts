@@ -160,10 +160,10 @@ export default async (req: Request, _context: Context) => {
       mediaIds = [mediaId];
     }
 
-    // Schedule 2 minutes from now for "publish now"
-    const publishDate = new Date(Date.now() + 2 * 60 * 1000);
+    // Schedule 5 minutes from now for "publish now"
+    const publishDate = new Date(Date.now() + 5 * 60 * 1000);
     const dateTime = publishDate.toISOString().replace(/\.\d{3}Z$/, "");
-    const timezone = "Europe/Madrid";
+    const timezone = "UTC";
 
     const scheduleUrl = `${METRICOOL_BASE}/v2/scheduler/posts?blogId=${METRICOOL_BLOG_ID}&userId=${METRICOOL_USER_ID}`;
     const scheduleBody = {
