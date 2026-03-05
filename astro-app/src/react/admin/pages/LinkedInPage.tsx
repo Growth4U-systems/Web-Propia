@@ -43,9 +43,9 @@ const CLOUDINARY_PRESET = 'blog_uploads';
 const LI_TEMPLATE = {
   url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772726703/li-template-0.jpg',
   textX: 88,
-  textY: 620,
+  textY: 1100,
   textW: 1552,
-  textH: 750,
+  textH: 500,
 };
 
 // --- Canvas image generator ---
@@ -142,11 +142,53 @@ async function uploadToCloudinary(blob: Blob, slug: string): Promise<string> {
   return data.secure_url;
 }
 
-// --- Caption generator ---
+// --- Caption generator (based on LinkedIn Post Skill for Philippe Sainthubert) ---
+
+const PAIN_LEAD_MAGNETS: Record<string, { name: string; url: string }> = {
+  cac: { name: 'Framework CAC Sostenible', url: 'growth4u.io/recursos/cac-sostenible/' },
+  confianza: { name: 'Framework Nichos 60 Días', url: 'growth4u.io/recursos/framework-nichos-60-dias/' },
+  estancamiento: { name: 'Diagnóstico Meseta de Crecimiento', url: 'growth4u.io/recursos/meseta-de-crecimiento/' },
+  sistema: { name: 'Sistema de Growth (blueprint)', url: 'growth4u.io/recursos/sistema-de-growth/' },
+  competencia: { name: 'Playbook David vs Goliat', url: 'growth4u.io/recursos/david-vs-goliat/' },
+  fundador: { name: 'Kit de Liberación del Fundador', url: 'growth4u.io/recursos/kit-de-liberacion/' },
+  attribution: { name: 'Dashboard de Attribution', url: 'growth4u.io/recursos/dashboard-de-attribution/' },
+};
+
+function detectPain(text: string): string | null {
+  const lower = text.toLowerCase();
+  if (lower.includes('cac') || lower.includes('coste de adquisición') || lower.includes('adquisición')) return 'cac';
+  if (lower.includes('confianza') || lower.includes('regulación') || lower.includes('desconfianza')) return 'confianza';
+  if (lower.includes('estanca') || lower.includes('meseta') || lower.includes('tracción')) return 'estancamiento';
+  if (lower.includes('sistema') || lower.includes('growth') || lower.includes('framework')) return 'sistema';
+  if (lower.includes('competencia') || lower.includes('gigante') || lower.includes('david')) return 'competencia';
+  if (lower.includes('fundador') || lower.includes('cuello de botella') || lower.includes('liberación')) return 'fundador';
+  if (lower.includes('attribution') || lower.includes('atribución') || lower.includes('medición')) return 'attribution';
+  return null;
+}
 
 function generateCaption(post: BlogPost): string {
-  const hashtags = '#GrowthMarketing #Growth4U #MarketingDigital #B2B #Estrategia';
-  return `${post.title}\n\n${post.excerpt}\n\nLee el artículo completo en growth4u.io/blog/${post.slug}/\n\n${hashtags}`;
+  const pain = detectPain(`${post.title} ${post.excerpt}`);
+  const leadMagnet = pain ? PAIN_LEAD_MAGNETS[pain] : null;
+
+  const lines: string[] = [];
+
+  // Hook — use the post title as base, add blog link
+  lines.push(post.excerpt || post.title);
+  lines.push('');
+  lines.push(`Lo desarrollamos en detalle en el blog:`);
+  lines.push(`growth4u.io/blog/${post.slug}/`);
+
+  // CTA mapped to pain if detected, otherwise generic engagement
+  if (leadMagnet) {
+    lines.push('');
+    lines.push(`Y si querés ir más allá, descargá gratis el ${leadMagnet.name}:`);
+    lines.push(leadMagnet.url);
+  }
+
+  lines.push('');
+  lines.push('#GrowthMarketing #Growth4U #Fintech #B2B');
+
+  return lines.join('\n');
 }
 
 // --- Main component ---
@@ -247,6 +289,40 @@ export default function LinkedInPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error al programar');
+
+      updateItem(index, { status: 'scheduled' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido';
+      updateItem(index, { status: 'error', error: msg });
+    }
+  }
+
+  async function publishNow(index: number) {
+    const item = queue[index];
+    updateItem(index, { status: 'scheduling', error: undefined });
+
+    try {
+      // Metricool requires future dates — schedule 5 min from now
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 5);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const dateTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:00`;
+
+      const res = await fetch(FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: item.caption,
+          imageUrl: item.liImageUrl,
+          publicationDate: {
+            dateTime,
+            timezone: 'Europe/Madrid',
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al publicar');
 
       updateItem(index, { status: 'scheduled' });
     } catch (err: unknown) {
@@ -398,13 +474,21 @@ export default function LinkedInPage() {
                       </div>
 
                       {item.status === 'draft' && (
-                        <button
-                          onClick={() => scheduleItem(index)}
-                          disabled={!item.scheduledDate || !item.scheduledTime}
-                          className="flex items-center gap-1 px-3 py-1 text-sm bg-[#0077B5] text-white rounded-lg hover:bg-[#005f8d] transition-colors disabled:opacity-50"
-                        >
-                          <Send className="w-3 h-3" /> Programar
-                        </button>
+                        <>
+                          <button
+                            onClick={() => publishNow(index)}
+                            className="flex items-center gap-1 px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <Send className="w-3 h-3" /> Publicar ahora
+                          </button>
+                          <button
+                            onClick={() => scheduleItem(index)}
+                            disabled={!item.scheduledDate || !item.scheduledTime}
+                            className="flex items-center gap-1 px-3 py-1 text-sm bg-[#0077B5] text-white rounded-lg hover:bg-[#005f8d] transition-colors disabled:opacity-50"
+                          >
+                            <Calendar className="w-3 h-3" /> Programar
+                          </button>
+                        </>
                       )}
 
                       {item.status === 'error' && (
