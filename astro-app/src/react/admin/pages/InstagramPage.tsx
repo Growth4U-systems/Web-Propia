@@ -916,11 +916,32 @@ export default function CameraPage() {
               .filter((p) => p.status === 'pending')
               .map((p) => (
                 <div key={p.id} className="bg-white rounded-xl border border-blue-200 bg-blue-50/30 p-4 flex items-center justify-between">
+                  {p.imageUrl && (
+                    <img src={p.imageUrl} alt="" className="w-12 h-15 rounded-lg object-cover flex-shrink-0 mr-4" />
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-[#032149] text-sm">{p.blogTitle}</h3>
                     <p className="text-xs text-blue-600 mt-1">
                       Programado: {p.scheduledAt.toLocaleDateString('es-ES')} a las {p.scheduledAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </p>
+                  </div>
+                  <div className="flex items-center gap-3 ml-4">
+                    {p.imageUrl && (
+                      <button
+                        onClick={() => setPreviewItem({
+                          post: { id: p.id, title: p.blogTitle, slug: p.blogSlug, category: '', excerpt: '', image: '', createdAt: null },
+                          caption: p.caption,
+                          igImageUrl: p.imageUrl,
+                          scheduledDate: '',
+                          scheduledTime: '',
+                          status: 'scheduled',
+                        })}
+                        className="p-1.5 text-slate-400 hover:text-[#6351d5] transition-colors"
+                        title="Preview"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                   <button
                     onClick={async () => {
