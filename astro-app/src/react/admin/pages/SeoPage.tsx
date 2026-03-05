@@ -29,6 +29,9 @@ import {
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase-client';
 
+const APP_ID = 'growth4u-public-app';
+const DATA_PATH = `artifacts/${APP_ID}/public/data`;
+
 // ============================================
 // TYPES
 // ============================================
@@ -531,7 +534,7 @@ export default function SeoPage() {
 
   const loadGscMetrics = async () => {
     try {
-      const q = query(collection(db, 'seo_metrics'), orderBy('date', 'desc'));
+      const q = query(collection(db, DATA_PATH, 'seo_metrics'), orderBy('date', 'desc'));
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SEOMetric[];
       setGscMetrics(data);
@@ -542,7 +545,7 @@ export default function SeoPage() {
 
   const loadDomainMetrics = async () => {
     try {
-      const q = query(collection(db, 'domain_metrics'), orderBy('date', 'desc'));
+      const q = query(collection(db, DATA_PATH, 'domain_metrics'), orderBy('date', 'desc'));
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as DomainMetric[];
       setDomainMetrics(data);
@@ -553,7 +556,7 @@ export default function SeoPage() {
 
   const loadAnalyticsMetrics = async () => {
     try {
-      const q = query(collection(db, 'analytics_metrics'), orderBy('date', 'desc'));
+      const q = query(collection(db, DATA_PATH, 'analytics_metrics'), orderBy('date', 'desc'));
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AnalyticsMetric[];
       setAnalyticsMetrics(data);
@@ -564,7 +567,7 @@ export default function SeoPage() {
 
   const loadCachedWebVitals = async () => {
     try {
-      const docRef = doc(db, 'site_data', 'web_vitals');
+      const docRef = doc(db, DATA_PATH, 'site_data', 'web_vitals');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setWebVitals(docSnap.data() as WebVitals);
@@ -576,7 +579,7 @@ export default function SeoPage() {
 
   const loadCachedDataForSEO = async () => {
     try {
-      const docRef = doc(db, 'dataforseo_metrics', 'latest');
+      const docRef = doc(db, DATA_PATH, 'dataforseo_metrics', 'latest');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setDataForSEO(docSnap.data() as DataForSEOMetrics);
@@ -652,7 +655,7 @@ export default function SeoPage() {
       };
 
       // Save to Firebase
-      await setDoc(doc(db, 'site_data', 'web_vitals'), {
+      await setDoc(doc(db, DATA_PATH, 'site_data', 'web_vitals'), {
         ...vitals,
         updatedAt: new Date().toISOString()
       });
@@ -674,7 +677,7 @@ export default function SeoPage() {
     const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
 
     try {
-      await addDoc(collection(db, 'seo_metrics'), {
+      await addDoc(collection(db, DATA_PATH, 'seo_metrics'), {
         date: newGscMetric.date,
         impressions,
         clicks,
@@ -703,7 +706,7 @@ export default function SeoPage() {
   const handleAddDomainMetric = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'domain_metrics'), {
+      await addDoc(collection(db, DATA_PATH, 'domain_metrics'), {
         date: newDomainMetric.date,
         domainAuthority: parseInt(newDomainMetric.domainAuthority),
         backlinks: parseInt(newDomainMetric.backlinks),
@@ -732,7 +735,7 @@ export default function SeoPage() {
   const handleDeleteGscMetric = async (id: string) => {
     if (!confirm('¿Eliminar esta métrica?')) return;
     try {
-      await deleteDoc(doc(db, 'seo_metrics', id));
+      await deleteDoc(doc(db, DATA_PATH, 'seo_metrics', id));
       loadGscMetrics();
     } catch (error) {
       console.error('Error deleting metric:', error);
@@ -742,7 +745,7 @@ export default function SeoPage() {
   const handleDeleteDomainMetric = async (id: string) => {
     if (!confirm('¿Eliminar esta métrica?')) return;
     try {
-      await deleteDoc(doc(db, 'domain_metrics', id));
+      await deleteDoc(doc(db, DATA_PATH, 'domain_metrics', id));
       loadDomainMetrics();
     } catch (error) {
       console.error('Error deleting metric:', error);
@@ -752,7 +755,7 @@ export default function SeoPage() {
   const handleAddAnalyticsMetric = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'analytics_metrics'), {
+      await addDoc(collection(db, DATA_PATH, 'analytics_metrics'), {
         date: newAnalyticsMetric.date,
         sessions: parseInt(newAnalyticsMetric.sessions),
         users: parseInt(newAnalyticsMetric.users),
@@ -785,7 +788,7 @@ export default function SeoPage() {
   const handleDeleteAnalyticsMetric = async (id: string) => {
     if (!confirm('¿Eliminar esta métrica?')) return;
     try {
-      await deleteDoc(doc(db, 'analytics_metrics', id));
+      await deleteDoc(doc(db, DATA_PATH, 'analytics_metrics', id));
       loadAnalyticsMetrics();
     } catch (error) {
       console.error('Error deleting metric:', error);

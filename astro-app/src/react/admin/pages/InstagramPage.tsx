@@ -127,18 +127,38 @@ async function generateIGImage(title: string, _category: string, templateIndex: 
   const padding = 60;
   const maxTextWidth = textW - padding * 2;
 
-  // Comic-style bold font — sized to fit bubble, uppercase for punch
+  // Comic-style bold font — dynamically sized to fit bubble, uppercase for punch
   const titleUpper = title.toUpperCase();
-  const fontSize = titleUpper.length > 100 ? 42 : titleUpper.length > 70 ? 48 : titleUpper.length > 40 ? 56 : 64;
-  ctx.font = `900 ${fontSize}px "Comic Sans MS", "Comic Neue", Impact, system-ui, sans-serif`;
+  const fontFamily = '"Comic Sans MS", "Comic Neue", Impact, system-ui, sans-serif';
+
+  // Start with a base font size and shrink until text fits within the bubble
+  let fontSize = titleUpper.length > 100 ? 42 : titleUpper.length > 70 ? 48 : titleUpper.length > 40 ? 56 : 64;
+  const minFontSize = 28;
+  let lines: string[];
+  let lineHeight: number;
+  let totalTextHeight: number;
+
+  do {
+    ctx.font = `900 ${fontSize}px ${fontFamily}`;
+    lines = wrapText(ctx, titleUpper, maxTextWidth);
+    lineHeight = fontSize * 1.25;
+    totalTextHeight = lines.length * lineHeight;
+    if (totalTextHeight <= textH - padding) break;
+    fontSize -= 2;
+  } while (fontSize >= minFontSize);
+
+  ctx.font = `900 ${fontSize}px ${fontFamily}`;
   ctx.fillStyle = '#1a1a1a';
   ctx.textAlign = 'center';
 
-  const lines = wrapText(ctx, titleUpper, maxTextWidth);
-  const lineHeight = fontSize * 1.25;
-  const totalTextHeight = lines.length * lineHeight;
   const textCenterX = textX + textW / 2;
   const textStartY = textY + (textH - totalTextHeight) / 2 + fontSize * 0.35;
+
+  // Clip to bubble area so text never overflows
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(textX, textY, textW, textH);
+  ctx.clip();
 
   // Draw each line with slight letter spacing for comic feel
   lines.forEach((line, i) => {
@@ -152,6 +172,8 @@ async function generateIGImage(title: string, _category: string, templateIndex: 
       x += ctx.measureText(char).width + spacing;
     }
   });
+
+  ctx.restore();
 
   // Scale down to 1080x1350 for Instagram
   const outCanvas = document.createElement('canvas');
@@ -300,27 +322,26 @@ export default function CameraPage() {
     return posts.filter((p) => p.category === filter);
   }
 
-  function generateCaption(post: BlogPost): string {
-    const hashtags = [
-      '#GrowthMarketing',
-      '#Fintech',
-      '#Growth4U',
-      '#MarketingDigital',
-      '#B2B',
-    ];
-
-    const categoryTags: Record<string, string[]> = {
-      Growth: ['#GrowthHacking', '#Startup'],
-      Marketing: ['#ContentMarketing', '#SEO'],
-      GEO: ['#GEO', '#ChatGPT', '#IA'],
-      Estrategia: ['#EstrategiaDigital', '#GTM'],
-      Producto: ['#ProductLedGrowth', '#SaaS'],
-    };
-
-    const extraTags = categoryTags[post.category] || [];
-    const allTags = [...hashtags, ...extraTags].slice(0, 8);
-
-    return `${post.title}\n\n${post.excerpt}\n\n👉 Lee el artículo completo en growth4u.io/blog/${post.slug}/\n\n${allTags.join(' ')}`;
+  async function generateCaption(post: BlogPost): Promise<string> {
+    try {
+      const res = await fetch('/.netlify/functions/generate-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: 'instagram',
+          title: post.title,
+          excerpt: post.excerpt,
+          slug: post.slug,
+          category: post.category,
+        }),
+      });
+      const data = await res.json();
+      if (data.caption) return data.caption;
+    } catch (err) {
+      console.error('AI caption generation failed, using fallback:', err);
+    }
+    // Fallback to basic template
+    return `${post.title}\n\n${post.excerpt}\n\n👉 Lee el artículo completo en growth4u.io/blog/${post.slug}/\n\n#GrowthMarketing #Fintech #Growth4U #MarketingDigital #B2B`;
   }
 
   async function generateCaptions() {
@@ -333,19 +354,21 @@ export default function CameraPage() {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     // Create items with 'generating' status first
-    const items: ScheduleItem[] = selected.map((post, i) => {
-      const date = new Date(tomorrow);
-      date.setDate(date.getDate() + i);
+    const items: ScheduleItem[] = await Promise.all(
+      selected.map(async (post, i) => {
+        const date = new Date(tomorrow);
+        date.setDate(date.getDate() + i);
 
-      return {
-        post,
-        caption: generateCaption(post),
-        igImageUrl: '',
-        scheduledDate: date.toISOString().split('T')[0],
-        scheduledTime: '10:00',
-        status: 'generating',
-      };
-    });
+        return {
+          post,
+          caption: await generateCaption(post),
+          igImageUrl: '',
+          scheduledDate: date.toISOString().split('T')[0],
+          scheduledTime: '10:00',
+          status: 'generating' as const,
+        };
+      })
+    );
 
     setScheduleItems(items);
     setSelectedPosts(new Set());

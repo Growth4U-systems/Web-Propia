@@ -17,6 +17,9 @@ import {
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { db } from '../../../lib/firebase-client';
 
+const APP_ID = 'growth4u-public-app';
+const DATA_PATH = `artifacts/${APP_ID}/public/data`;
+
 interface GEOTest {
   id: string;
   date: string;
@@ -75,7 +78,7 @@ export default function GeoPage() {
   const loadTests = async () => {
     try {
       const testsQuery = query(
-        collection(db, 'geo_tests'),
+        collection(db, DATA_PATH, 'geo_tests'),
         orderBy('date', 'desc')
       );
       const snapshot = await getDocs(testsQuery);
@@ -95,7 +98,7 @@ export default function GeoPage() {
     e.preventDefault();
 
     try {
-      await addDoc(collection(db, 'geo_tests'), {
+      await addDoc(collection(db, DATA_PATH, 'geo_tests'), {
         ...newTest,
         date: new Date().toISOString(),
         createdAt: new Date().toISOString()
@@ -122,7 +125,7 @@ export default function GeoPage() {
     if (!confirm('¿Eliminar esta prueba?')) return;
 
     try {
-      await deleteDoc(doc(db, 'geo_tests', id));
+      await deleteDoc(doc(db, DATA_PATH, 'geo_tests', id));
       loadTests();
     } catch (error) {
       console.error('Error deleting test:', error);

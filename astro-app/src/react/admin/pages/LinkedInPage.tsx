@@ -38,11 +38,11 @@ const CLOUDINARY_PRESET = 'blog_uploads';
 
 // LinkedIn template on Cloudinary (1728x2304) — text area is the cyan-bordered rectangle
 const LI_TEMPLATE = {
-  url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772726703/li-template-0.jpg',
-  textX: 88,
-  textY: 1000,
-  textW: 1552,
-  textH: 550,
+  url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-1.jpg',
+  textX: 100,
+  textY: 560,
+  textW: 1528,
+  textH: 800,
 };
 
 // --- Canvas image generator ---
@@ -139,55 +139,28 @@ async function uploadToCloudinary(blob: Blob, slug: string): Promise<string> {
   return data.secure_url;
 }
 
-// --- Caption generator (based on LinkedIn Post Skill for Philippe Sainthubert) ---
+// --- Caption generator (AI-powered using linkedin-post-skill) ---
 
-const PAIN_LEAD_MAGNETS: Record<string, { name: string; url: string }> = {
-  cac: { name: 'Framework CAC Sostenible', url: 'growth4u.io/recursos/cac-sostenible/' },
-  confianza: { name: 'Framework Nichos 60 Días', url: 'growth4u.io/recursos/framework-nichos-60-dias/' },
-  estancamiento: { name: 'Diagnóstico Meseta de Crecimiento', url: 'growth4u.io/recursos/meseta-de-crecimiento/' },
-  sistema: { name: 'Sistema de Growth (blueprint)', url: 'growth4u.io/recursos/sistema-de-growth/' },
-  competencia: { name: 'Playbook David vs Goliat', url: 'growth4u.io/recursos/david-vs-goliat/' },
-  fundador: { name: 'Kit de Liberación del Fundador', url: 'growth4u.io/recursos/kit-de-liberacion/' },
-  attribution: { name: 'Dashboard de Attribution', url: 'growth4u.io/recursos/dashboard-de-attribution/' },
-};
-
-function detectPain(text: string): string | null {
-  const lower = text.toLowerCase();
-  if (lower.includes('cac') || lower.includes('coste de adquisición') || lower.includes('adquisición')) return 'cac';
-  if (lower.includes('confianza') || lower.includes('regulación') || lower.includes('desconfianza')) return 'confianza';
-  if (lower.includes('estanca') || lower.includes('meseta') || lower.includes('tracción')) return 'estancamiento';
-  if (lower.includes('sistema') || lower.includes('growth') || lower.includes('framework')) return 'sistema';
-  if (lower.includes('competencia') || lower.includes('gigante') || lower.includes('david')) return 'competencia';
-  if (lower.includes('fundador') || lower.includes('cuello de botella') || lower.includes('liberación')) return 'fundador';
-  if (lower.includes('attribution') || lower.includes('atribución') || lower.includes('medición')) return 'attribution';
-  return null;
-}
-
-function generateCaption(post: BlogPost): string {
-  const pain = detectPain(`${post.title} ${post.excerpt}`);
-  const leadMagnet = pain ? PAIN_LEAD_MAGNETS[pain] : null;
-
-  const lines: string[] = [];
-
-  // Hook — always use title (excerpt can be truncated from Firebase)
-  lines.push(post.title);
-  lines.push('');
-
-  // Blog link
-  lines.push('Lee el artículo completo:');
-  lines.push(`growth4u.io/blog/${post.slug}/`);
-
-  // CTA mapped to pain if detected
-  if (leadMagnet) {
-    lines.push('');
-    lines.push(`Descargá gratis el ${leadMagnet.name}:`);
-    lines.push(leadMagnet.url);
+async function generateCaption(post: BlogPost): Promise<string> {
+  try {
+    const res = await fetch('/.netlify/functions/generate-caption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        platform: 'linkedin',
+        title: post.title,
+        excerpt: post.excerpt,
+        slug: post.slug,
+        category: post.category,
+      }),
+    });
+    const data = await res.json();
+    if (data.caption) return data.caption;
+  } catch (err) {
+    console.error('AI caption generation failed, using fallback:', err);
   }
-
-  lines.push('');
-  lines.push('#GrowthMarketing #Growth4U #B2B');
-
-  return lines.join('\n');
+  // Fallback to basic template
+  return `${post.title}\n\nLee el artículo completo:\ngrowth4u.io/blog/${post.slug}/\n\n#GrowthMarketing #Growth4U #B2B`;
 }
 
 // --- Main component ---
@@ -235,7 +208,7 @@ export default function LinkedInPage() {
   }
 
   async function addToQueue(post: BlogPost) {
-    const caption = generateCaption(post);
+    const caption = await generateCaption(post);
     const newItem: QueueItem = {
       post,
       caption,
