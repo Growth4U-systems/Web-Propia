@@ -881,6 +881,53 @@ export default function CameraPage() {
         </div>
       )}
 
+      {/* Saved scheduled posts from Firebase */}
+      {savedPosts.filter((p) => p.status === 'pending').length > 0 && (
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-[#032149] flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-500" />
+              Programados ({savedPosts.filter((p) => p.status === 'pending').length})
+            </h2>
+            <button
+              onClick={async () => {
+                const res = await fetch(`${FUNCTION_URL}?action=cron`);
+                const data = await res.json();
+                alert(`Publicados: ${data.processed || 0}`);
+                loadSavedPosts();
+              }}
+              className="flex items-center gap-2 text-sm text-[#6351d5] hover:underline"
+            >
+              <Send className="w-4 h-4" />
+              Publicar pendientes ahora
+            </button>
+          </div>
+          <div className="space-y-3">
+            {savedPosts
+              .filter((p) => p.status === 'pending')
+              .map((p) => (
+                <div key={p.id} className="bg-white rounded-xl border border-blue-200 bg-blue-50/30 p-4 flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-[#032149] text-sm">{p.blogTitle}</h3>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Programado: {p.scheduledAt.toLocaleDateString('es-ES')} a las {p.scheduledAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await deleteIGScheduledPost(p.id);
+                      loadSavedPosts();
+                    }}
+                    className="text-xs text-red-400 hover:text-red-600 ml-4"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* Post selection */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4">
