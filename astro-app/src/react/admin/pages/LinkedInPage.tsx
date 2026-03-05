@@ -2,13 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Loader2,
   Send,
-  Clock,
   CheckCircle2,
   AlertCircle,
   Sparkles,
   Eye,
   X,
-  Calendar,
   ImageIcon,
   Trash2,
   RefreshCw,
@@ -25,17 +23,16 @@ interface BlogPost {
   createdAt: string | null;
 }
 
-interface ScheduleItem {
+interface QueueItem {
   post: BlogPost;
   caption: string;
   liImageUrl: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  status: 'generating' | 'draft' | 'scheduling' | 'scheduled' | 'error';
+  status: 'generating' | 'draft' | 'publishing' | 'published' | 'error';
   error?: string;
 }
 
-const FUNCTION_URL = '/.netlify/functions/metricool';
+const FUNCTION_URL = '/.netlify/functions/linkedin';
+const LINKEDIN_CLIENT_ID = '78u22bpyd8o0f0';
 const CLOUDINARY_CLOUD = 'dsc0jsbkz';
 const CLOUDINARY_PRESET = 'blog_uploads';
 
@@ -172,21 +169,23 @@ function generateCaption(post: BlogPost): string {
 
   const lines: string[] = [];
 
-  // Hook — use the post title as base, add blog link
-  lines.push(post.excerpt || post.title);
+  // Hook — always use title (excerpt can be truncated from Firebase)
+  lines.push(post.title);
   lines.push('');
-  lines.push(`Lo desarrollamos en detalle en el blog:`);
+
+  // Blog link
+  lines.push('Lee el artículo completo:');
   lines.push(`growth4u.io/blog/${post.slug}/`);
 
-  // CTA mapped to pain if detected, otherwise generic engagement
+  // CTA mapped to pain if detected
   if (leadMagnet) {
     lines.push('');
-    lines.push(`Y si querés ir más allá, descargá gratis el ${leadMagnet.name}:`);
+    lines.push(`Descargá gratis el ${leadMagnet.name}:`);
     lines.push(leadMagnet.url);
   }
 
   lines.push('');
-  lines.push('#GrowthMarketing #Growth4U #Fintech #B2B');
+  lines.push('#GrowthMarketing #Growth4U #B2B');
 
   return lines.join('\n');
 }
@@ -196,14 +195,33 @@ function generateCaption(post: BlogPost): string {
 export default function LinkedInPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [queue, setQueue] = useState<ScheduleItem[]>([]);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [publishedSlugs] = useState<Set<string>>(new Set());
+  const [linkedinStatus, setLinkedinStatus] = useState<{ connected: boolean; org?: string } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     loadPosts();
+    checkLinkedInConnection();
   }, []);
+
+  async function checkLinkedInConnection() {
+    try {
+      const res = await fetch(FUNCTION_URL);
+      const data = await res.json();
+      setLinkedinStatus(data);
+    } catch {
+      setLinkedinStatus({ connected: false });
+    }
+  }
+
+  function connectLinkedIn() {
+    const redirectUri = `${window.location.origin}/.netlify/functions/linkedin-callback`;
+    const scope = 'w_organization_social r_organization_social';
+    const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+    window.open(url, '_blank');
+  }
 
   async function loadPosts() {
     setLoading(true);
@@ -218,12 +236,10 @@ export default function LinkedInPage() {
 
   async function addToQueue(post: BlogPost) {
     const caption = generateCaption(post);
-    const newItem: ScheduleItem = {
+    const newItem: QueueItem = {
       post,
       caption,
       liImageUrl: '',
-      scheduledDate: '',
-      scheduledTime: '10:00',
       status: 'generating',
     };
 
@@ -255,7 +271,7 @@ export default function LinkedInPage() {
     setQueue((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function updateItem(index: number, updates: Partial<ScheduleItem>) {
+  function updateItem(index: number, updates: Partial<QueueItem>) {
     setQueue((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], ...updates };
@@ -263,88 +279,43 @@ export default function LinkedInPage() {
     });
   }
 
-  async function scheduleItem(index: number) {
-    const item = queue[index];
-    if (!item.scheduledDate || !item.scheduledTime) {
-      updateItem(index, { error: 'Selecciona fecha y hora', status: 'error' });
-      return;
-    }
-
-    updateItem(index, { status: 'scheduling', error: undefined });
-
-    try {
-      const dateTime = `${item.scheduledDate}T${item.scheduledTime}:00`;
-      const res = await fetch(FUNCTION_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: item.caption,
-          imageUrl: item.liImageUrl,
-          publicationDate: {
-            dateTime,
-            timezone: 'Europe/Madrid',
-          },
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al programar');
-
-      updateItem(index, { status: 'scheduled' });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido';
-      updateItem(index, { status: 'error', error: msg });
-    }
-  }
-
   async function publishNow(index: number) {
     const item = queue[index];
-    updateItem(index, { status: 'scheduling', error: undefined });
+    updateItem(index, { status: 'publishing', error: undefined });
 
     try {
-      // Metricool requires future dates — schedule 5 min from now
-      const now = new Date();
-      now.setMinutes(now.getMinutes() + 5);
-      const pad = (n: number) => String(n).padStart(2, '0');
-      const dateTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:00`;
-
       const res = await fetch(FUNCTION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: item.caption,
           imageUrl: item.liImageUrl,
-          publicationDate: {
-            dateTime,
-            timezone: 'Europe/Madrid',
-          },
         }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error al publicar');
 
-      updateItem(index, { status: 'scheduled' });
+      updateItem(index, { status: 'published' });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error desconocido';
       updateItem(index, { status: 'error', error: msg });
     }
   }
 
-  async function scheduleAll() {
+  async function publishAll() {
     const drafts = queue
       .map((item, i) => ({ item, i }))
-      .filter(({ item }) => item.status === 'draft' && item.scheduledDate && item.scheduledTime);
+      .filter(({ item }) => item.status === 'draft');
 
     for (const { i } of drafts) {
-      await scheduleItem(i);
-      // Rate limit between requests
+      await publishNow(i);
       await new Promise((r) => setTimeout(r, 2000));
     }
   }
 
   const availablePosts = posts.filter((p) => !publishedSlugs.has(p.slug));
-  const draftCount = queue.filter((i) => i.status === 'draft' && i.scheduledDate && i.scheduledTime).length;
+  const draftCount = queue.filter((i) => i.status === 'draft').length;
 
   return (
     <div>
@@ -354,15 +325,31 @@ export default function LinkedInPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#032149]">LinkedIn — Growth4U</h1>
-          <p className="text-slate-500 mt-1">Genera y programa posts de LinkedIn desde tus blogs</p>
+          <p className="text-slate-500 mt-1">Genera y publica posts de LinkedIn desde tus blogs</p>
+          {linkedinStatus && (
+            <div className="mt-2">
+              {linkedinStatus.connected ? (
+                <span className="inline-flex items-center gap-1.5 text-xs text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                  <CheckCircle2 className="w-3 h-3" /> Conectado: {linkedinStatus.org}
+                </span>
+              ) : (
+                <button
+                  onClick={connectLinkedIn}
+                  className="inline-flex items-center gap-1.5 text-xs text-white bg-[#0077B5] px-3 py-1.5 rounded-full hover:bg-[#005f8d] transition-colors"
+                >
+                  Conectar LinkedIn
+                </button>
+              )}
+            </div>
+          )}
         </div>
         {draftCount > 0 && (
           <button
-            onClick={scheduleAll}
+            onClick={publishAll}
             className="flex items-center gap-2 px-4 py-2 bg-[#0077B5] text-white rounded-lg hover:bg-[#005f8d] transition-colors"
           >
             <Send className="w-4 h-4" />
-            Programar todos ({draftCount})
+            Publicar todos ({draftCount})
           </button>
         )}
       </div>
@@ -420,17 +407,17 @@ export default function LinkedInPage() {
                         )}
                         {item.status === 'draft' && (
                           <span className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                            <Clock className="w-3 h-3" /> Listo
+                            <CheckCircle2 className="w-3 h-3" /> Listo
                           </span>
                         )}
-                        {item.status === 'scheduling' && (
+                        {item.status === 'publishing' && (
                           <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-                            <Loader2 className="w-3 h-3 animate-spin" /> Programando...
+                            <Loader2 className="w-3 h-3 animate-spin" /> Publicando...
                           </span>
                         )}
-                        {item.status === 'scheduled' && (
+                        {item.status === 'published' && (
                           <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                            <CheckCircle2 className="w-3 h-3" /> Programado
+                            <CheckCircle2 className="w-3 h-3" /> Publicado
                           </span>
                         )}
                         {item.status === 'error' && (
@@ -455,40 +442,15 @@ export default function LinkedInPage() {
                       rows={3}
                     />
 
-                    {/* Date/Time + Actions */}
+                    {/* Actions */}
                     <div className="flex items-center gap-3 mt-2">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        <input
-                          type="date"
-                          value={item.scheduledDate}
-                          onChange={(e) => updateItem(index, { scheduledDate: e.target.value })}
-                          className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#0077B5]"
-                        />
-                        <input
-                          type="time"
-                          value={item.scheduledTime}
-                          onChange={(e) => updateItem(index, { scheduledTime: e.target.value })}
-                          className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#0077B5]"
-                        />
-                      </div>
-
                       {item.status === 'draft' && (
-                        <>
-                          <button
-                            onClick={() => publishNow(index)}
-                            className="flex items-center gap-1 px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                          >
-                            <Send className="w-3 h-3" /> Publicar ahora
-                          </button>
-                          <button
-                            onClick={() => scheduleItem(index)}
-                            disabled={!item.scheduledDate || !item.scheduledTime}
-                            className="flex items-center gap-1 px-3 py-1 text-sm bg-[#0077B5] text-white rounded-lg hover:bg-[#005f8d] transition-colors disabled:opacity-50"
-                          >
-                            <Calendar className="w-3 h-3" /> Programar
-                          </button>
-                        </>
+                        <button
+                          onClick={() => publishNow(index)}
+                          className="flex items-center gap-1 px-3 py-1 text-sm bg-[#0077B5] text-white rounded-lg hover:bg-[#005f8d] transition-colors"
+                        >
+                          <Send className="w-3 h-3" /> Publicar en LinkedIn
+                        </button>
                       )}
 
                       {item.status === 'error' && (

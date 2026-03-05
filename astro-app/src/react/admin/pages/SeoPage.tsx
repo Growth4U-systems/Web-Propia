@@ -476,6 +476,9 @@ export default function SeoPage() {
   const [syncingDataForSEO, setSyncingDataForSEO] = useState(false);
   const [dataForSEOError, setDataForSEOError] = useState<string | null>(null);
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'seo' | 'geo'>('seo');
+
   // Modals
   const [showGscForm, setShowGscForm] = useState(false);
   const [showDomainForm, setShowDomainForm] = useState(false);
@@ -811,8 +814,6 @@ export default function SeoPage() {
       </div>
     );
   }
-
-  const [activeTab, setActiveTab] = useState<'seo' | 'geo'>('seo');
 
   return (
     <div className="space-y-10">
