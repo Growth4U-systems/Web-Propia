@@ -178,8 +178,13 @@ Escribe SOLO el caption, listo para copiar y publicar. Sin explicaciones ni meta
       messages: [{ role: "user", content: userPrompt }],
     });
 
-    const caption =
+    let caption =
       message.content[0].type === "text" ? message.content[0].text : "";
+
+    // Strip markdown formatting that LinkedIn doesn't render
+    if (platform === "linkedin") {
+      caption = caption.replace(/\*\*/g, "").replace(/\*/g, "").replace(/__/g, "").replace(/_([^_]+)_/g, "$1");
+    }
 
     return Response.json({ caption }, { headers: CORS_HEADERS });
   } catch (err: unknown) {
