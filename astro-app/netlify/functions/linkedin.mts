@@ -112,6 +112,97 @@ async function createPost(authorUrn: string, text: string, imageUrn: string): Pr
   throw new Error(`Create post failed (${res.status}): ${responseText}`);
 }
 
+// Fetch recent posts with engagement metrics
+async function fetchMetrics() {
+  // Get user info
+  const meRes = await fetch("https://api.linkedin.com/v2/me", {
+    headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+  });
+  const meData = await meRes.json();
+  if (!meRes.ok) {
+    throw new Error(`Failed to get user info (${meRes.status})`);
+  }
+  const personUrn = `urn:li:person:${meData.id}`;
+  const name = `${meData.localizedFirstName || ""} ${meData.localizedLastName || ""}`.trim();
+
+  // Fetch recent posts by author
+  const postsUrl = `https://api.linkedin.com/rest/posts?author=${encodeURIComponent(personUrn)}&q=author&count=25&sortBy=LAST_MODIFIED`;
+  const postsRes = await fetch(postsUrl, { headers: LI_HEADERS });
+  const postsData = await postsRes.json();
+
+  if (!postsRes.ok) {
+    throw new Error(`Fetch posts failed (${postsRes.status}): ${JSON.stringify(postsData)}`);
+  }
+
+  const rawPosts = postsData.elements || [];
+
+  // For each post, fetch social actions (likes, comments, shares)
+  const posts = await Promise.all(
+    rawPosts.slice(0, 25).map(async (post: Record<string, unknown>) => {
+      const postId = post.id as string;
+      const commentary = (post.commentary as string) || "";
+      const createdAt = post.createdAt as number | undefined;
+      const content = post.content as Record<string, unknown> | undefined;
+
+      // Extract image URL from post content if available
+      let imageUrl = "";
+      if (content?.media) {
+        const media = content.media as Record<string, unknown>;
+        if (media.id) {
+          // Try to get the image URL via the images API
+          try {
+            const imgRes = await fetch(`https://api.linkedin.com/rest/images/${encodeURIComponent(media.id as string)}`, {
+              headers: LI_HEADERS,
+            });
+            if (imgRes.ok) {
+              const imgData = await imgRes.json();
+              imageUrl = imgData.downloadUrl || "";
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      // Fetch social actions summary
+      let likes = 0;
+      let comments = 0;
+      let shares = 0;
+      try {
+        const activityUrn = postId.replace("urn:li:share:", "urn:li:activity:").replace("urn:li:ugcPost:", "urn:li:activity:");
+        const socialRes = await fetch(
+          `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(activityUrn)}`,
+          { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } }
+        );
+        if (socialRes.ok) {
+          const social = await socialRes.json();
+          likes = social.likesSummary?.totalLikes || 0;
+          comments = social.commentsSummary?.totalFirstLevelComments || 0;
+          shares = social.sharesSummary?.totalShares || 0;
+        }
+      } catch { /* ignore - stats unavailable */ }
+
+      return {
+        id: postId,
+        text: commentary,
+        createdAt: createdAt ? new Date(createdAt).toISOString() : null,
+        imageUrl,
+        likes,
+        comments,
+        shares,
+      };
+    })
+  );
+
+  return {
+    account: {
+      name,
+      personUrn,
+      headline: meData.localizedHeadline || "",
+      profilePicture: meData.profilePicture?.["displayImage~"]?.elements?.[0]?.identifiers?.[0]?.identifier || "",
+    },
+    posts,
+  };
+}
+
 // Create text-only post
 async function createTextPost(authorUrn: string, text: string): Promise<Record<string, unknown>> {
   const res = await fetch("https://api.linkedin.com/rest/posts", {
@@ -152,8 +243,23 @@ export default async (req: Request, _context: Context) => {
     );
   }
 
-  // GET = check connection status
+  // GET = check connection or fetch metrics
   if (req.method === "GET") {
+    const url = new URL(req.url);
+    const action = url.searchParams.get("action");
+
+    // ?action=metrics → fetch posts + engagement
+    if (action === "metrics") {
+      try {
+        const data = await fetchMetrics();
+        return Response.json(data, { headers: CORS_HEADERS });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        return Response.json({ error: message }, { status: 500, headers: CORS_HEADERS });
+      }
+    }
+
+    // Default GET = connection check
     try {
       const res = await fetch("https://api.linkedin.com/v2/me", {
         headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },

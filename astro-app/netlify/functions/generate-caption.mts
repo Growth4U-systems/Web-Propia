@@ -154,6 +154,8 @@ Categoria: ${category}
 Resumen: ${excerpt}
 URL del articulo: growth4u.io/blog/${slug}/
 
+IMPORTANTE: SIEMPRE incluir el link al articulo (growth4u.io/blog/${slug}/) al final del post o como parte del CTA. El lector debe poder acceder al contenido completo.
+
 Escribe SOLO el post, listo para copiar y publicar. Sin explicaciones ni metadatos.`
         : `Escribe un caption de Instagram para este articulo del blog de Growth4U.
 
@@ -161,6 +163,8 @@ Titulo: ${title}
 Categoria: ${category}
 Resumen: ${excerpt}
 URL del articulo: growth4u.io/blog/${slug}/
+
+IMPORTANTE: SIEMPRE incluir el link al articulo (growth4u.io/blog/${slug}/) en el CTA del caption. El lector debe saber donde leer mas.
 
 Escribe SOLO el caption, listo para copiar y publicar. Sin explicaciones ni metadatos.`;
 

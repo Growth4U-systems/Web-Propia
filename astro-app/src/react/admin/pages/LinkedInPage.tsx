@@ -10,6 +10,11 @@ import {
   ImageIcon,
   Trash2,
   RefreshCw,
+  BarChart3,
+  Heart,
+  MessageCircle,
+  Share2,
+  TrendingUp,
 } from 'lucide-react';
 import { getAllPosts } from '../../../lib/firebase-client';
 
@@ -31,6 +36,28 @@ interface QueueItem {
   error?: string;
 }
 
+interface LIPost {
+  id: string;
+  text: string;
+  createdAt: string | null;
+  imageUrl: string;
+  likes: number;
+  comments: number;
+  shares: number;
+}
+
+interface LIAccount {
+  name: string;
+  personUrn: string;
+  headline: string;
+  profilePicture: string;
+}
+
+interface LIMetrics {
+  account: LIAccount;
+  posts: LIPost[];
+}
+
 const FUNCTION_URL = '/.netlify/functions/linkedin';
 const LINKEDIN_CLIENT_ID = '78u22bpyd8o0f0';
 const CLOUDINARY_CLOUD = 'dsc0jsbkz';
@@ -40,9 +67,9 @@ const CLOUDINARY_PRESET = 'blog_uploads';
 const LI_TEMPLATE = {
   url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-1.jpg',
   textX: 100,
-  textY: 560,
+  textY: 750,
   textW: 1528,
-  textH: 800,
+  textH: 650,
 };
 
 // --- Canvas image generator ---
@@ -173,11 +200,38 @@ export default function LinkedInPage() {
   const [publishedSlugs] = useState<Set<string>>(new Set());
   const [linkedinStatus, setLinkedinStatus] = useState<{ connected: boolean; org?: string } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [activeTab, setActiveTab] = useState<'publish' | 'metrics'>('publish');
+  const [metrics, setMetrics] = useState<LIMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+  const [metricsError, setMetricsError] = useState('');
 
   useEffect(() => {
     loadPosts();
     checkLinkedInConnection();
   }, []);
+
+  async function loadMetrics() {
+    setMetricsLoading(true);
+    setMetricsError('');
+    try {
+      const res = await fetch(`${FUNCTION_URL}?action=metrics`);
+      const text = await res.text();
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Función no disponible (${res.status})`);
+      }
+      if (!res.ok) {
+        throw new Error((data.error as string) || `Error ${res.status}`);
+      }
+      setMetrics(data as unknown as LIMetrics);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error cargando métricas';
+      setMetricsError(msg);
+    }
+    setMetricsLoading(false);
+  }
 
   async function checkLinkedInConnection() {
     try {
@@ -208,10 +262,10 @@ export default function LinkedInPage() {
   }
 
   async function addToQueue(post: BlogPost) {
-    const caption = await generateCaption(post);
+    // Add to queue immediately with generating status
     const newItem: QueueItem = {
       post,
-      caption,
+      caption: 'Generando caption con IA...',
       liImageUrl: '',
       status: 'generating',
     };
@@ -220,12 +274,18 @@ export default function LinkedInPage() {
     const idx = queue.length;
 
     try {
-      const blob = await generateLIImage(post.title);
+      // Generate caption and image in parallel
+      const [caption, blob] = await Promise.all([
+        generateCaption(post),
+        generateLIImage(post.title),
+      ]);
+
       const url = await uploadToCloudinary(blob, post.slug);
+
       setQueue((prev) => {
         const updated = [...prev];
         if (updated[idx]) {
-          updated[idx] = { ...updated[idx], liImageUrl: url, status: 'draft' };
+          updated[idx] = { ...updated[idx], caption, liImageUrl: url, status: 'draft' };
         }
         return updated;
       });
@@ -316,7 +376,7 @@ export default function LinkedInPage() {
             </div>
           )}
         </div>
-        {draftCount > 0 && (
+        {activeTab === 'publish' && draftCount > 0 && (
           <button
             onClick={publishAll}
             className="flex items-center gap-2 px-4 py-2 bg-[#0077B5] text-white rounded-lg hover:bg-[#005f8d] transition-colors"
@@ -326,6 +386,163 @@ export default function LinkedInPage() {
           </button>
         )}
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 bg-slate-100 rounded-xl p-1 w-fit">
+        <button
+          onClick={() => setActiveTab('publish')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'publish'
+              ? 'bg-white text-[#032149] shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Send className="w-4 h-4" />
+          Publicar
+        </button>
+        <button
+          onClick={() => { setActiveTab('metrics'); if (!metrics && !metricsLoading) loadMetrics(); }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'metrics'
+              ? 'bg-white text-[#032149] shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          Métricas
+        </button>
+      </div>
+
+      {/* Metrics Tab */}
+      {activeTab === 'metrics' && (
+        <div>
+          {metricsLoading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 text-[#0077B5] animate-spin" />
+            </div>
+          )}
+
+          {metricsError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm">
+              {metricsError}
+            </div>
+          )}
+
+          {metrics && !metricsLoading && (
+            <>
+              {/* Account overview */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    Total Posts
+                  </div>
+                  <p className="text-2xl font-bold text-[#032149]">
+                    {metrics.posts.length}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                    <Heart className="w-3.5 h-3.5" />
+                    Total Likes
+                  </div>
+                  <p className="text-2xl font-bold text-[#032149]">
+                    {metrics.posts.reduce((s, p) => s + p.likes, 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Total Comentarios
+                  </div>
+                  <p className="text-2xl font-bold text-[#032149]">
+                    {metrics.posts.reduce((s, p) => s + p.comments, 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                    <Share2 className="w-3.5 h-3.5" />
+                    Total Shares
+                  </div>
+                  <p className="text-2xl font-bold text-[#032149]">
+                    {metrics.posts.reduce((s, p) => s + p.shares, 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Refresh button */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-[#032149]">
+                  Últimas publicaciones
+                </h2>
+                <button
+                  onClick={loadMetrics}
+                  disabled={metricsLoading}
+                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#0077B5] transition-colors"
+                >
+                  <RefreshCw className={`w-4 h-4 ${metricsLoading ? 'animate-spin' : ''}`} />
+                  Actualizar
+                </button>
+              </div>
+
+              {/* Posts table */}
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50">
+                        <th className="text-left p-3 font-medium text-slate-500">Post</th>
+                        <th className="text-center p-3 font-medium text-slate-500">
+                          <Heart className="w-4 h-4 mx-auto" />
+                        </th>
+                        <th className="text-center p-3 font-medium text-slate-500">
+                          <MessageCircle className="w-4 h-4 mx-auto" />
+                        </th>
+                        <th className="text-center p-3 font-medium text-slate-500">
+                          <Share2 className="w-4 h-4 mx-auto" />
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.posts.map((p) => (
+                        <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="p-3">
+                            <div className="flex items-center gap-3">
+                              {p.imageUrl && (
+                                <img
+                                  src={p.imageUrl}
+                                  alt=""
+                                  className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                                />
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-xs text-[#032149] line-clamp-2 leading-tight">
+                                  {p.text?.split('\n')[0]?.slice(0, 100) || '—'}
+                                </p>
+                                {p.createdAt && (
+                                  <p className="text-[10px] text-slate-400 mt-0.5">
+                                    {new Date(p.createdAt).toLocaleDateString('es-ES')}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="text-center p-3 text-slate-700 font-medium">{p.likes}</td>
+                          <td className="text-center p-3 text-slate-700 font-medium">{p.comments}</td>
+                          <td className="text-center p-3 text-slate-700 font-medium">{p.shares}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Publish Tab */}
+      {activeTab === 'publish' && <>
 
       {/* Queue — always on top */}
       {queue.length > 0 && (
@@ -498,6 +715,8 @@ export default function LinkedInPage() {
           <p className="text-slate-500">Selecciona blog posts para generar contenido de LinkedIn</p>
         </div>
       )}
+
+      </>}
 
       {/* Full-size preview modal */}
       {previewUrl && (

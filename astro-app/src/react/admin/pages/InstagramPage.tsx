@@ -981,6 +981,26 @@ export default function CameraPage() {
         </div>
       )}
 
+      {/* Reset button — clear all saved posts and unblock slugs */}
+      {savedPosts.length > 0 && (
+        <div className="mb-6 flex justify-end">
+          <button
+            onClick={async () => {
+              if (!confirm('¿Reiniciar todo? Se borrarán todos los posts programados/publicados guardados y se desbloquearán todos los blogs.')) return;
+              for (const p of savedPosts) {
+                await deleteIGScheduledPost(p.id);
+              }
+              setSavedPosts([]);
+              setPublishedSlugs(new Set());
+            }}
+            className="flex items-center gap-2 text-xs text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Reiniciar todo (desbloquear blogs)
+          </button>
+        </div>
+      )}
+
       {/* Post selection */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4">
