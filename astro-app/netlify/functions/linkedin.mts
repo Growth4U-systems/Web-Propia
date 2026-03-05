@@ -22,14 +22,14 @@ interface PostRequest {
 
 // Get the authenticated user's person URN
 async function getPersonUrn(): Promise<string> {
-  const res = await fetch("https://api.linkedin.com/v2/userinfo", {
+  const res = await fetch("https://api.linkedin.com/v2/me", {
     headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
   });
   const data = await res.json();
-  if (!res.ok || !data.sub) {
+  if (!res.ok || !data.id) {
     throw new Error(`Failed to get user info (${res.status}): ${JSON.stringify(data)}`);
   }
-  return `urn:li:person:${data.sub}`;
+  return `urn:li:person:${data.id}`;
 }
 
 // Step 1: Register image upload with LinkedIn
@@ -155,13 +155,14 @@ export default async (req: Request, _context: Context) => {
   // GET = check connection status
   if (req.method === "GET") {
     try {
-      const res = await fetch("https://api.linkedin.com/v2/userinfo", {
+      const res = await fetch("https://api.linkedin.com/v2/me", {
         headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
       });
       if (res.ok) {
         const data = await res.json();
+        const name = `${data.localizedFirstName || ""} ${data.localizedLastName || ""}`.trim() || "LinkedIn";
         return Response.json(
-          { connected: true, org: data.name || data.email || "LinkedIn" },
+          { connected: true, org: name },
           { headers: CORS_HEADERS },
         );
       }
