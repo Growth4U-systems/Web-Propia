@@ -179,6 +179,7 @@ export async function getAllCaseStudies(): Promise<CaseStudy[]> {
         testimonial: d.testimonial || '',
         testimonialAuthor: d.testimonialAuthor || '',
         testimonialRole: d.testimonialRole || '',
+        testimonialImage: d.testimonialImage || '',
         image: d.image || '',
         videoUrl: d.videoUrl || '',
         content: d.content || '',
