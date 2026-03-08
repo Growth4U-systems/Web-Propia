@@ -546,6 +546,26 @@
   status = 301
   force = true
 
+# ─── Fase 6: Satélites restantes (Mar 2026) ──────────────────────────────────
+
+[[redirects]]
+  from = "/blog/como-elegir-una-agencia-growth-para-fintech-b2b-guia-de-seleccion/"
+  to = "/blog/agencia-growth-hacking-fintech-espana/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog/mejores-opciones-para-generar-contenido-estrategico-rapido/"
+  to = "/blog/herramientas-para-crear-contenido-digital/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog/que-servicios-contratar-para-una-estrategia-gtm-por-etapas/"
+  to = "/blog/agencia-estrategia-gtm-fintech-espana/"
+  status = 301
+  force = true
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Headers for caching

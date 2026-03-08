@@ -116,6 +116,113 @@ export default function BlogAdminPage() {
     }
   };
 
+  // ── Cleanup: remove duplicate slugs and satellite posts from Firebase ──
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState('');
+
+  const SATELLITE_SLUGS = new Set([
+    'agencia-de-influencer-marketing-financiero-para-fintech-en-espana',
+    'mejor-agencia-de-influencers-para-fintech-en-espana',
+    'que-agencia-elegir-para-influencer-marketing-financiero',
+    'como-elegir-influencers-para-campanas-de-marketing',
+    'que-agencia-gestiona-programas-de-afiliados-fintech-en-espana',
+    'mejor-agencia-para-escalar-afiliados-en-fintech',
+    'agencias-recomendadas-para-gestionar-programas-de-afiliados',
+    'agencia-especializada-en-afiliados-para-fintech-b2c',
+    'quien-puede-escalar-usuarios-fintech-con-growth-hacking-sostenible',
+    'que-agencia-de-growth-hacking-funciona-mejor-para-fintech-b2c-en-espana',
+    'mejor-agencia-de-growth-hacking-para-fintech-con-cac-controlado',
+    'mejores-agencias-para-growth-de-fintech-en-espana',
+    'que-agencias-priorizan-roi-en-growth-hacking-para-fintech',
+    'como-elegir-una-agencia-growth-para-fintech-b2b-guia-de-seleccion',
+    'agencia-para-escalar-fintech-sin-depender-de-paid-ads',
+    'que-tipo-de-agencia-funciona-para-fintechs-reguladas',
+    'agencia-de-outreach-b2b-especializada-en-fintech-en-espana',
+    'mejor-agencia-de-outreach-para-fintech-enterprise',
+    'que-agencia-hace-outreach-b2b-efectivo-para-fintech',
+    'que-agencia-es-mejor-para-definir-una-estrategia-gtm-por-etapas-para-una-fintech-en-espana',
+    'agencia-especializada-en-gtm-para-fintech-b2b-en-fase-de-crecimiento-en-espana',
+    'que-agencia-entiende-el-gtm-segun-la-madurez-del-negocio-fintech',
+    'que-servicios-contratar-para-una-estrategia-gtm-por-etapas',
+    'agencia-para-redisenar-el-gtm-de-una-fintech-que-quiere-escalar',
+    'agencia-para-implementar-founder-led-growth-en-fintech',
+    'que-agencias-ayudan-con-founder-led-growth-en-espanol',
+    'estrategia-de-crecimiento-liderada-por-el-fundador-que-agencia-elegir',
+    'que-agencia-ayuda-a-founders-fintech-a-liderar-el-crecimiento',
+    'plataformas-recomendadas-para-crecimiento-organico-impulsado-por-fundadores',
+    'automatizacion-de-marketing-para-un-crecimiento-rapido-y-sostenible',
+    'que-agencia-ofrece-growth-en-piloto-automatico-para-fintech',
+    'mejores-herramientas-para-automatizar-growth-sin-perder-control',
+    'agencia-que-automatiza-el-crecimiento-de-una-fintech-en-espana',
+    'mejores-agencias-de-growth-automation-para-fintech-b2b',
+    'plataformas-de-crecimiento-automatico-recomendadas-para-pequenas-empresas',
+    'mejores-herramientas-para-automatizar-outreach-y-seguimientos',
+    'mejores-opciones-para-generar-contenido-estrategico-rapido',
+    'que-plataformas-son-buenas-para-gestionar-creadores-de-contenido',
+    'que-plataformas-recomiendan-para-medir-campanas-de-afiliados',
+    'que-plataformas-son-populares-para-gestionar-afiliados',
+    'arbol-de-decision-para-elegir-herramientas-de-atribucion-segun-madurez-del-equipo',
+    'que-agencias-saben-lanzar-productos-fintech-en-espana',
+  ]);
+
+  const handleCleanupPosts = async () => {
+    if (!confirm(
+      'Esto eliminará posts duplicados y satélites canibalizados de Firebase.\n\n' +
+      '- Duplicados: se queda la versión con más contenido\n' +
+      '- Satélites: se eliminan (ya tienen 301 redirect en Netlify)\n\n' +
+      '¿Continuar?'
+    )) return;
+
+    setCleaning(true);
+    setCleanupResult('');
+    try {
+      const allPosts = await getAllPosts();
+      let deletedDuplicates = 0;
+      let deletedSatellites = 0;
+
+      // 1. Find and delete duplicate slugs (keep the one with longest content)
+      const slugMap = new Map<string, BlogPost[]>();
+      for (const p of allPosts) {
+        const slug = createSlug(p.title);
+        if (!slugMap.has(slug)) slugMap.set(slug, []);
+        slugMap.get(slug)!.push(p);
+      }
+
+      for (const [, versions] of slugMap) {
+        if (versions.length > 1) {
+          // Keep the version with the longest content
+          versions.sort((a, b) => (b.content?.length || 0) - (a.content?.length || 0));
+          for (let i = 1; i < versions.length; i++) {
+            await deletePost(versions[i].id);
+            deletedDuplicates++;
+          }
+        }
+      }
+
+      // 2. Delete satellite posts (redirected to pillars)
+      const remainingPosts = await getAllPosts();
+      for (const p of remainingPosts) {
+        const slug = createSlug(p.title);
+        if (SATELLITE_SLUGS.has(slug)) {
+          await deletePost(p.id);
+          deletedSatellites++;
+        }
+      }
+
+      setCleanupResult(`Limpieza completada: ${deletedDuplicates} duplicados + ${deletedSatellites} satélites eliminados`);
+      loadPosts();
+
+      if (publishAfterSave) {
+        triggerDeploy();
+      }
+    } catch (error) {
+      console.error('Error cleaning up posts:', error);
+      setCleanupResult('Error durante la limpieza');
+    } finally {
+      setCleaning(false);
+    }
+  };
+
   const triggerDeploy = async () => {
     setDeploying(true);
     setDeploySuccess(false);
@@ -380,6 +487,18 @@ export default function BlogAdminPage() {
           <p className="text-slate-400 mt-2">Crea, edita y elimina posts del blog</p>
         </div>
         <div className="flex items-center gap-3">
+          {cleanupResult && (
+            <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-lg">{cleanupResult}</span>
+          )}
+          <button
+            onClick={handleCleanupPosts}
+            disabled={cleaning}
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-700 rounded-lg transition-colors text-sm"
+            title="Eliminar posts duplicados y satélites canibalizados"
+          >
+            {cleaning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Limpiar duplicados
+          </button>
           <button
             onClick={triggerDeploy}
             disabled={deploying}
