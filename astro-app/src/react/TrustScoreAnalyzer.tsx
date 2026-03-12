@@ -80,10 +80,16 @@ export default function TrustScoreAnalyzer() {
   const [elapsed, setElapsed] = useState(0);
   const [limitReached, setLimitReached] = useState(false);
   const [unlockError, setUnlockError] = useState("");
+  const [urlError, setUrlError] = useState("");
   const [sendingEmail, setSendingEmail] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   const canUnlock = name.trim() && email.trim() && phone.trim() && consent;
+
+  function isValidDomain(input: string): boolean {
+    const cleaned = input.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    return /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/.test(cleaned);
+  }
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -108,6 +114,11 @@ export default function TrustScoreAnalyzer() {
     e.preventDefault();
     if (!url.trim() || loading) return;
 
+    if (!isValidDomain(url)) {
+      setUrlError("Introduce un dominio válido, ej: tuempresa.com");
+      return;
+    }
+    setUrlError("");
     setLoading(true);
     setLogs([]);
     setResult(null);
@@ -256,7 +267,7 @@ export default function TrustScoreAnalyzer() {
                 id="url"
                 type="text"
                 value={url}
-                onChange={e => setUrl(e.target.value)}
+                onChange={e => { setUrl(e.target.value); setUrlError(""); }}
                 placeholder="growth4u.io"
                 autoFocus
                 className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-base font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0faec1] focus:border-transparent placeholder:text-gray-400"
@@ -269,7 +280,8 @@ export default function TrustScoreAnalyzer() {
                 Analizar
               </button>
             </div>
-            <p className="text-xs text-gray-400 mt-3 text-center">Sin registro. Resultado inmediato.</p>
+            {urlError && <p className="text-xs text-red-500 mt-3 text-center">{urlError}</p>}
+            {!urlError && <p className="text-xs text-gray-400 mt-3 text-center">Sin registro. Resultado inmediato.</p>}
           </form>
         </div>
 
