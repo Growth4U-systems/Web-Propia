@@ -1015,7 +1015,7 @@ export default async (req: Request, context: Context) => {
           stream(encoder, controller, "detail", { message: `  Perfiles sociales en SERP: ${competitorData.social_profiles}` });
         }
 
-        // Step 7: Final analysis (LLM call #5 — the big one)
+        // Step 7: Final analysis — LLM with heuristic fallback (NEVER fails)
         stream(encoder, controller, "step", { step: "analysis", message: "Generando Trust Score Report..." });
         const founderStr = founderName ? `\n\n## Founder/CEO: ${founderName}\n${JSON.stringify(socialPresence["Founder LinkedIn"] || { found: false })}` : "";
         const sectorInfoStr = `Sector: ${sectorInfo.sector} | Mercado: ${sectorInfo.region} | ICP: ${sectorInfo.icp} | Categoría: ${sectorInfo.category_search_query}`;
@@ -1028,44 +1028,142 @@ export default async (req: Request, context: Context) => {
         const trimmedSeo = JSON.stringify(seoData).slice(0, 2000);
         const prompt = buildPrompt(fullUrl, brandName, trimmedContent, trimmedSerp, trimmedGeo, trimmedSocial, sectorInfoStr + founderStr + competitorStr, trimmedSeo);
         stream(encoder, controller, "detail", { message: `  Prompt: ~${Math.round(prompt.length / 4)} tokens` });
-        let analysisResp;
-        try {
-          analysisResp = await withHeartbeat(encoder, controller, () => anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
-            max_tokens: 2500,
-            messages: [{ role: "user", content: prompt }],
-          }, { timeout: 90_000 }));
-        } catch (apiErr) {
-          stream(encoder, controller, "detail", { message: `  API error: ${String(apiErr).slice(0, 200)}` });
-          // Retry with Haiku (faster, more reliable)
-          stream(encoder, controller, "detail", { message: `  Reintentando con modelo rápido...` });
-          analysisResp = await withHeartbeat(encoder, controller, () => anthropic.messages.create({
-            model: "claude-3-5-haiku-20241022",
-            max_tokens: 2500,
-            messages: [{ role: "user", content: prompt }],
-          }, { timeout: 90_000 }));
+
+        // Heuristic fallback — generates result from collected data, no LLM needed
+        function buildHeuristicResult() {
+          const sp = serpData.stats;
+          const socialCount = Object.values(socialPresence).filter(v => v.found).length;
+          const hasReviews = socialPresence["G2"]?.found || socialPresence["Trustpilot"]?.found || socialPresence["Capterra"]?.found;
+
+          const borrowed = Math.min(100, Math.max(5,
+            (sp.third_party_mentions > 5 ? 40 : sp.third_party_mentions * 8) +
+            (sp.news_mentions > 3 ? 30 : sp.news_mentions * 10) +
+            (sp.brand_in_category_results ? 20 : 0) +
+            (hasReviews ? 10 : 0)
+          ));
+          const serp = Math.min(100, Math.max(5,
+            (sp.own_domain_in_top10 > 3 ? 40 : sp.own_domain_in_top10 * 13) +
+            (sp.indexed_pages_found > 5 ? 25 : sp.indexed_pages_found * 5) +
+            (sp.brand_in_category_results ? 20 : 0) +
+            (sp.review_site_mentions > 3 ? 15 : sp.review_site_mentions * 5)
+          ));
+          const brand = Math.min(100, Math.max(5,
+            (socialCount * 12) +
+            (hasReviews ? 25 : 0) +
+            (socialPresence["Founder LinkedIn"]?.found ? 15 : 0)
+          ));
+          const geo = Math.min(100, Math.max(5,
+            (geoData.brand_mentioned_by_llm ? 60 : 10) +
+            (geoData.recommendations.length > 0 ? 20 : 0) +
+            (geoData.required_sources_to_rank.length > 0 ? 10 : 0)
+          ));
+          const outbound = Math.min(100, Math.max(5,
+            (seoData.title.present ? 15 : 0) +
+            (seoData.meta_description.present && seoData.meta_description.length > 50 ? 15 : 0) +
+            (seoData.og_tags.title && seoData.og_tags.image ? 15 : 0) +
+            (seoData.h1.count === 1 ? 15 : 0) +
+            (content.includes("blog") || content.includes("recurso") ? 15 : 0) +
+            (content.match(/cta|contacto|demo|prueba|gratis/i) ? 15 : 0) +
+            10
+          ));
+          const demand = Math.min(100, Math.max(5,
+            (seoData.https ? 10 : 0) +
+            (seoData.robots_txt.accessible ? 10 : 0) +
+            (seoData.sitemap.accessible ? 15 : 0) +
+            (seoData.canonical.present ? 10 : 0) +
+            (seoData.schema_types.length > 0 ? 10 : 0) +
+            (seoData.analytics.ga4 || seoData.analytics.gtm ? 15 : 0) +
+            (seoData.analytics.meta_pixel ? 10 : 0) +
+            (seoData.viewport ? 5 : 0) +
+            (seoData.images.with_alt > seoData.images.without_alt ? 10 : 0) +
+            5
+          ));
+
+          const trust_score = Math.round(borrowed * 0.20 + serp * 0.20 + brand * 0.20 + geo * 0.10 + outbound * 0.15 + demand * 0.15);
+
+          return {
+            company_name: brandName,
+            business_type: "Unknown",
+            one_liner: `Análisis de confianza digital de ${brandName}`,
+            trust_score,
+            pillars: {
+              borrowed_trust: { score: borrowed, findings: [
+                `${sp.third_party_mentions} menciones de terceros en SERP`,
+                `${sp.news_mentions} noticias encontradas`,
+                sp.brand_in_category_results ? "Aparece en búsquedas de categoría" : "No aparece en búsquedas de categoría",
+              ] },
+              serp_trust: { score: serp, findings: [
+                `${sp.own_domain_in_top10} resultados propios en top 10`,
+                `${sp.indexed_pages_found}+ páginas indexadas`,
+                `${sp.review_site_mentions} menciones en sites de reviews`,
+              ] },
+              brand_assets: { score: brand, findings: [
+                `${socialCount} perfiles sociales verificados`,
+                hasReviews ? "Presente en plataformas de reviews" : "Sin presencia en plataformas de reviews",
+                socialPresence["Founder LinkedIn"]?.found ? "Founder visible en LinkedIn" : "Founder no encontrado en LinkedIn",
+              ] },
+              geo_presence: { score: geo, findings: [
+                geoData.brand_mentioned_by_llm ? "La marca SÍ es recomendada por LLMs" : "La marca NO es recomendada por LLMs",
+                `${geoData.competitors_mentioned.length} competidores mencionados por LLMs`,
+                `${geoData.required_sources_to_rank.length} fuentes identificadas para mejorar visibilidad`,
+              ] },
+              outbound_readiness: { score: outbound, findings: [
+                seoData.title.present ? `Title tag configurado (${seoData.title.length} chars)` : "Sin title tag",
+                seoData.og_tags.title ? "Open Graph configurado" : "Sin Open Graph",
+                seoData.meta_description.present ? "Meta description presente" : "Sin meta description",
+              ] },
+              demand_engine: { score: demand, findings: [
+                seoData.sitemap.accessible ? `Sitemap con ${seoData.sitemap.url_count} URLs` : "Sin sitemap.xml",
+                (seoData.analytics.ga4 || seoData.analytics.gtm) ? "Analytics configurado" : "Sin analytics detectado",
+                seoData.schema_types.length > 0 ? `Schema.org: ${seoData.schema_types.join(", ")}` : "Sin schema markup",
+              ] },
+            },
+            top_gaps: [
+              !seoData.sitemap.accessible ? "Falta sitemap.xml" : null,
+              !geoData.brand_mentioned_by_llm ? "No aparece en recomendaciones de IAs" : null,
+              sp.third_party_mentions < 3 ? "Pocas menciones de terceros" : null,
+              !hasReviews ? "Sin reviews en plataformas externas" : null,
+              !(seoData.analytics.ga4 || seoData.analytics.gtm) ? "Sin analytics configurado" : null,
+            ].filter(Boolean) as string[],
+            serp_highlight: `${sp.own_domain_in_top10} resultados propios, ${sp.indexed_pages_found}+ páginas indexadas`,
+            geo_highlight: geoData.brand_mentioned_by_llm ? "La marca es recomendada por LLMs" : "La marca NO aparece en recomendaciones de LLMs",
+            missing_sources: geoData.required_sources_to_rank.filter(s => s.priority === "alta").map(s => s.specific_example || s.source_type),
+            competitor_comparison: competitorData ? {
+              competitor_name: competitorData.name,
+              competitor_advantage: `${competitorData.indexed_pages}+ páginas indexadas, ${competitorData.brand_serp} resultados SERP propios`,
+              brand_advantage: `Datos insuficientes para comparación detallada`,
+              key_gap: `Análisis basado en datos disponibles — solicita una sesión para profundizar`,
+            } : null,
+            verdict: `Trust Score de ${trust_score}/100 calculado con datos reales de SERP, redes sociales y presencia en IAs.`,
+          };
         }
 
-        const rawAnalysis = extractJson(extractText(analysisResp.content));
-
         let result;
+        // Try LLM analysis with multiple fallbacks
         try {
-          result = JSON.parse(rawAnalysis);
-        } catch {
-          stream(encoder, controller, "error", { message: "Error parseando respuesta del análisis. Reintentando..." });
+          let analysisResp;
           try {
-            const retryResp = await withHeartbeat(encoder, controller, () => anthropic.messages.create({
+            analysisResp = await withHeartbeat(encoder, controller, () => anthropic.messages.create({
               model: "claude-3-5-sonnet-20241022",
-              max_tokens: 3000,
-              messages: [{ role: "user", content: prompt + "\n\nTu respuesta anterior no fue JSON válido. Responde ÚNICAMENTE con JSON válido, sin texto antes ni después." }],
-            }));
-            const retryRaw = extractJson(extractText(retryResp.content));
-            result = JSON.parse(retryRaw);
-          } catch {
-            stream(encoder, controller, "error", { message: "No se pudo parsear el análisis tras 2 intentos." });
-            controller.close();
-            return;
+              max_tokens: 2500,
+              messages: [{ role: "user", content: prompt }],
+            }, { timeout: 90_000 }));
+          } catch (apiErr) {
+            stream(encoder, controller, "detail", { message: `  Sonnet error: ${String(apiErr).slice(0, 150)}` });
+            stream(encoder, controller, "detail", { message: `  Reintentando con Haiku...` });
+            analysisResp = await withHeartbeat(encoder, controller, () => anthropic.messages.create({
+              model: "claude-3-5-haiku-20241022",
+              max_tokens: 2500,
+              messages: [{ role: "user", content: prompt }],
+            }, { timeout: 60_000 }));
           }
+
+          const rawAnalysis = extractJson(extractText(analysisResp.content));
+          result = JSON.parse(rawAnalysis);
+        } catch (llmErr) {
+          stream(encoder, controller, "detail", { message: `  LLM fallback: ${String(llmErr).slice(0, 150)}` });
+          stream(encoder, controller, "detail", { message: `  Generando resultado heurístico...` });
+          result = buildHeuristicResult();
         }
 
         // Server-side trust_score recalculation (don't trust LLM math)
