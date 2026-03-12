@@ -1,5 +1,4 @@
 import type { Context } from "@netlify/functions";
-import Anthropic from "@anthropic-ai/sdk";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -30,18 +29,6 @@ async function withKeepalive<T>(
   } finally {
     clearInterval(interval);
   }
-}
-
-/** Extract text from Anthropic response content blocks */
-function extractText(content: Array<{ type: string; text?: string }>): string {
-  const block = content.find(b => b.type === "text");
-  return block?.text || "";
-}
-
-/** Extract JSON from LLM response (handles ```json fences) */
-function extractJson(raw: string): string {
-  const m = raw.match(/```json\s*([\s\S]*?)```/);
-  return m ? m[1].trim() : raw.trim();
 }
 
 /** Check if hostname is a private/internal IP */
@@ -479,127 +466,270 @@ function discoverSocialProfiles(htmlPages: string[]): DiscoveredProfile[] {
   return profiles;
 }
 
-// ── Analysis Prompt ──────────────────────────────────────────
+// ── Brand Name Detection (heuristic) ──────────────────────────
 
-function buildPrompt(url: string, brandName: string, content: string, serpData: string, geoData: string, socialData: string, sectorInfo: string, seoData?: string) {
-  return `Eres un analista experto en confianza digital del Trust Engine de Growth4U. Analiza esta marca y genera un Trust Score Report.
+function detectBrandName(title: string, domain: string): string {
+  const domainPrefix = domain.split(".")[0];
 
-## URL analizada: ${url}
-## Marca: ${brandName}
-## Sector/ICP: ${sectorInfo}
+  if (title) {
+    // Split on common title separators
+    const segment = title.split(/\s[-|—·:]\s|\s[-|—·:]|[-|—·:]\s/)[0].trim();
+    if (segment.length > 0 && segment.length < 60) {
+      // If the segment looks like a domain (contains dot), use domain prefix instead
+      if (segment.includes(".") && !segment.includes(" ")) {
+        return domainPrefix.charAt(0).toUpperCase() + domainPrefix.slice(1);
+      }
+      return segment;
+    }
+  }
 
-## Contenido extraído de la web:
-${content}
-
-## Datos de SERP (presencia en Google):
-${serpData}
-
-## Presencia en redes sociales y plataformas:
-${socialData}
-
-## Datos de GEO (presencia en LLMs):
-${geoData}
-${seoData ? `\n## Auditoría SEO técnica:\n${seoData}` : ""}
-
-## Instrucciones
-
-Evalúa la marca en estos 6 pilares del Trust Engine (0-100 cada uno):
-
-### 1. Borrowed Trust (peso 20%)
-Confianza prestada por terceros. ¿Quién habla de esta marca?
-- Menciones en medios y prensa (usa media_mentions)
-- Presencia en rankings, comparativas, listas del sector (usa category_search)
-- Asociación con marcas/personas conocidas
-
-### 2. SERP Trust (peso 20%)
-¿Qué encuentra alguien que googlea esta marca?
-- ¿Dominan la página 1 con su dominio? (usa stats.own_domain_in_top10)
-- ¿Aparecen en búsquedas de categoría? (usa category_search)
-- ¿Sentimiento positivo, neutro o negativo?
-- ¿Hay review sites, foros, quejas?
-
-### 3. Brand Assets Trust (peso 20%)
-Activos de marca que generan confianza directa.
-- Testimonios o casos de éxito visibles en la web
-- Logos de clientes, social proof, premios
-- Reviews en plataformas externas (G2, Capterra, Trustpilot)
-- Presencia en redes sociales (LinkedIn, etc.) — usa social_presence
-- **Visibilidad del Founder/CEO** (muy importante en B2B): ¿tiene LinkedIn activo? ¿aparece en búsquedas? Si hay datos de "Founder LinkedIn" en social_presence, evalúalo. Un founder invisible es un red flag en B2B.
-
-### 4. GEO Presence (peso 10%)
-¿Aparece cuando le preguntas a un LLM?
-- ¿El LLM la recomienda? (usa geo_data.brand_mentioned_by_llm)
-- ¿Qué competidores SÍ mencionan?
-- ¿En qué fuentes falta?
-
-### 5. Outbound Readiness (peso 15%)
-¿Está preparada la web para convertir visitas en leads?
-- Messaging claro en 5 segundos (evalúa H1 y title tag del seo_audit)
-- CTAs claros, blog, lead magnets
-- Meta description convincente que genere clicks (evalúa longitud y contenido del seo_audit)
-- Open Graph configurado para que los shares en social se vean bien (evalúa og_tags del seo_audit)
-
-### 6. Demand Engine (peso 15%)
-Infraestructura técnica para captar y escalar demanda.
-- Formularios, tech stack, landing pages, growth signals
-- **SEO técnico** (usa seo_audit): ¿tiene robots.txt, sitemap.xml, canonical tags, schema markup, viewport mobile?
-- **Indexabilidad**: ¿sitemap con URLs? ¿robots.txt bien configurado? ¿imágenes con alt text?
-- **Analytics & tracking** (usa seo_audit.analytics): ¿tiene GA4/GTM, Meta Pixel, herramientas de behavior (Hotjar/Clarity), CRM/chat (HubSpot/Intercom)?
-- Sin analytics = no mide nada = no puede optimizar. Red flag grave.
-- Con GTM + GA4 + pixel de ads = infraestructura seria de medición
-- Herramientas como HubSpot, Segment, Intercom indican madurez de demand gen
-- Si no tiene sitemap.xml → red flag (Google no puede indexar eficientemente)
-- Si no tiene schema markup → pierde rich snippets en SERP
-
-## REGLAS DE SCORING (OBLIGATORIAS):
-- Cada pilar: 0-100 basado SOLO en evidencia real de los datos proporcionados
-- trust_score = PROMEDIO PONDERADO: borrowed_trust×0.20 + serp_trust×0.20 + brand_assets×0.20 + geo_presence×0.10 + outbound_readiness×0.15 + demand_engine×0.15
-- Calcula trust_score matemáticamente, NO lo inventes
-- Si hay 0 menciones en medios → borrowed_trust < 20
-- Si hay 0 reviews externas → brand_assets < 30
-- Si el dominio tiene >5 resultados propios en top 10 → serp_trust > 60
-- Si la marca NO aparece en búsquedas de categoría → serp_trust < 40
-- Si la LLM NO menciona la marca → geo_presence < 30
-- Si tiene LinkedIn activo con followers → brand_assets +10
-- Cada finding debe citar un dato concreto de la evidencia (URL, número, nombre de fuente)
-
-## Formato OBLIGATORIO (JSON estricto):
-
-\`\`\`json
-{
-  "company_name": "string",
-  "business_type": "B2B | B2C | Mixed",
-  "one_liner": "string — descripción en 1 línea de lo que hace la empresa",
-  "trust_score": "number — CALCULADO como promedio ponderado, NO inventado",
-  "pillars": {
-    "borrowed_trust": { "score": "number 0-100", "findings": ["finding con dato concreto", "finding con dato concreto", "finding con dato concreto"] },
-    "serp_trust": { "score": "number 0-100", "findings": ["finding con dato concreto", "finding con dato concreto", "finding con dato concreto"] },
-    "brand_assets": { "score": "number 0-100", "findings": ["finding con dato concreto", "finding con dato concreto", "finding con dato concreto"] },
-    "geo_presence": { "score": "number 0-100", "findings": ["finding con dato concreto", "finding con dato concreto", "finding con dato concreto"] },
-    "outbound_readiness": { "score": "number 0-100", "findings": ["finding con dato concreto", "finding con dato concreto", "finding con dato concreto"] },
-    "demand_engine": { "score": "number 0-100", "findings": ["finding con dato concreto", "finding con dato concreto", "finding con dato concreto"] }
-  },
-  "top_gaps": ["gap 1", "gap 2", "gap 3"],
-  "serp_highlight": "string — resumen de presencia en Google",
-  "geo_highlight": "string — resumen de presencia en LLMs",
-  "missing_sources": ["fuente donde debería estar pero no está"],
-  "competitor_comparison": {
-    "competitor_name": "string — nombre del competidor analizado",
-    "competitor_advantage": "string — qué hace mejor el competidor en trust digital (sé específico con datos)",
-    "brand_advantage": "string — qué hace mejor la marca analizada vs el competidor",
-    "key_gap": "string — la diferencia más impactante, escrita de forma provocadora para el prospect"
-  },
-  "verdict": "string — veredicto final con recomendación prioritaria, mencionando al competidor si hay datos"
+  // Fallback: capitalize the domain prefix
+  return domainPrefix.charAt(0).toUpperCase() + domainPrefix.slice(1);
 }
-\`\`\`
 
-IMPORTANTE:
-- Sé brutalmente honesto. Usa SOLO datos reales de los inputs proporcionados.
-- NO inventes hallazgos — si no hay datos, di "Sin evidencia encontrada" y pon score bajo.
-- Cada empresa es diferente. El score DEBE variar según la evidencia real.
-- Si hay datos del competidor, la comparativa debe ser PROVOCADORA: "Mientras tú tienes X, tu competidor tiene Y". El prospect necesita sentir la urgencia.
-- Si NO hay datos del competidor, pon competitor_comparison como null.
-- Responde SOLO con el JSON, sin texto adicional.`;
+// ── Heuristic Scoring ─────────────────────────────────────────
+
+const SKIP_DOMAINS = new Set([
+  "g2.com", "capterra.com", "clutch.co", "trustpilot.com", "linkedin.com",
+  "facebook.com", "twitter.com", "x.com", "youtube.com", "wikipedia.org",
+  "medium.com", "reddit.com", "hubspot.com", "google.com", "bing.com",
+  "sortlist.com", "appvizer.com", "comparably.com", "goodfirms.co",
+  "themanifest.com", "designrush.com", "pinterest.com", "tiktok.com",
+  "quora.com", "amazon.com", "indeed.com", "glassdoor.com",
+]);
+
+function cap100(n: number): number {
+  return Math.min(100, Math.max(0, n));
+}
+
+interface ScoringData {
+  thirdPartyMentions: number;
+  newsMentions: number;
+  ownDomainInTop10: number;
+  brandInCategory: boolean;
+  indexedPages: number;
+  sitemapUrlCount: number;
+  reviewSiteMentions: number;
+  hasG2: boolean;
+  hasTrustpilot: boolean;
+  hasCapterra: boolean;
+  hasCrunchbase: boolean;
+  socialProfileCount: number;
+  founderLinkedInFound: boolean;
+  seoData: SeoSignals;
+  content: string;
+  allLinks: string[];
+  hasBlog: boolean;
+}
+
+function scoreBorrowedTrust(d: ScoringData): { score: number; findings: string[] } {
+  let score = 10;
+  const findings: string[] = [];
+
+  if (d.thirdPartyMentions > 0) { score += 15; }
+  if (d.thirdPartyMentions > 3) { score += 10; }
+  if (d.thirdPartyMentions > 7) { score += 10; }
+  if (d.newsMentions > 0) { score += 15; }
+  if (d.newsMentions > 3) { score += 10; }
+  if (d.hasG2 || d.hasTrustpilot || d.hasCapterra) { score += 10; }
+  if (d.hasCrunchbase) { score += 10; }
+  if (d.brandInCategory) { score += 10; }
+
+  // Findings
+  if (d.thirdPartyMentions > 0) {
+    findings.push(`${d.thirdPartyMentions} menciones de terceros encontradas en Google`);
+  } else {
+    findings.push("Sin menciones de terceros en Google");
+  }
+
+  if (d.newsMentions > 0) {
+    findings.push(`${d.newsMentions} menciones en Google News`);
+  } else {
+    findings.push("Sin menciones en Google News");
+  }
+
+  const reviewPlatforms: string[] = [];
+  if (d.hasG2) reviewPlatforms.push("G2");
+  if (d.hasTrustpilot) reviewPlatforms.push("Trustpilot");
+  if (d.hasCapterra) reviewPlatforms.push("Capterra");
+  if (d.hasCrunchbase) reviewPlatforms.push("Crunchbase");
+  if (reviewPlatforms.length > 0) {
+    findings.push(`Presente en: ${reviewPlatforms.join(", ")}`);
+  } else {
+    findings.push("No encontrada en plataformas de review (G2, Trustpilot, Capterra, Crunchbase)");
+  }
+
+  return { score: cap100(score), findings };
+}
+
+function scoreSerpTrust(d: ScoringData): { score: number; findings: string[] } {
+  let score = 10;
+  const findings: string[] = [];
+
+  if (d.ownDomainInTop10 >= 1) { score += 15; }
+  if (d.ownDomainInTop10 >= 3) { score += 10; }
+  if (d.ownDomainInTop10 >= 5) { score += 10; }
+  if (d.brandInCategory) { score += 15; }
+  if (d.indexedPages > 5) { score += 10; }
+  if (d.sitemapUrlCount > 20) { score += 10; }
+  if (d.reviewSiteMentions > 0) { score += 10; }
+  // No negative sentiment check — assume positive if no negative signals
+  score += 10;
+
+  findings.push(`Dominio propio aparece ${d.ownDomainInTop10} veces en top 10 para búsqueda de marca`);
+  findings.push(d.brandInCategory
+    ? "La marca aparece en resultados de búsqueda de categoría"
+    : "La marca NO aparece en resultados de búsqueda de categoría");
+  findings.push(`${d.indexedPages} páginas indexadas encontradas en Google${d.sitemapUrlCount > 0 ? `, ${d.sitemapUrlCount} URLs en sitemap` : ""}`);
+
+  return { score: cap100(score), findings };
+}
+
+function scoreBrandAssets(d: ScoringData): { score: number; findings: string[] } {
+  let score = 10;
+  const findings: string[] = [];
+
+  // +10 per social profile, max +40
+  const socialBonus = Math.min(40, d.socialProfileCount * 10);
+  score += socialBonus;
+
+  if (d.founderLinkedInFound) { score += 15; }
+  if (d.hasG2 || d.hasTrustpilot || d.hasCapterra) { score += 10; }
+  if (d.seoData.schema_types.includes("Organization") || d.seoData.schema_types.includes("LocalBusiness")) { score += 10; }
+  if (d.seoData.og_tags.title && d.seoData.og_tags.image) { score += 15; }
+
+  findings.push(`${d.socialProfileCount} perfiles sociales detectados`);
+  findings.push(d.founderLinkedInFound
+    ? "LinkedIn del fundador/CEO encontrado en Google"
+    : "LinkedIn del fundador/CEO no encontrado");
+  findings.push(d.seoData.og_tags.title && d.seoData.og_tags.image
+    ? "Open Graph configurado (title + image)"
+    : "Open Graph incompleto — los shares en redes sociales no se verán bien");
+
+  return { score: cap100(score), findings };
+}
+
+function scoreGeoPresence(d: ScoringData): { score: number; findings: string[] } {
+  let score = 10;
+  const findings: string[] = [];
+
+  if (d.brandInCategory) { score += 15; }
+  if (d.seoData.schema_types.length > 0) { score += 10; }
+  if (d.indexedPages > 10) { score += 10; }
+  if (d.thirdPartyMentions > 3) { score += 10; }
+  if (d.hasG2 || d.hasTrustpilot || d.hasCapterra) { score += 10; }
+  if (d.newsMentions > 0) { score += 10; }
+  if (d.socialProfileCount >= 3) { score += 10; }
+  if (d.hasBlog) { score += 15; }
+
+  findings.push(d.brandInCategory
+    ? "La marca aparece en resultados de categoría, aumentando probabilidad de citación por IAs"
+    : "La marca NO aparece en resultados de categoría — baja probabilidad de ser citada por IAs");
+  findings.push(d.hasBlog
+    ? "Blog/sección de contenidos detectada — señal positiva para indexación por LLMs"
+    : "No se detectó blog o sección de contenidos — los LLMs priorizan marcas con contenido publicado");
+  findings.push(d.seoData.schema_types.length > 0
+    ? `Datos estructurados detectados (${d.seoData.schema_types.join(", ")}) — facilita la comprensión por IAs`
+    : "Sin datos estructurados (schema.org) — dificulta la comprensión por IAs");
+
+  return { score: cap100(score), findings };
+}
+
+function scoreOutboundReadiness(d: ScoringData): { score: number; findings: string[] } {
+  let score = 10;
+  const findings: string[] = [];
+
+  const titleGoodLength = d.seoData.title.present && d.seoData.title.length >= 30 && d.seoData.title.length <= 60;
+  if (titleGoodLength) { score += 15; }
+  else if (d.seoData.title.present) { score += 8; }
+
+  const descGoodLength = d.seoData.meta_description.present && d.seoData.meta_description.length >= 120 && d.seoData.meta_description.length <= 160;
+  if (descGoodLength) { score += 15; }
+  else if (d.seoData.meta_description.present) { score += 8; }
+
+  if (d.seoData.h1.count === 1) { score += 10; }
+
+  const ctaKeywords = /contacto|demo|prueba|registro|signup|trial|contact|book|agendar|reservar|solicitar|empezar/i;
+  if (ctaKeywords.test(d.content)) { score += 10; }
+
+  if (d.seoData.og_tags.title && d.seoData.og_tags.description && d.seoData.og_tags.image) { score += 10; }
+
+  if (d.hasBlog) { score += 10; }
+
+  const leadCaptureKeywords = /formulario|newsletter|suscrib|email.*input|input.*email|lead.*magnet|descarg|ebook|whitepaper|guía gratuita|free guide/i;
+  if (leadCaptureKeywords.test(d.content)) { score += 10; }
+
+  if (d.seoData.h2_count > 2) { score += 10; }
+
+  // Findings
+  if (d.seoData.title.present) {
+    findings.push(`Title tag presente (${d.seoData.title.length} chars)${titleGoodLength ? " con longitud óptima" : d.seoData.title.length < 30 ? " — demasiado corto" : " — demasiado largo"}`);
+  } else {
+    findings.push("Sin title tag — problema grave de SEO y conversión");
+  }
+
+  if (d.seoData.meta_description.present) {
+    findings.push(`Meta description presente (${d.seoData.meta_description.length} chars)${descGoodLength ? " con longitud óptima" : ""}`);
+  } else {
+    findings.push("Sin meta description — reduce CTR en Google");
+  }
+
+  if (ctaKeywords.test(d.content)) {
+    findings.push("CTAs detectados en el contenido (contacto/demo/prueba)");
+  } else {
+    findings.push("No se detectaron CTAs claros en el contenido");
+  }
+
+  return { score: cap100(score), findings };
+}
+
+function scoreDemandEngine(d: ScoringData): { score: number; findings: string[] } {
+  let score = 10;
+  const findings: string[] = [];
+
+  if (d.seoData.https) { score += 10; }
+  if (d.seoData.robots_txt.accessible) { score += 10; }
+  if (d.seoData.sitemap.accessible) { score += 10; }
+  if (d.seoData.canonical.present) { score += 10; }
+  if (d.seoData.schema_types.length > 0) { score += 10; }
+  if (d.seoData.analytics.ga4 || d.seoData.analytics.gtm) { score += 10; }
+  if (d.seoData.analytics.meta_pixel || d.seoData.analytics.other_trackers.some(t => /ads|twitter ads|linkedin insight/i.test(t))) { score += 10; }
+  if (d.seoData.analytics.hotjar || d.seoData.analytics.clarity) { score += 10; }
+  if (d.seoData.analytics.hubspot || d.seoData.analytics.intercom || d.seoData.analytics.other_trackers.some(t => /crisp|drift|tawk/i.test(t))) { score += 10; }
+  if (d.seoData.viewport) { score += 10; }
+
+  // Analytics finding
+  const detectedTrackers: string[] = [];
+  if (d.seoData.analytics.ga4) detectedTrackers.push("GA4");
+  if (d.seoData.analytics.gtm) detectedTrackers.push("GTM");
+  if (d.seoData.analytics.meta_pixel) detectedTrackers.push("Meta Pixel");
+  if (d.seoData.analytics.hotjar) detectedTrackers.push("Hotjar");
+  if (d.seoData.analytics.clarity) detectedTrackers.push("Clarity");
+  if (d.seoData.analytics.hubspot) detectedTrackers.push("HubSpot");
+  if (d.seoData.analytics.intercom) detectedTrackers.push("Intercom");
+  detectedTrackers.push(...d.seoData.analytics.other_trackers);
+
+  if (detectedTrackers.length > 0) {
+    findings.push(`Analytics detectados: ${detectedTrackers.join(", ")}`);
+  } else {
+    findings.push("Sin analytics detectados — no se puede medir ni optimizar nada");
+  }
+
+  // Technical SEO finding
+  const techItems: string[] = [];
+  if (d.seoData.robots_txt.accessible) techItems.push("robots.txt");
+  if (d.seoData.sitemap.accessible) techItems.push(`sitemap (${d.seoData.sitemap.url_count} URLs)`);
+  if (d.seoData.canonical.present) techItems.push("canonical");
+  if (d.seoData.schema_types.length > 0) techItems.push("schema.org");
+  if (techItems.length > 0) {
+    findings.push(`SEO técnico: ${techItems.join(", ")}`);
+  } else {
+    findings.push("SEO técnico mínimo — sin robots.txt, sitemap, canonical ni schema");
+  }
+
+  findings.push(d.seoData.https ? "HTTPS activo" : "Sin HTTPS — problema grave de seguridad y SEO");
+
+  return { score: cap100(score), findings };
 }
 
 // ── Main Handler ─────────────────────────────────────────────
@@ -631,14 +761,11 @@ export default async (req: Request, context: Context) => {
   }
 
   const domain = hostname.replace("www.", "");
-  const domainPrefix = domain.split(".")[0];
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
       try {
-        const anthropic = new Anthropic();
-
         // Step 1: Crawl
         stream(encoder, controller, "step", { step: "crawl", message: `Crawling ${fullUrl}...` });
         const { text: content, pages, title, htmlPages } = await crawl(fullUrl);
@@ -650,7 +777,7 @@ export default async (req: Request, context: Context) => {
           stream(encoder, controller, "detail", { message: `  Title: "${title}"` });
         }
 
-        // Step 1.5: SEO Technical Audit (from SanchoCMO seo-audit skill)
+        // Step 1.5: SEO Technical Audit
         stream(encoder, controller, "step", { step: "seo", message: "Auditoría SEO técnica..." });
         const seoHtml = htmlPages[0] || "";
         const seoSignals = extractSeoSignals(seoHtml, fullUrl);
@@ -682,51 +809,21 @@ export default async (req: Request, context: Context) => {
         ].filter(Boolean);
         stream(encoder, controller, "detail", { message: `  ${seoIcon(trackers.length > 0)} Analytics: ${trackers.length > 0 ? trackers.join(", ") : "ninguno detectado"}` });
 
-        // Step 2: Detect brand name + sector + ICP + region + competitor (single LLM call)
-        stream(encoder, controller, "step", { step: "sector", message: "Detectando marca, sector, mercado y competencia..." });
-        const contextForSector = `URL: ${domain}\nTitle: ${title}\nContent: ${content.slice(0, 2000)}`;
-        const sectorResp = await withKeepalive(encoder, controller, anthropic.messages.create({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 500,
-          messages: [{ role: "user", content: `Analiza esta empresa:\n${contextForSector}\n\nIMPORTANTE: Identifica el mercado geográfico principal (país/región) donde opera esta empresa basándote en el idioma del sitio, la moneda, el TLD del dominio, y cualquier pista del contenido.\n\nPara "category_search_query", incluye SIEMPRE el país/región. Ej: "mejores agencias de growth marketing en España", "best CRM software in Mexico".\n\nPara "geo_query", incluye el país/región. Ej: "¿cuáles son las mejores agencias de growth marketing en España?".\n\nNOTA: No incluyas "top_competitor" aquí, lo detectaremos después con datos SERP reales.\n\nResponde SOLO JSON:\n\`\`\`json\n{"brand_name": "nombre real de la empresa", "founder_name": "nombre completo del fundador/CEO si se puede inferir del contenido, o cadena vacía si no", "sector": "sector/industria en español", "region": "mercado geográfico principal donde opera (ej: España, México, Global, DACH)", "category_search_query": "búsqueda con país incluido que haría un buyer en Google para encontrar este tipo de solución", "geo_query": "pregunta natural con país incluido que haría un buyer a ChatGPT", "icp": "perfil del buyer ideal, ej: Director de Marketing en empresas tech B2B en España", "top_competitor": {"name": "", "website": ""}}\n\`\`\`` }],
-        }));
-        const sectorRaw = extractJson(extractText(sectorResp.content));
+        // Step 2: Detect brand name (heuristic from title/meta/domain)
+        stream(encoder, controller, "step", { step: "sector", message: "Detectando marca..." });
+        const brandName = detectBrandName(title, domain);
+        const categorySearchQuery = `"${brandName}" alternatives competitors`;
 
-        let sectorInfo: { brand_name: string; founder_name: string; sector: string; region: string; category_search_query: string; geo_query: string; icp: string; top_competitor: { name: string; website: string } };
-        try {
-          sectorInfo = JSON.parse(sectorRaw);
-        } catch {
-          sectorInfo = {
-            brand_name: domainPrefix,
-            founder_name: "",
-            sector: "desconocido",
-            region: "desconocido",
-            category_search_query: `mejores ${domainPrefix} alternativas`,
-            geo_query: `¿cuáles son las mejores herramientas como ${domainPrefix}?`,
-            icp: "desconocido",
-            top_competitor: { name: "", website: "" },
-          };
-        }
-
-        const brandName = sectorInfo.brand_name || domainPrefix;
         stream(encoder, controller, "detail", { message: `  Marca: ${brandName}` });
-        if (sectorInfo.founder_name) {
-          stream(encoder, controller, "detail", { message: `  Founder: ${sectorInfo.founder_name}` });
-        }
-        stream(encoder, controller, "detail", { message: `  Sector: ${sectorInfo.sector}` });
-        stream(encoder, controller, "detail", { message: `  Mercado: ${sectorInfo.region}` });
-        stream(encoder, controller, "detail", { message: `  ICP: ${sectorInfo.icp}` });
-        stream(encoder, controller, "detail", { message: `  Búsqueda categoría: ${sectorInfo.category_search_query}` });
-        if (sectorInfo.top_competitor?.name) {
-          stream(encoder, controller, "detail", { message: `  Competidor principal: ${sectorInfo.top_competitor.name} (${sectorInfo.top_competitor.website})` });
-        }
+        stream(encoder, controller, "detail", { message: `  Sector: sector desconocido` });
+        stream(encoder, controller, "detail", { message: `  Búsqueda categoría: ${categorySearchQuery}` });
 
         // Step 3: SERP — Brand queries + Category queries
         const serpQueries = [
           { label: "Búsqueda de marca", q: `"${brandName}"` },
           { label: "Menciones terceros", q: `"${brandName}" -site:${domain}` },
           { label: "Reviews y comparativas", q: `"${brandName}" (review OR comparativa OR vs OR alternativa OR opiniones)` },
-          { label: "Búsqueda de categoría", q: sectorInfo.category_search_query },
+          { label: "Búsqueda de categoría", q: categorySearchQuery },
           { label: "Indexación del sitio", q: `site:${domain}` },
         ];
 
@@ -779,7 +876,6 @@ export default async (req: Request, context: Context) => {
         }
 
         // Phase 2: Serper fallback for social platforms NOT found in HTML
-        // Uses domain instead of brand name to avoid homonym confusion
         const foundPlatforms = new Set(discoveredProfiles.map(p => p.platform));
         const socialFallbacks: Array<{ platform: string; q: string }> = [];
         if (!foundPlatforms.has("linkedin")) socialFallbacks.push({ platform: "LinkedIn", q: `site:linkedin.com/company "${domain}"` });
@@ -795,16 +891,13 @@ export default async (req: Request, context: Context) => {
           { platform: "Crunchbase", q: `site:crunchbase.com "${brandName}"` },
         ];
 
-        // Phase 4: Founder LinkedIn visibility (B2B trust signal)
-        const founderName = sectorInfo.founder_name;
-        if (founderName) {
-          socialFallbacks.push({ platform: "Founder LinkedIn", q: `site:linkedin.com/in "${founderName}" "${brandName}"` });
-        }
+        // Phase 4: Founder LinkedIn visibility — skip since we have no founder name without LLM
+        // (We cannot detect founder name heuristically)
 
-        // Run all Serper checks in parallel (fallback socials + reviews + founder)
+        // Run all Serper checks in parallel (fallback socials + reviews)
         const allChecks = [...socialFallbacks, ...reviewChecks];
         if (socialFallbacks.length > 0) {
-          stream(encoder, controller, "step", { step: "social", message: `Buscando ${socialFallbacks.length} perfiles no encontrados en HTML + reviews${founderName ? " + founder" : ""}...` });
+          stream(encoder, controller, "step", { step: "social", message: `Buscando ${socialFallbacks.length} perfiles no encontrados en HTML + reviews...` });
         } else {
           stream(encoder, controller, "step", { step: "social", message: "Verificando plataformas de reviews..." });
         }
@@ -838,183 +931,74 @@ export default async (req: Request, context: Context) => {
 
         const ownDomainCount = (serpResults["Búsqueda de marca"] || []).filter(r => r.link?.includes(domain)).length;
         const indexedPages = (serpResults["Indexación del sitio"] || []).length;
-        const serpData = {
-          brand_search: (serpResults["Búsqueda de marca"] || []).slice(0, 10).map(r => ({ title: r.title, link: r.link, snippet: r.snippet })),
-          media_mentions: (serpResults["Menciones terceros"] || []).slice(0, 10).map(r => ({ title: r.title, link: r.link, snippet: r.snippet })),
-          review_mentions: (serpResults["Reviews y comparativas"] || []).slice(0, 10).map(r => ({ title: r.title, link: r.link, snippet: r.snippet })),
-          category_search: categoryResults.slice(0, 10).map(r => ({ title: r.title, link: r.link, snippet: r.snippet })),
-          indexed_pages: (serpResults["Indexación del sitio"] || []).slice(0, 10).map(r => ({ title: r.title, link: r.link })),
-          news_mentions: newsResults.slice(0, 10).map(r => ({ title: r.title, source: r.source })),
-          social_presence: socialPresence,
-          stats: {
-            own_domain_in_top10: ownDomainCount,
-            indexed_pages_found: indexedPages,
-            third_party_mentions: (serpResults["Menciones terceros"] || []).length,
-            review_site_mentions: (serpResults["Reviews y comparativas"] || []).length,
-            news_mentions: newsResults.length,
-            brand_in_category_results: brandInCategory,
-          },
-        };
 
         stream(encoder, controller, "step", { step: "serp", message: "Resumen SERP" });
         stream(encoder, controller, "detail", { message: `  Dominio propio en top 10: ${ownDomainCount} resultados` });
         stream(encoder, controller, "detail", { message: `  Páginas indexadas: ${indexedPages}+ encontradas` });
-        stream(encoder, controller, "detail", { message: `  Menciones terceros: ${serpData.stats.third_party_mentions} resultados` });
-        stream(encoder, controller, "detail", { message: `  Reviews/comparativas: ${serpData.stats.review_site_mentions} resultados` });
-        stream(encoder, controller, "detail", { message: `  Noticias: ${serpData.stats.news_mentions} resultados` });
+        stream(encoder, controller, "detail", { message: `  Menciones terceros: ${(serpResults["Menciones terceros"] || []).length} resultados` });
+        stream(encoder, controller, "detail", { message: `  Reviews/comparativas: ${(serpResults["Reviews y comparativas"] || []).length} resultados` });
+        stream(encoder, controller, "detail", { message: `  Noticias: ${newsResults.length} resultados` });
         stream(encoder, controller, "detail", { message: `  Aparece en búsqueda de categoría: ${brandInCategory ? "SÍ" : "NO"}` });
 
-        // Step 5: GEO
-        stream(encoder, controller, "step", { step: "geo", message: `GEO: Preguntando a LLM — "${sectorInfo.geo_query}"` });
+        // Step 5: GEO — heuristic based on SERP signals (no LLM calls)
+        stream(encoder, controller, "step", { step: "geo", message: "Evaluando presencia GEO (heurística basada en señales SERP)..." });
 
-        const geoResp1 = await withKeepalive(encoder, controller, anthropic.messages.create({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1500,
-          messages: [{ role: "user", content: `Actúa como un ${sectorInfo.icp}. Responde esta pregunta: "${sectorInfo.geo_query}"\n\nMenciona las empresas/soluciones que recomendarías, basándote en fuentes reales como G2, Capterra, Gartner, blogs especializados, etc.\n\nJSON:\n\`\`\`json\n{"recommendations": [{"name": "X", "reason": "why", "sources_cited": ["source"]}], "source_types_used": ["G2", "etc"]}\n\`\`\`` }],
-        }));
-        const raw1 = extractJson(extractText(geoResp1.content));
-        let recommendations: { recommendations: Array<{ name: string; reason: string; sources_cited: string[] }>; source_types_used: string[] };
-        try { recommendations = JSON.parse(raw1); } catch { recommendations = { recommendations: [], source_types_used: [] }; }
-
-        const brandLower = brandName.toLowerCase();
-        const brandMentioned = recommendations.recommendations.some(r => r.name.toLowerCase().includes(brandLower));
-        for (const r of recommendations.recommendations.slice(0, 5)) {
-          const icon = r.name.toLowerCase().includes(brandLower) ? "✅" : "❌";
-          stream(encoder, controller, "detail", { message: `  ${icon} ${r.name} — ${r.reason.slice(0, 80)}` });
+        const brandMentionedByLlm = brandInCategory;
+        const competitorsMentioned: string[] = [];
+        for (const r of categoryResults) {
+          if (!r.link?.includes(domain) && r.link) {
+            try {
+              const compUrl = new URL(r.link);
+              const compDom = compUrl.hostname.replace(/^www\./, "");
+              if (!SKIP_DOMAINS.has(compDom)) {
+                const name = r.title?.split(/[-–|·:]/)[0]?.trim() || compDom;
+                if (!competitorsMentioned.includes(name)) {
+                  competitorsMentioned.push(name);
+                }
+              }
+            } catch { /* skip invalid URLs */ }
+          }
         }
 
-        stream(encoder, controller, "step", { step: "geo", message: "Analizando fuentes necesarias para LLMs..." });
-        const geoResp2 = await withKeepalive(encoder, controller, anthropic.messages.create({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: `Si alguien pregunta a ChatGPT: "${sectorInfo.geo_query}", ¿qué fuentes necesitaría "${brandName}" para ser recomendada?\n\nJSON:\n\`\`\`json\n{"required_sources": [{"source_type": "tipo", "specific_example": "ejemplo", "priority": "alta|media|baja"}]}\n\`\`\`` }],
-        }));
-        const raw2 = extractJson(extractText(geoResp2.content));
-        let requiredSources: { required_sources: Array<{ source_type: string; specific_example: string; priority: string }> };
-        try { requiredSources = JSON.parse(raw2); } catch { requiredSources = { required_sources: [] }; }
-
-        for (const src of requiredSources.required_sources.slice(0, 5)) {
-          const icon = src.priority === "alta" ? "🔴" : src.priority === "media" ? "🟡" : "🟢";
-          stream(encoder, controller, "detail", { message: `  ${icon} [${src.priority}] ${src.specific_example || src.source_type}` });
+        stream(encoder, controller, "detail", { message: `  Marca probable en LLMs (basado en SERP): ${brandMentionedByLlm ? "SÍ" : "NO"}` });
+        if (competitorsMentioned.length > 0) {
+          stream(encoder, controller, "detail", { message: `  Competidores en resultados de categoría: ${competitorsMentioned.slice(0, 5).join(", ")}` });
         }
 
-        const geoData = {
-          sector_query: sectorInfo.geo_query,
-          brand_mentioned_by_llm: brandMentioned,
-          competitors_mentioned: recommendations.recommendations.filter(r => !r.name.toLowerCase().includes(brandLower)).map(r => r.name).slice(0, 5),
-          recommendations: recommendations.recommendations.slice(0, 5),
-          source_types_llm_uses: recommendations.source_types_used,
-          required_sources_to_rank: requiredSources.required_sources.slice(0, 8),
-        };
-
-        stream(encoder, controller, "detail", {
-          message: `  ✓ Marca mencionada por LLM: ${brandMentioned ? "SÍ" : "NO"}`,
-        });
-
-        // Step 6: Competitor mini-analysis — find real competitor from SERP + GEO data
+        // Step 6: Competitor mini-analysis — pick first non-directory domain from category SERP
         let competitorData: { name: string; website: string; brand_serp: number; category_serp: boolean; indexed_pages: number; has_g2: boolean; has_trustpilot: boolean; social_profiles: number } | null = null;
 
-        stream(encoder, controller, "step", { step: "competitor", message: "Buscando competidor principal desde SERP + GEO..." });
-        const skipDomains = ["g2.com", "capterra.com", "clutch.co", "trustpilot.com", "linkedin.com", "facebook.com", "twitter.com", "x.com", "youtube.com", "wikipedia.org", "medium.com", "reddit.com", "hubspot.com", "google.com", "bing.com", "pinterest.com", "tiktok.com", "quora.com", "amazon.com", "indeed.com", "glassdoor.com", "sortlist.com", "appvizer.com", "comparably.com", "goodfirms.co", "themanifest.com", "designrush.com", "agency-list.com", "agencyspotter.com"];
-        const candidateDomains: Array<{ name: string; website: string; url: string; source: string }> = [];
+        stream(encoder, controller, "step", { step: "competitor", message: "Buscando competidor principal desde SERP..." });
 
-        // Source 1: Category SERP results
+        let comp: { name: string; website: string } = { name: "", website: "" };
+
+        // Pick the first non-directory domain from category SERP results
         for (const r of categoryResults) {
           const link = r.link || "";
           if (!link.includes(domain) && link.match(/^https?:\/\/[^/]+/)) {
             try {
               const compUrl = new URL(link);
               const compDom = compUrl.hostname.replace(/^www\./, "");
-              if (!skipDomains.some(sd => compDom.includes(sd)) && !candidateDomains.some(c => c.website === compDom)) {
+              if (!SKIP_DOMAINS.has(compDom)) {
                 const rawName = r.title?.split(/[-–|·:]/)[0]?.trim() || compDom;
-                candidateDomains.push({ name: rawName, website: compDom, url: link, source: "category_serp" });
+                comp = { name: rawName, website: compDom };
+                break;
               }
             } catch { /* skip invalid URLs */ }
           }
         }
 
-        // Source 2: GEO competitors (from Step 5 LLM recommendations)
-        const geoCompetitors = geoData.competitors_mentioned || [];
-        if (geoCompetitors.length > 0) {
-          stream(encoder, controller, "detail", { message: `  ${geoCompetitors.length} competidores detectados por GEO: ${geoCompetitors.join(", ")}` });
-          // Search SERP for each GEO competitor to get their real website
-          const geoSearches = geoCompetitors.slice(0, 5).map(name =>
-            serperSearch(`"${name}" ${sectorInfo.sector} ${sectorInfo.region}`, 3)
-          );
-          const geoSearchResults = await Promise.all(geoSearches);
-          for (let i = 0; i < geoCompetitors.length && i < 5; i++) {
-            const name = geoCompetitors[i];
-            const results = geoSearchResults[i].organic || [];
-            for (const r of results) {
-              const link = r.link || "";
-              if (!link.includes(domain) && link.match(/^https?:\/\/[^/]+/)) {
-                try {
-                  const compUrl = new URL(link);
-                  const compDom = compUrl.hostname.replace(/^www\./, "");
-                  if (!skipDomains.some(sd => compDom.includes(sd)) && !candidateDomains.some(c => c.website === compDom)) {
-                    candidateDomains.push({ name, website: compDom, url: link, source: "geo" });
-                    break; // one result per GEO competitor is enough
-                  }
-                } catch { /* skip */ }
-              }
-            }
-          }
-        }
-
-        // Source 3: Additional SERP query for alternatives/competitors
-        const altQuery = `"${brandName}" alternativas competidores ${sectorInfo.region}`;
-        stream(encoder, controller, "detail", { message: `  Buscando alternativas: ${altQuery}` });
-        const altResults = await serperSearch(altQuery, 10);
-        for (const r of (altResults.organic || [])) {
-          const link = r.link || "";
-          if (!link.includes(domain) && link.match(/^https?:\/\/[^/]+/)) {
-            try {
-              const compUrl = new URL(link);
-              const compDom = compUrl.hostname.replace(/^www\./, "");
-              if (!skipDomains.some(sd => compDom.includes(sd)) && !candidateDomains.some(c => c.website === compDom)) {
-                const rawName = r.title?.split(/[-–|·:]/)[0]?.trim() || compDom;
-                candidateDomains.push({ name: rawName, website: compDom, url: link, source: "alternatives_serp" });
-              }
-            } catch { /* skip */ }
-          }
-        }
-
-        // Pick the best competitor using LLM from all sources
-        let comp: { name: string; website: string } = { name: "", website: "" };
-        if (candidateDomains.length > 0) {
-          const candidateList = candidateDomains.slice(0, 15).map(c => `- ${c.name} (${c.website}) [${c.source}]`).join("\n");
-          stream(encoder, controller, "detail", { message: `  ${candidateDomains.length} candidatos totales (SERP + GEO + alternativas)` });
-
-          try {
-            const compResp = await withKeepalive(encoder, controller, anthropic.messages.create({
-              model: "claude-sonnet-4-20250514",
-              max_tokens: 200,
-              messages: [{ role: "user", content: `"${brandName}" es una empresa de ${sectorInfo.sector} en ${sectorInfo.region}.\n\nEstos son posibles competidores de múltiples fuentes (SERP de categoría, recomendaciones de LLMs, búsqueda de alternativas):\n${candidateList}\n\nElige el competidor MÁS DIRECTO, RELEVANTE y CONOCIDO en el mercado — debe ser una empresa del MISMO tipo de solución/servicio en el mismo mercado geográfico. Prefiere empresas reconocidas en la industria sobre pequeñas desconocidas. NO elijas directorios, blogs, medios, o empresas de otro sector.\n\nJSON:\n\`\`\`json\n{"name": "nombre", "website": "dominio.com"}\n\`\`\`` }],
-            }));
-            const compParsed = JSON.parse(extractJson(extractText(compResp.content)));
-            if (compParsed.name && compParsed.website) {
-              comp = compParsed;
-            }
-          } catch {
-            // Fallback to first candidate
-            comp = candidateDomains[0];
-          }
-        }
-
-        // If still no competitor, try the LLM's original suggestion
-        if (!comp.name && sectorInfo.top_competitor?.name) {
-          comp = sectorInfo.top_competitor;
-        }
-
         if (comp.name) {
           stream(encoder, controller, "detail", { message: `  Competidor seleccionado: ${comp.name} (${comp.website})` });
+        } else {
+          stream(encoder, controller, "detail", { message: `  No se encontró competidor directo en los resultados SERP` });
         }
 
-        if (comp?.name && comp?.website) {
+        if (comp.name && comp.website) {
           stream(encoder, controller, "step", { step: "competitor", message: `Analizando competidor: ${comp.name}...` });
           const compDomain = comp.website.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
 
-          // Run 3 competitor queries in parallel (reuse category results from Step 3)
+          // Run 3 competitor queries in parallel
           const [compBrand, compSite, compReviews] = await Promise.all([
             serperSearch(`"${comp.name}"`, 10),
             serperSearch(`site:${compDomain}`, 10),
@@ -1055,56 +1039,195 @@ export default async (req: Request, context: Context) => {
           stream(encoder, controller, "detail", { message: `  Perfiles sociales en SERP: ${competitorData.social_profiles}` });
         }
 
-        // Step 7: Final analysis
-        stream(encoder, controller, "step", { step: "analysis", message: "Generando Trust Score Report..." });
-        const founderStr = founderName ? `\n\n## Founder/CEO: ${founderName}\n${JSON.stringify(socialPresence["Founder LinkedIn"] || { found: false })}` : "";
-        const sectorInfoStr = `Sector: ${sectorInfo.sector} | Mercado: ${sectorInfo.region} | ICP: ${sectorInfo.icp} | Categoría: ${sectorInfo.category_search_query}`;
-        const competitorStr = competitorData ? `\n\n## Datos del competidor principal: ${competitorData.name}\n${JSON.stringify(competitorData)}` : "";
-        const prompt = buildPrompt(fullUrl, brandName, content, JSON.stringify(serpData), JSON.stringify(geoData), JSON.stringify(socialPresence), sectorInfoStr + founderStr + competitorStr, JSON.stringify(seoData));
-        const analysisResp = await withKeepalive(encoder, controller, anthropic.messages.create({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 3000,
-          messages: [{ role: "user", content: prompt }],
-        }));
+        // Step 7: Heuristic scoring
+        stream(encoder, controller, "step", { step: "analysis", message: "Calculando Trust Score (heurístico)..." });
 
-        const rawAnalysis = extractJson(extractText(analysisResp.content));
+        // Detect if site has a blog from crawled links
+        const allLinks = pages.join(" ");
+        const hasBlog = /\/blog/i.test(allLinks) || /\/blog/i.test(seoHtml);
 
-        let result;
-        try {
-          result = JSON.parse(rawAnalysis);
-        } catch {
-          stream(encoder, controller, "error", { message: "Error parseando respuesta del análisis. Reintentando..." });
-          try {
-            const retryResp = await withKeepalive(encoder, controller, anthropic.messages.create({
-              model: "claude-sonnet-4-20250514",
-              max_tokens: 3000,
-              messages: [{ role: "user", content: prompt + "\n\nTu respuesta anterior no fue JSON válido. Responde ÚNICAMENTE con JSON válido, sin texto antes ni después." }],
-            }));
-            const retryRaw = extractJson(extractText(retryResp.content));
-            result = JSON.parse(retryRaw);
-          } catch {
-            stream(encoder, controller, "error", { message: "No se pudo parsear el análisis tras 2 intentos." });
-            controller.close();
-            return;
+        // Count social profiles (from HTML + Serper)
+        const socialPlatforms: SocialPlatform[] = ["linkedin", "instagram", "facebook", "twitter", "youtube", "tiktok"];
+        let socialProfileCount = 0;
+        for (const plat of socialPlatforms) {
+          // Check HTML-discovered
+          if (foundPlatforms.has(plat)) { socialProfileCount++; continue; }
+          // Check Serper fallback (platform names differ slightly)
+          const platKey = plat === "twitter" ? "Twitter/X" : plat === "linkedin" ? "LinkedIn" : plat === "youtube" ? "YouTube" : plat === "instagram" ? "Instagram" : plat;
+          if (socialPresence[platKey]?.found) { socialProfileCount++; }
+        }
+
+        const hasG2 = socialPresence["G2"]?.found || false;
+        const hasTrustpilot = socialPresence["Trustpilot"]?.found || false;
+        const hasCapterra = socialPresence["Capterra"]?.found || false;
+        const hasCrunchbase = socialPresence["Crunchbase"]?.found || false;
+        const founderLinkedInFound = socialPresence["Founder LinkedIn"]?.found || false;
+
+        const scoringData: ScoringData = {
+          thirdPartyMentions: (serpResults["Menciones terceros"] || []).length,
+          newsMentions: newsResults.length,
+          ownDomainInTop10: ownDomainCount,
+          brandInCategory,
+          indexedPages,
+          sitemapUrlCount: seoData.sitemap.url_count,
+          reviewSiteMentions: (serpResults["Reviews y comparativas"] || []).length,
+          hasG2,
+          hasTrustpilot,
+          hasCapterra,
+          hasCrunchbase,
+          socialProfileCount,
+          founderLinkedInFound,
+          seoData,
+          content,
+          allLinks: pages,
+          hasBlog,
+        };
+
+        const borrowedTrust = scoreBorrowedTrust(scoringData);
+        const serpTrust = scoreSerpTrust(scoringData);
+        const brandAssets = scoreBrandAssets(scoringData);
+        const geoPresence = scoreGeoPresence(scoringData);
+        const outboundReadiness = scoreOutboundReadiness(scoringData);
+        const demandEngine = scoreDemandEngine(scoringData);
+
+        const trustScore = Math.round(
+          borrowedTrust.score * 0.20 +
+          serpTrust.score * 0.20 +
+          brandAssets.score * 0.20 +
+          geoPresence.score * 0.10 +
+          outboundReadiness.score * 0.15 +
+          demandEngine.score * 0.15
+        );
+
+        // Generate top_gaps from lowest-scoring pillars and missing elements
+        const pillarScores = [
+          { key: "borrowed_trust", label: "Confianza de terceros", score: borrowedTrust.score },
+          { key: "serp_trust", label: "Presencia SERP", score: serpTrust.score },
+          { key: "brand_assets", label: "Activos de marca", score: brandAssets.score },
+          { key: "geo_presence", label: "Presencia GEO/IA", score: geoPresence.score },
+          { key: "outbound_readiness", label: "Preparación outbound", score: outboundReadiness.score },
+          { key: "demand_engine", label: "Motor de demanda", score: demandEngine.score },
+        ].sort((a, b) => a.score - b.score);
+
+        const topGaps: string[] = [];
+        // Add gaps from specific missing elements
+        if (!brandInCategory) topGaps.push("No aparece en búsquedas de categoría — necesita estrategia de contenido y backlinks");
+        if (scoringData.thirdPartyMentions === 0) topGaps.push("Sin menciones de terceros en Google — necesita PR y relaciones con medios");
+        if (!hasG2 && !hasTrustpilot && !hasCapterra) topGaps.push("Sin presencia en plataformas de review (G2, Trustpilot, Capterra)");
+        if (!seoData.sitemap.accessible) topGaps.push("Sin sitemap.xml — Google no puede indexar el sitio eficientemente");
+        if (socialProfileCount < 2) topGaps.push("Presencia mínima en redes sociales — necesita activar perfiles");
+        if (!seoData.analytics.ga4 && !seoData.analytics.gtm) topGaps.push("Sin analytics detectados — no se puede medir ni optimizar");
+        if (!seoData.meta_description.present) topGaps.push("Sin meta description — reduce CTR en resultados de Google");
+        if (!hasBlog) topGaps.push("Sin blog o sección de contenidos — pierde oportunidades de tráfico orgánico y citación por IAs");
+        if (scoringData.newsMentions === 0) topGaps.push("Sin menciones en prensa — necesita estrategia de PR");
+
+        // Trim to top 5
+        const finalGaps = topGaps.slice(0, 5);
+        // If we have fewer than 3 gaps, add generic ones from lowest pillars
+        while (finalGaps.length < 3) {
+          const lowest = pillarScores.find(p => !finalGaps.some(g => g.toLowerCase().includes(p.label.toLowerCase())));
+          if (lowest) {
+            finalGaps.push(`${lowest.label} tiene score bajo (${lowest.score}/100) — requiere atención prioritaria`);
+          } else {
+            break;
           }
         }
 
-        // Server-side trust_score recalculation (don't trust LLM math)
-        const p = result.pillars;
-        if (p) {
-          const calculated = Math.round(
-            (p.borrowed_trust?.score || 0) * 0.20 +
-            (p.serp_trust?.score || 0) * 0.20 +
-            (p.brand_assets?.score || 0) * 0.20 +
-            (p.geo_presence?.score || 0) * 0.10 +
-            (p.outbound_readiness?.score || 0) * 0.15 +
-            (p.demand_engine?.score || 0) * 0.15
-          );
-          if (result.trust_score !== calculated) {
-            stream(encoder, controller, "detail", { message: `  Score corregido: LLM dijo ${result.trust_score}, calculado real: ${calculated}` });
-            result.trust_score = calculated;
-          }
+        // SERP highlight
+        const serpHighlight = ownDomainCount >= 5
+          ? `Fuerte presencia SERP: ${ownDomainCount} resultados propios en top 10, ${indexedPages}+ páginas indexadas`
+          : ownDomainCount >= 1
+            ? `Presencia SERP moderada: ${ownDomainCount} resultados propios en top 10, ${indexedPages}+ páginas indexadas`
+            : `Presencia SERP débil: sin resultados propios destacados en top 10, ${indexedPages}+ páginas indexadas`;
+
+        // GEO highlight
+        const geoHighlight = brandMentionedByLlm
+          ? "La marca aparece en resultados de categoría — buena base para citación por IAs generativas"
+          : "La marca NO aparece en resultados de categoría — baja probabilidad de ser citada por ChatGPT, Perplexity, etc.";
+
+        // Missing sources
+        const missingSources: string[] = [];
+        if (!hasG2) missingSources.push("G2");
+        if (!hasTrustpilot) missingSources.push("Trustpilot");
+        if (!hasCapterra) missingSources.push("Capterra");
+        if (!hasCrunchbase) missingSources.push("Crunchbase");
+        if (scoringData.newsMentions === 0) missingSources.push("Medios de prensa");
+        if (!hasBlog) missingSources.push("Blog propio con contenido indexable");
+
+        // Competitor comparison
+        let competitorComparison: { competitor_name: string; competitor_advantage: string; brand_advantage: string; key_gap: string } | null = null;
+        if (competitorData) {
+          const compAdvantages: string[] = [];
+          const brandAdvantages: string[] = [];
+
+          if (competitorData.brand_serp > ownDomainCount) compAdvantages.push(`${competitorData.brand_serp} resultados propios en SERP vs ${ownDomainCount}`);
+          else if (ownDomainCount > competitorData.brand_serp) brandAdvantages.push(`${ownDomainCount} resultados propios en SERP vs ${competitorData.brand_serp}`);
+
+          if (competitorData.indexed_pages > indexedPages) compAdvantages.push(`${competitorData.indexed_pages}+ páginas indexadas vs ${indexedPages}+`);
+          else if (indexedPages > competitorData.indexed_pages) brandAdvantages.push(`${indexedPages}+ páginas indexadas vs ${competitorData.indexed_pages}+`);
+
+          if (competitorData.has_g2 && !hasG2) compAdvantages.push("Tiene presencia en G2");
+          if (competitorData.has_trustpilot && !hasTrustpilot) compAdvantages.push("Tiene presencia en Trustpilot");
+          if (competitorData.social_profiles > socialProfileCount) compAdvantages.push(`${competitorData.social_profiles} perfiles sociales visibles vs ${socialProfileCount}`);
+          else if (socialProfileCount > competitorData.social_profiles) brandAdvantages.push(`${socialProfileCount} perfiles sociales vs ${competitorData.social_profiles}`);
+
+          if (hasG2 && !competitorData.has_g2) brandAdvantages.push("Tiene presencia en G2");
+          if (hasTrustpilot && !competitorData.has_trustpilot) brandAdvantages.push("Tiene presencia en Trustpilot");
+
+          competitorComparison = {
+            competitor_name: competitorData.name,
+            competitor_advantage: compAdvantages.length > 0 ? compAdvantages.join("; ") : "Sin ventajas claras detectadas sobre la marca analizada",
+            brand_advantage: brandAdvantages.length > 0 ? brandAdvantages.join("; ") : "Sin ventajas claras detectadas sobre el competidor",
+            key_gap: compAdvantages.length > 0
+              ? `Mientras ${brandName} tiene ${ownDomainCount} resultados propios en SERP, ${competitorData.name} tiene ${competitorData.brand_serp}. ${competitorData.has_g2 && !hasG2 ? `Además, ${competitorData.name} ya está en G2.` : ""}`
+              : `Ambos tienen presencia SERP similar — la diferenciación vendrá del contenido y la confianza de terceros`,
+          };
         }
+
+        // Verdict
+        const lowestPillar = pillarScores[0].label;
+        const secondLowest = pillarScores[1].label;
+        let verdict: string;
+        if (trustScore >= 70) {
+          verdict = `Buena presencia digital con margen de mejora en ${lowestPillar}`;
+        } else if (trustScore >= 40) {
+          verdict = `Presencia digital intermedia. Priorizar ${lowestPillar} y ${secondLowest}`;
+        } else {
+          verdict = `Presencia digital débil. Se necesita trabajo urgente en ${lowestPillar}`;
+        }
+
+        // One-liner from meta description or title
+        const oneLiner = seoData.meta_description.content || seoData.title.content || `Empresa en ${domain}`;
+
+        // Determine business type heuristically
+        const contentLower = content.toLowerCase();
+        let businessType = "Mixed";
+        if (/b2b|enterprise|empresas|saas|plataforma para empresas|software para/i.test(contentLower)) {
+          businessType = "B2B";
+        } else if (/b2c|consumidor|usuario|tienda|ecommerce|e-commerce|comprar|precio/i.test(contentLower)) {
+          businessType = "B2C";
+        }
+
+        const result = {
+          company_name: brandName,
+          business_type: businessType,
+          one_liner: oneLiner.slice(0, 200),
+          trust_score: trustScore,
+          pillars: {
+            borrowed_trust: borrowedTrust,
+            serp_trust: serpTrust,
+            brand_assets: brandAssets,
+            geo_presence: geoPresence,
+            outbound_readiness: outboundReadiness,
+            demand_engine: demandEngine,
+          },
+          top_gaps: finalGaps,
+          serp_highlight: serpHighlight,
+          geo_highlight: geoHighlight,
+          missing_sources: missingSources,
+          competitor_comparison: competitorComparison,
+          verdict,
+        };
 
         stream(encoder, controller, "result", { data: result });
 
