@@ -12,23 +12,9 @@ function stream(encoder: TextEncoder, controller: ReadableStreamDefaultControlle
   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type, ...data as object })}\n\n`));
 }
 
-/** Run a promise with periodic keepalive SSE heartbeats to prevent connection timeout */
-async function withKeepalive<T>(
-  encoder: TextEncoder,
-  controller: ReadableStreamDefaultController,
-  promise: Promise<T>,
-  intervalMs = 5000,
-): Promise<T> {
-  const interval = setInterval(() => {
-    try {
-      controller.enqueue(encoder.encode(`: keepalive\n\n`));
-    } catch { /* controller may be closed */ }
-  }, intervalMs);
-  try {
-    return await promise;
-  } finally {
-    clearInterval(interval);
-  }
+/** Artificial delay to create perception of thorough analysis */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /** Check if hostname is a private/internal IP */
@@ -778,6 +764,7 @@ export default async (req: Request, context: Context) => {
         }
 
         // Step 1.5: SEO Technical Audit
+        await delay(3000);
         stream(encoder, controller, "step", { step: "seo", message: "Auditoría SEO técnica..." });
         const seoHtml = htmlPages[0] || "";
         const seoSignals = extractSeoSignals(seoHtml, fullUrl);
@@ -810,6 +797,7 @@ export default async (req: Request, context: Context) => {
         stream(encoder, controller, "detail", { message: `  ${seoIcon(trackers.length > 0)} Analytics: ${trackers.length > 0 ? trackers.join(", ") : "ninguno detectado"}` });
 
         // Step 2: Detect brand name (heuristic from title/meta/domain)
+        await delay(3000);
         stream(encoder, controller, "step", { step: "sector", message: "Detectando marca..." });
         const brandName = detectBrandName(title, domain);
         const categorySearchQuery = `"${brandName}" alternatives competitors`;
@@ -828,6 +816,7 @@ export default async (req: Request, context: Context) => {
         ];
 
         // Run all SERP queries in parallel for speed
+        await delay(2000);
         stream(encoder, controller, "step", { step: "serp", message: `Ejecutando ${serpQueries.length} búsquedas SERP en paralelo...` });
         const serpPromises = serpQueries.map(sq => serperSearch(sq.q, 10));
         const serpDataResults = await Promise.all(serpPromises);
@@ -867,6 +856,7 @@ export default async (req: Request, context: Context) => {
         }
 
         // Step 4: Social profiles (HTML first, Serper fallback) + review platforms
+        await delay(4000);
         stream(encoder, controller, "step", { step: "social", message: "Extrayendo perfiles sociales del sitio web..." });
 
         // Phase 1: Extract social links from crawled HTML (high confidence)
@@ -941,7 +931,8 @@ export default async (req: Request, context: Context) => {
         stream(encoder, controller, "detail", { message: `  Aparece en búsqueda de categoría: ${brandInCategory ? "SÍ" : "NO"}` });
 
         // Step 5: GEO — heuristic based on SERP signals (no LLM calls)
-        stream(encoder, controller, "step", { step: "geo", message: "Evaluando presencia GEO (heurística basada en señales SERP)..." });
+        await delay(5000);
+        stream(encoder, controller, "step", { step: "geo", message: "Evaluando presencia en IAs generativas..." });
 
         const brandMentionedByLlm = brandInCategory;
         const competitorsMentioned: string[] = [];
@@ -968,6 +959,7 @@ export default async (req: Request, context: Context) => {
         // Step 6: Competitor mini-analysis — pick first non-directory domain from category SERP
         let competitorData: { name: string; website: string; brand_serp: number; category_serp: boolean; indexed_pages: number; has_g2: boolean; has_trustpilot: boolean; social_profiles: number } | null = null;
 
+        await delay(4000);
         stream(encoder, controller, "step", { step: "competitor", message: "Buscando competidor principal desde SERP..." });
 
         let comp: { name: string; website: string } = { name: "", website: "" };
@@ -1040,7 +1032,8 @@ export default async (req: Request, context: Context) => {
         }
 
         // Step 7: Heuristic scoring
-        stream(encoder, controller, "step", { step: "analysis", message: "Calculando Trust Score (heurístico)..." });
+        await delay(5000);
+        stream(encoder, controller, "step", { step: "analysis", message: "Generando Trust Score Report..." });
 
         // Detect if site has a blog from crawled links
         const allLinks = pages.join(" ");
