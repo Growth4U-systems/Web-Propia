@@ -13,6 +13,25 @@ function stream(encoder: TextEncoder, controller: ReadableStreamDefaultControlle
   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type, ...data as object })}\n\n`));
 }
 
+/** Run a promise with periodic keepalive SSE heartbeats to prevent connection timeout */
+async function withKeepalive<T>(
+  encoder: TextEncoder,
+  controller: ReadableStreamDefaultController,
+  promise: Promise<T>,
+  intervalMs = 5000,
+): Promise<T> {
+  const interval = setInterval(() => {
+    try {
+      controller.enqueue(encoder.encode(`: keepalive\n\n`));
+    } catch { /* controller may be closed */ }
+  }, intervalMs);
+  try {
+    return await promise;
+  } finally {
+    clearInterval(interval);
+  }
+}
+
 /** Extract text from Anthropic response content blocks */
 function extractText(content: Array<{ type: string; text?: string }>): string {
   const block = content.find(b => b.type === "text");
@@ -666,11 +685,11 @@ export default async (req: Request, context: Context) => {
         // Step 2: Detect brand name + sector + ICP + region + competitor (single LLM call)
         stream(encoder, controller, "step", { step: "sector", message: "Detectando marca, sector, mercado y competencia..." });
         const contextForSector = `URL: ${domain}\nTitle: ${title}\nContent: ${content.slice(0, 2000)}`;
-        const sectorResp = await anthropic.messages.create({
+        const sectorResp = await withKeepalive(encoder, controller, anthropic.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 500,
           messages: [{ role: "user", content: `Analiza esta empresa:\n${contextForSector}\n\nIMPORTANTE: Identifica el mercado geográfico principal (país/región) donde opera esta empresa basándote en el idioma del sitio, la moneda, el TLD del dominio, y cualquier pista del contenido.\n\nPara "category_search_query", incluye SIEMPRE el país/región. Ej: "mejores agencias de growth marketing en España", "best CRM software in Mexico".\n\nPara "geo_query", incluye el país/región. Ej: "¿cuáles son las mejores agencias de growth marketing en España?".\n\nNOTA: No incluyas "top_competitor" aquí, lo detectaremos después con datos SERP reales.\n\nResponde SOLO JSON:\n\`\`\`json\n{"brand_name": "nombre real de la empresa", "founder_name": "nombre completo del fundador/CEO si se puede inferir del contenido, o cadena vacía si no", "sector": "sector/industria en español", "region": "mercado geográfico principal donde opera (ej: España, México, Global, DACH)", "category_search_query": "búsqueda con país incluido que haría un buyer en Google para encontrar este tipo de solución", "geo_query": "pregunta natural con país incluido que haría un buyer a ChatGPT", "icp": "perfil del buyer ideal, ej: Director de Marketing en empresas tech B2B en España", "top_competitor": {"name": "", "website": ""}}\n\`\`\`` }],
-        });
+        }));
         const sectorRaw = extractJson(extractText(sectorResp.content));
 
         let sectorInfo: { brand_name: string; founder_name: string; sector: string; region: string; category_search_query: string; geo_query: string; icp: string; top_competitor: { name: string; website: string } };
@@ -848,11 +867,11 @@ export default async (req: Request, context: Context) => {
         // Step 5: GEO
         stream(encoder, controller, "step", { step: "geo", message: `GEO: Preguntando a LLM — "${sectorInfo.geo_query}"` });
 
-        const geoResp1 = await anthropic.messages.create({
+        const geoResp1 = await withKeepalive(encoder, controller, anthropic.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1500,
           messages: [{ role: "user", content: `Actúa como un ${sectorInfo.icp}. Responde esta pregunta: "${sectorInfo.geo_query}"\n\nMenciona las empresas/soluciones que recomendarías, basándote en fuentes reales como G2, Capterra, Gartner, blogs especializados, etc.\n\nJSON:\n\`\`\`json\n{"recommendations": [{"name": "X", "reason": "why", "sources_cited": ["source"]}], "source_types_used": ["G2", "etc"]}\n\`\`\`` }],
-        });
+        }));
         const raw1 = extractJson(extractText(geoResp1.content));
         let recommendations: { recommendations: Array<{ name: string; reason: string; sources_cited: string[] }>; source_types_used: string[] };
         try { recommendations = JSON.parse(raw1); } catch { recommendations = { recommendations: [], source_types_used: [] }; }
@@ -865,11 +884,11 @@ export default async (req: Request, context: Context) => {
         }
 
         stream(encoder, controller, "step", { step: "geo", message: "Analizando fuentes necesarias para LLMs..." });
-        const geoResp2 = await anthropic.messages.create({
+        const geoResp2 = await withKeepalive(encoder, controller, anthropic.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1000,
           messages: [{ role: "user", content: `Si alguien pregunta a ChatGPT: "${sectorInfo.geo_query}", ¿qué fuentes necesitaría "${brandName}" para ser recomendada?\n\nJSON:\n\`\`\`json\n{"required_sources": [{"source_type": "tipo", "specific_example": "ejemplo", "priority": "alta|media|baja"}]}\n\`\`\`` }],
-        });
+        }));
         const raw2 = extractJson(extractText(geoResp2.content));
         let requiredSources: { required_sources: Array<{ source_type: string; specific_example: string; priority: string }> };
         try { requiredSources = JSON.parse(raw2); } catch { requiredSources = { required_sources: [] }; }
@@ -967,11 +986,11 @@ export default async (req: Request, context: Context) => {
           stream(encoder, controller, "detail", { message: `  ${candidateDomains.length} candidatos totales (SERP + GEO + alternativas)` });
 
           try {
-            const compResp = await anthropic.messages.create({
+            const compResp = await withKeepalive(encoder, controller, anthropic.messages.create({
               model: "claude-sonnet-4-20250514",
               max_tokens: 200,
               messages: [{ role: "user", content: `"${brandName}" es una empresa de ${sectorInfo.sector} en ${sectorInfo.region}.\n\nEstos son posibles competidores de múltiples fuentes (SERP de categoría, recomendaciones de LLMs, búsqueda de alternativas):\n${candidateList}\n\nElige el competidor MÁS DIRECTO, RELEVANTE y CONOCIDO en el mercado — debe ser una empresa del MISMO tipo de solución/servicio en el mismo mercado geográfico. Prefiere empresas reconocidas en la industria sobre pequeñas desconocidas. NO elijas directorios, blogs, medios, o empresas de otro sector.\n\nJSON:\n\`\`\`json\n{"name": "nombre", "website": "dominio.com"}\n\`\`\`` }],
-            });
+            }));
             const compParsed = JSON.parse(extractJson(extractText(compResp.content)));
             if (compParsed.name && compParsed.website) {
               comp = compParsed;
@@ -1042,11 +1061,11 @@ export default async (req: Request, context: Context) => {
         const sectorInfoStr = `Sector: ${sectorInfo.sector} | Mercado: ${sectorInfo.region} | ICP: ${sectorInfo.icp} | Categoría: ${sectorInfo.category_search_query}`;
         const competitorStr = competitorData ? `\n\n## Datos del competidor principal: ${competitorData.name}\n${JSON.stringify(competitorData)}` : "";
         const prompt = buildPrompt(fullUrl, brandName, content, JSON.stringify(serpData), JSON.stringify(geoData), JSON.stringify(socialPresence), sectorInfoStr + founderStr + competitorStr, JSON.stringify(seoData));
-        const analysisResp = await anthropic.messages.create({
+        const analysisResp = await withKeepalive(encoder, controller, anthropic.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 3000,
           messages: [{ role: "user", content: prompt }],
-        });
+        }));
 
         const rawAnalysis = extractJson(extractText(analysisResp.content));
 
@@ -1056,11 +1075,11 @@ export default async (req: Request, context: Context) => {
         } catch {
           stream(encoder, controller, "error", { message: "Error parseando respuesta del análisis. Reintentando..." });
           try {
-            const retryResp = await anthropic.messages.create({
+            const retryResp = await withKeepalive(encoder, controller, anthropic.messages.create({
               model: "claude-sonnet-4-20250514",
               max_tokens: 3000,
               messages: [{ role: "user", content: prompt + "\n\nTu respuesta anterior no fue JSON válido. Responde ÚNICAMENTE con JSON válido, sin texto antes ni después." }],
-            });
+            }));
             const retryRaw = extractJson(extractText(retryResp.content));
             result = JSON.parse(retryRaw);
           } catch {
