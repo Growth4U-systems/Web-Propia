@@ -10,7 +10,7 @@
 # Trust Score proxy → Vercel (Martin's app)
 [[redirects]]
   from = "/trust-score/*"
-  to = "https://trust.growth4u.io/trust-score/:splat"
+  to = "https://trust.growth4u.io/:splat"
   status = 200
   force = true
 
