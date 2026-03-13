@@ -544,14 +544,52 @@ function OverviewTab({
     setScraping(true);
     setScrapeResult(null);
     try {
-      const res = await fetch('/.netlify/functions/li-scrape', {
+      // Step 1: Start the Apify run
+      const startRes = await fetch('/.netlify/functions/li-scrape?action=start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ maxPosts: 3 }),
       });
-      const data = await res.json();
-      setScrapeResult(data);
-      if (data.ok && onScrapeComplete) onScrapeComplete();
+      const startData = await startRes.json();
+      if (!startData.ok) throw new Error(startData.error || 'Failed to start');
+
+      const { runId, datasetId } = startData;
+      setScrapeResult({ ok: true, saved: 0, totalPosts: 0, error: undefined,
+        message: `Scraping ${startData.creators} perfiles...` } as any);
+
+      // Step 2: Poll for completion (every 5s, max 5 min)
+      let finished = false;
+      for (let i = 0; i < 60; i++) {
+        await new Promise((r) => setTimeout(r, 5000));
+        const statusRes = await fetch(`/.netlify/functions/li-scrape?action=status&runId=${runId}`);
+        const statusData = await statusRes.json();
+        if (statusData.finished) {
+          finished = statusData.status === 'SUCCEEDED';
+          break;
+        }
+      }
+
+      if (!finished) throw new Error('Scraping tardó demasiado');
+
+      // Step 3: Process results in batches of 5
+      let totalSaved = 0;
+      let remaining = 999;
+      while (remaining > 0) {
+        const processRes = await fetch('/.netlify/functions/li-scrape?action=process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ datasetId }),
+        });
+        const processData = await processRes.json();
+        totalSaved += processData.saved || 0;
+        remaining = processData.remaining || 0;
+        setScrapeResult({ ok: true, saved: totalSaved, totalPosts: processData.totalInDataset } as any);
+        // If no remaining or we've done enough batches, stop
+        if (remaining <= 0 || totalSaved > 50) break;
+      }
+
+      setScrapeResult({ ok: true, saved: totalSaved });
+      if (onScrapeComplete) onScrapeComplete();
     } catch (err: any) {
       setScrapeResult({ ok: false, error: err.message });
     }
