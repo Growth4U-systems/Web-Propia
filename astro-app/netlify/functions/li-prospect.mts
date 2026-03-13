@@ -8,6 +8,13 @@ const FIREBASE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_P
 const REACTIONS_ACTOR = 'harvestapi~linkedin-post-reactions';
 const COMMENTS_ACTOR = 'harvestapi~linkedin-post-comments';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json',
+};
+
 // C-level and senior titles to match
 const CLEVEL_PATTERNS = [
   /\bceo\b/i, /\bcto\b/i, /\bcmo\b/i, /\bcoo\b/i, /\bcfo\b/i, /\bcpo\b/i, /\bcro\b/i,
@@ -19,58 +26,8 @@ const CLEVEL_PATTERNS = [
   /\bpartner\b/i,
 ];
 
-// Tech/startup company indicators
-const TECH_PATTERNS = [
-  /\bsaas\b/i, /\bfintech\b/i, /\bstartup\b/i, /\bscale-?up\b/i,
-  /\btech\b/i, /\bsoftware\b/i, /\bplatform\b/i, /\bapp\b/i,
-  /\bai\b/i, /\bml\b/i, /\bdata\b/i, /\bcloud\b/i,
-  /\be-?commerce\b/i, /\bmarketplace\b/i, /\bdigital\b/i,
-];
-
-// --- Helpers ---
-
-async function runApifyActor(actorId: string, input: Record<string, any>): Promise<any[]> {
-  const runRes = await fetch(
-    `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_TOKEN}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    }
-  );
-  const runData = await runRes.json();
-  const runId = runData?.data?.id;
-  const datasetId = runData?.data?.defaultDatasetId;
-  if (!runId) throw new Error(`Failed to start Apify actor ${actorId}`);
-
-  // Poll until done (max 5 min)
-  const maxWait = 300_000;
-  const start = Date.now();
-  while (Date.now() - start < maxWait) {
-    await new Promise((r) => setTimeout(r, 5000));
-    const statusRes = await fetch(
-      `https://api.apify.com/v2/acts/${actorId}/runs/${runId}?token=${APIFY_TOKEN}`
-    );
-    const statusData = await statusRes.json();
-    const status = statusData?.data?.status;
-    if (status === 'SUCCEEDED') break;
-    if (status === 'FAILED' || status === 'ABORTED') {
-      throw new Error(`Apify actor ${actorId} ${status}`);
-    }
-  }
-
-  const itemsRes = await fetch(
-    `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`
-  );
-  return itemsRes.json();
-}
-
 function isCLevel(headline: string): boolean {
   return CLEVEL_PATTERNS.some((p) => p.test(headline));
-}
-
-function isTechRelated(headline: string): boolean {
-  return TECH_PATTERNS.some((p) => p.test(headline));
 }
 
 function detectProfileType(headline: string): string {
@@ -86,24 +43,20 @@ function detectProfileType(headline: string): string {
   return 'other';
 }
 
-// Extract person info from reaction or comment — handles various Apify output formats
 function extractPerson(item: any, type: 'reaction' | 'comment'): {
   name: string; title: string; company: string; linkedinUrl: string;
 } | null {
   if (type === 'reaction') {
-    // harvestapi format: firstName, lastName, headline, profileUrl, OR nested author
     const firstName = item.firstName || item.author?.firstName || '';
     const lastName = item.lastName || item.author?.lastName || '';
     const name = (item.name || `${firstName} ${lastName}`).trim();
     const title = item.headline || item.title || item.author?.headline || '';
     const linkedinUrl = item.profileUrl || item.linkedinUrl || item.author?.linkedinUrl || '';
     if (!name || !title) return null;
-    // Try to extract company from headline (usually "Title at Company")
     const atMatch = title.match(/(?:at|en|@)\s+(.+?)(?:\s*\||$)/i);
     const company = atMatch ? atMatch[1].trim() : '';
     return { name, title, company, linkedinUrl };
   } else {
-    // Comment format: author object with profile data
     const author = item.author || item;
     const firstName = author.firstName || '';
     const lastName = author.lastName || '';
@@ -117,7 +70,6 @@ function extractPerson(item: any, type: 'reaction' | 'comment'): {
   }
 }
 
-// Use Claude to generate a reason why this person is a good prospect
 async function generateReason(person: { name: string; title: string; company: string }): Promise<string> {
   if (!ANTHROPIC_KEY) return `${person.title}`;
   try {
@@ -144,7 +96,6 @@ async function generateReason(person: { name: string; title: string; company: st
   }
 }
 
-// Save candidate to Firebase
 async function saveCandidate(candidate: {
   name: string; title: string; company: string; linkedinUrl: string;
   sourcePostUrl: string; sourceCreatorName: string; interactionType: string;
@@ -173,164 +124,246 @@ async function saveCandidate(candidate: {
   return res.ok;
 }
 
-// Check existing candidates to avoid duplicates
-async function getExistingCandidateUrls(): Promise<Set<string>> {
-  const res = await fetch(`${FIREBASE_BASE}/li_candidates?pageSize=500`);
-  const data = await res.json();
+async function getExistingUrls(): Promise<Set<string>> {
+  const [candRes, prospRes] = await Promise.all([
+    fetch(`${FIREBASE_BASE}/li_candidates?pageSize=500`),
+    fetch(`${FIREBASE_BASE}/li_prospects?pageSize=500`),
+  ]);
+  const [candData, prospData] = await Promise.all([candRes.json(), prospRes.json()]);
   const urls = new Set<string>();
-  for (const doc of data?.documents || []) {
+  for (const doc of [...(candData?.documents || []), ...(prospData?.documents || [])]) {
     const url = doc?.fields?.linkedinUrl?.stringValue;
     if (url) urls.add(url.replace(/\/$/, '').toLowerCase());
   }
   return urls;
 }
 
-// Also check existing prospects to avoid duplicates
-async function getExistingProspectUrls(): Promise<Set<string>> {
-  const res = await fetch(`${FIREBASE_BASE}/li_prospects?pageSize=500`);
-  const data = await res.json();
-  const urls = new Set<string>();
-  for (const doc of data?.documents || []) {
-    const url = doc?.fields?.linkedinUrl?.stringValue;
-    if (url) urls.add(url.replace(/\/$/, '').toLowerCase());
-  }
-  return urls;
-}
-
-// --- Main handler ---
+// =====================================================
+// ASYNC ARCHITECTURE — 3 actions via query param
+// =====================================================
+// POST ?action=start   → launches Apify actors for reactions+comments, returns run IDs
+// GET  ?action=status   → checks if both Apify runs finished
+// POST ?action=process  → fetches results, filters C-levels, generates reasons, saves to Firebase
+// =====================================================
 
 export default async (req: Request, _context: Context) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
-  }
-
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
   if (!APIFY_TOKEN) {
-    return new Response(
-      JSON.stringify({ error: 'Missing APIFY_API_TOKEN' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'Missing APIFY_API_TOKEN' }), { status: 500, headers: CORS_HEADERS });
   }
 
+  const url = new URL(req.url);
+  const action = url.searchParams.get('action') || 'start';
+
   try {
-    const body = await req.json().catch(() => ({}));
-    // Accept post URLs + creator names to scan
-    const posts: { postUrl: string; creatorName: string }[] = (body as any)?.posts || [];
-    const maxReactions = (body as any)?.maxReactions || 50;
-    const maxComments = (body as any)?.maxComments || 30;
+    // ---- ACTION: START ----
+    if (action === 'start') {
+      const body = await req.json().catch(() => ({}));
+      const posts: { postUrl: string; creatorName: string }[] = (body as any)?.posts || [];
+      const maxReactions = (body as any)?.maxReactions || 50;
+      const maxComments = (body as any)?.maxComments || 30;
 
-    if (posts.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'No posts provided. Send { posts: [{ postUrl, creatorName }] }' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const postUrls = posts.map((p) => p.postUrl);
-    const creatorMap = new Map(posts.map((p) => [p.postUrl, p.creatorName]));
-
-    // Fetch existing to dedup
-    const [existingCandidates, existingProspects] = await Promise.all([
-      getExistingCandidateUrls(),
-      getExistingProspectUrls(),
-    ]);
-    const allExisting = new Set([...existingCandidates, ...existingProspects]);
-
-    // Scrape reactions and comments in parallel
-    const [reactions, comments] = await Promise.all([
-      runApifyActor(REACTIONS_ACTOR, { postUrls, maxReactions }).catch(() => []),
-      runApifyActor(COMMENTS_ACTOR, { postUrls, maxComments }).catch(() => []),
-    ]);
-
-    // Process all interactions
-    const allPeople: {
-      person: { name: string; title: string; company: string; linkedinUrl: string };
-      interactionType: 'like' | 'comment';
-      postUrl: string;
-    }[] = [];
-
-    for (const r of reactions) {
-      const person = extractPerson(r, 'reaction');
-      if (!person) continue;
-      const postUrl = r.postUrl || r.query || postUrls[0] || '';
-      allPeople.push({ person, interactionType: 'like', postUrl });
-    }
-
-    for (const c of comments) {
-      const person = extractPerson(c, 'comment');
-      if (!person) continue;
-      const postUrl = c.postUrl || c.query || postUrls[0] || '';
-      allPeople.push({ person, interactionType: 'comment', postUrl });
-    }
-
-    // Filter: C-level + tech related + not already known
-    let saved = 0;
-    let filtered = 0;
-    let duplicates = 0;
-
-    for (const { person, interactionType, postUrl } of allPeople) {
-      // Must be C-level/senior
-      if (!isCLevel(person.title)) {
-        filtered++;
-        continue;
+      if (posts.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'No posts provided. Send { posts: [{ postUrl, creatorName }] }' }),
+          { status: 400, headers: CORS_HEADERS }
+        );
       }
 
-      // Dedup
-      const cleanUrl = person.linkedinUrl.replace(/\/$/, '').toLowerCase();
-      if (cleanUrl && allExisting.has(cleanUrl)) {
-        duplicates++;
-        continue;
+      const postUrls = posts.map((p) => p.postUrl);
+
+      // Launch both actors in parallel
+      const [reactionsRun, commentsRun] = await Promise.all([
+        fetch(`https://api.apify.com/v2/acts/${REACTIONS_ACTOR}/runs?token=${APIFY_TOKEN}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postUrls, maxReactions }),
+        }).then((r) => r.json()),
+        fetch(`https://api.apify.com/v2/acts/${COMMENTS_ACTOR}/runs?token=${APIFY_TOKEN}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postUrls, maxComments }),
+        }).then((r) => r.json()),
+      ]);
+
+      const reactionsRunId = reactionsRun?.data?.id;
+      const reactionsDatasetId = reactionsRun?.data?.defaultDatasetId;
+      const commentsRunId = commentsRun?.data?.id;
+      const commentsDatasetId = commentsRun?.data?.defaultDatasetId;
+
+      if (!reactionsRunId || !commentsRunId) {
+        return new Response(JSON.stringify({
+          error: 'Failed to start Apify actors',
+          details: { reactionsRun: reactionsRun?.data, commentsRun: commentsRun?.data },
+        }), { status: 500, headers: CORS_HEADERS });
       }
 
-      // Generate reason (use Claude Haiku for speed/cost)
-      const reason = await generateReason(person);
-      const profileType = detectProfileType(person.title);
-      const creatorName = creatorMap.get(postUrl) || 'Unknown';
-
-      const ok = await saveCandidate({
-        name: person.name,
-        title: person.title,
-        company: person.company,
-        linkedinUrl: person.linkedinUrl,
-        sourcePostUrl: postUrl,
-        sourceCreatorName: creatorName,
-        interactionType,
-        profileType,
-        reason,
-      });
-
-      if (ok) {
-        saved++;
-        allExisting.add(cleanUrl); // prevent dupes within same run
-      }
+      return new Response(JSON.stringify({
+        ok: true,
+        phase: 'started',
+        reactionsRunId,
+        reactionsDatasetId,
+        commentsRunId,
+        commentsDatasetId,
+        posts: posts.length,
+        // Pass along posts info for the process step
+        postsData: posts,
+      }), { status: 200, headers: CORS_HEADERS });
     }
 
-    return new Response(JSON.stringify({
-      ok: true,
-      totalReactions: reactions.length,
-      totalComments: comments.length,
-      totalPeople: allPeople.length,
-      filtered,
-      duplicates,
-      candidatesSaved: saved,
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    // ---- ACTION: STATUS ----
+    if (action === 'status') {
+      const reactionsRunId = url.searchParams.get('reactionsRunId');
+      const commentsRunId = url.searchParams.get('commentsRunId');
+
+      if (!reactionsRunId || !commentsRunId) {
+        return new Response(JSON.stringify({ error: 'Missing reactionsRunId or commentsRunId' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      const [reactionsStatus, commentsStatus] = await Promise.all([
+        fetch(`https://api.apify.com/v2/acts/${REACTIONS_ACTOR}/runs/${reactionsRunId}?token=${APIFY_TOKEN}`).then((r) => r.json()),
+        fetch(`https://api.apify.com/v2/acts/${COMMENTS_ACTOR}/runs/${commentsRunId}?token=${APIFY_TOKEN}`).then((r) => r.json()),
+      ]);
+
+      const rStatus = reactionsStatus?.data?.status;
+      const cStatus = commentsStatus?.data?.status;
+      const isDone = (s: string) => s === 'SUCCEEDED' || s === 'FAILED' || s === 'ABORTED';
+
+      return new Response(JSON.stringify({
+        ok: true,
+        reactionsStatus: rStatus,
+        commentsStatus: cStatus,
+        finished: isDone(rStatus) && isDone(cStatus),
+        reactionsDatasetId: reactionsStatus?.data?.defaultDatasetId,
+        commentsDatasetId: commentsStatus?.data?.defaultDatasetId,
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: PROCESS ----
+    if (action === 'process') {
+      const body = await req.json().catch(() => ({}));
+      const reactionsDatasetId = (body as any)?.reactionsDatasetId;
+      const commentsDatasetId = (body as any)?.commentsDatasetId;
+      const postsData: { postUrl: string; creatorName: string }[] = (body as any)?.postsData || [];
+      const offset = (body as any)?.offset || 0;
+      const batchSize = 10;
+
+      if (!reactionsDatasetId && !commentsDatasetId) {
+        return new Response(JSON.stringify({ error: 'Missing dataset IDs' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      const creatorMap = new Map(postsData.map((p) => [p.postUrl, p.creatorName]));
+      const postUrls = postsData.map((p) => p.postUrl);
+
+      // Fetch all reactions + comments from Apify datasets
+      const [reactionsItems, commentsItems] = await Promise.all([
+        reactionsDatasetId
+          ? fetch(`https://api.apify.com/v2/datasets/${reactionsDatasetId}/items?token=${APIFY_TOKEN}`).then((r) => r.json()).catch(() => [])
+          : [],
+        commentsDatasetId
+          ? fetch(`https://api.apify.com/v2/datasets/${commentsDatasetId}/items?token=${APIFY_TOKEN}`).then((r) => r.json()).catch(() => [])
+          : [],
+      ]);
+
+      // Combine all people
+      const allPeople: {
+        person: { name: string; title: string; company: string; linkedinUrl: string };
+        interactionType: 'like' | 'comment';
+        postUrl: string;
+      }[] = [];
+
+      for (const r of (reactionsItems || [])) {
+        const person = extractPerson(r, 'reaction');
+        if (!person) continue;
+        const postUrl = r.postUrl || r.query || postUrls[0] || '';
+        allPeople.push({ person, interactionType: 'like', postUrl });
+      }
+
+      for (const c of (commentsItems || [])) {
+        const person = extractPerson(c, 'comment');
+        if (!person) continue;
+        const postUrl = c.postUrl || c.query || postUrls[0] || '';
+        allPeople.push({ person, interactionType: 'comment', postUrl });
+      }
+
+      // Apply offset + batch for processing (Claude reason generation is slow)
+      const batch = allPeople.slice(offset, offset + batchSize);
+      if (batch.length === 0) {
+        return new Response(JSON.stringify({
+          ok: true,
+          phase: 'done',
+          totalPeople: allPeople.length,
+          message: 'All interactions processed',
+        }), { status: 200, headers: CORS_HEADERS });
+      }
+
+      // Fetch existing to dedup
+      const allExisting = await getExistingUrls();
+
+      let saved = 0;
+      let filtered = 0;
+      let duplicates = 0;
+      const errorDetails: string[] = [];
+
+      for (const { person, interactionType, postUrl } of batch) {
+        try {
+          if (!isCLevel(person.title)) {
+            filtered++;
+            continue;
+          }
+
+          const cleanUrl = person.linkedinUrl.replace(/\/$/, '').toLowerCase();
+          if (cleanUrl && allExisting.has(cleanUrl)) {
+            duplicates++;
+            continue;
+          }
+
+          const reason = await generateReason(person);
+          const profileType = detectProfileType(person.title);
+          const creatorName = creatorMap.get(postUrl) || 'Unknown';
+
+          const ok = await saveCandidate({
+            name: person.name,
+            title: person.title,
+            company: person.company,
+            linkedinUrl: person.linkedinUrl,
+            sourcePostUrl: postUrl,
+            sourceCreatorName: creatorName,
+            interactionType,
+            profileType,
+            reason,
+          });
+
+          if (ok) {
+            saved++;
+            allExisting.add(cleanUrl);
+          } else {
+            errorDetails.push(`Failed to save ${person.name}`);
+          }
+        } catch (e: any) {
+          errorDetails.push(e.message || 'Unknown error');
+        }
+      }
+
+      return new Response(JSON.stringify({
+        ok: true,
+        phase: 'process',
+        totalPeople: allPeople.length,
+        processed: batch.length,
+        nextOffset: offset + batch.length,
+        hasMore: offset + batch.length < allPeople.length,
+        saved,
+        filtered,
+        duplicates,
+        errorDetails: errorDetails.slice(0, 5),
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: CORS_HEADERS });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS_HEADERS });
   }
 };

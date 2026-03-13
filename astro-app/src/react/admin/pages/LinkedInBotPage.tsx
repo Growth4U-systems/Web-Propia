@@ -599,7 +599,7 @@ function OverviewTab({
     setProspecting(true);
     setProspectResult(null);
     try {
-      // Use posted comments as source posts (we already interacted with them)
+      // Use posted/approved comments as source posts
       const postedComments = comments.filter((c) => c.status === 'posted' || c.status === 'approved');
       const posts = postedComments.slice(0, 10).map((c) => ({
         postUrl: c.postUrl,
@@ -610,14 +610,63 @@ function OverviewTab({
         setProspecting(false);
         return;
       }
-      const res = await fetch('/.netlify/functions/li-prospect', {
+
+      // Step 1: Start Apify actors
+      const startRes = await fetch('/.netlify/functions/li-prospect?action=start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ posts, maxReactions: 50, maxComments: 30 }),
       });
-      const data = await res.json();
-      setProspectResult(data);
-      if (data.ok && onScrapeComplete) onScrapeComplete();
+      const startData = await startRes.json();
+      if (!startData.ok) throw new Error(startData.error || 'Failed to start');
+
+      const { reactionsRunId, commentsRunId, reactionsDatasetId, commentsDatasetId, postsData } = startData;
+      setProspectResult({ ok: true, candidatesSaved: 0, message: 'Escaneando interacciones...' } as any);
+
+      // Step 2: Poll until both actors finish (every 5s, max 5 min)
+      let finished = false;
+      let finalReactionsDatasetId = reactionsDatasetId;
+      let finalCommentsDatasetId = commentsDatasetId;
+      for (let i = 0; i < 60; i++) {
+        await new Promise((r) => setTimeout(r, 5000));
+        const statusRes = await fetch(
+          `/.netlify/functions/li-prospect?action=status&reactionsRunId=${reactionsRunId}&commentsRunId=${commentsRunId}`
+        );
+        const statusData = await statusRes.json();
+        if (statusData.finished) {
+          finished = true;
+          finalReactionsDatasetId = statusData.reactionsDatasetId || finalReactionsDatasetId;
+          finalCommentsDatasetId = statusData.commentsDatasetId || finalCommentsDatasetId;
+          break;
+        }
+      }
+
+      if (!finished) throw new Error('Escaneo tardó demasiado');
+
+      // Step 3: Process results in batches
+      let totalSaved = 0;
+      let offset = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const processRes = await fetch('/.netlify/functions/li-prospect?action=process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reactionsDatasetId: finalReactionsDatasetId,
+            commentsDatasetId: finalCommentsDatasetId,
+            postsData: postsData || posts,
+            offset,
+          }),
+        });
+        const processData = await processRes.json();
+        totalSaved += processData.saved || 0;
+        offset = processData.nextOffset || (offset + 10);
+        hasMore = processData.hasMore === true;
+        setProspectResult({ ok: true, candidatesSaved: totalSaved } as any);
+      }
+
+      setProspectResult({ ok: true, candidatesSaved: totalSaved });
+      if (onScrapeComplete) onScrapeComplete();
     } catch (err: any) {
       setProspectResult({ ok: false, error: err.message });
     }

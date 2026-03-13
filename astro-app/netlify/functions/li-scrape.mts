@@ -64,8 +64,21 @@ const CORS_HEADERS = {
 };
 
 function findCreator(postAuthorUrl: string) {
-  const clean = (u: string) => u.replace(/\/$/, '').toLowerCase();
-  return CREATORS.find((c) => clean(c.url) === clean(postAuthorUrl));
+  if (!postAuthorUrl) return undefined;
+  const clean = (u: string) => u.replace(/\/$/, '').replace(/\?.*$/, '').toLowerCase();
+  const cleaned = clean(postAuthorUrl);
+  // Try exact match first
+  const exact = CREATORS.find((c) => clean(c.url) === cleaned);
+  if (exact) return exact;
+  // Try slug match (Apify sometimes returns just the slug like "jccortizo")
+  const slug = cleaned.split('/').filter(Boolean).pop() || '';
+  if (slug) {
+    return CREATORS.find((c) => {
+      const creatorSlug = clean(c.url).split('/').filter(Boolean).pop() || '';
+      return creatorSlug === slug;
+    });
+  }
+  return undefined;
 }
 
 // Lead magnets disponibles — solo sugerir si hay match natural con el tema del post
@@ -290,7 +303,7 @@ export default async (req: Request, _context: Context) => {
             postUrl,
             postSnippet: content.slice(0, 300),
             commentDraft,
-            commentType: creator?.category === 'VC' ? 'authority' : 'outbound',
+            commentType: creator?.category === 'VC' ? 'authority' : creator?.category === 'Founder' ? 'founder' : creator?.category === 'Growth' ? 'growth' : 'outbound',
           });
 
           if (ok) saved++;
