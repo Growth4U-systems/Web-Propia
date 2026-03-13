@@ -23,6 +23,8 @@ import {
   Send,
   Sparkles,
   Bell,
+  Zap,
+  RefreshCw,
 } from 'lucide-react';
 import {
   getAllLIComments,
@@ -342,6 +344,7 @@ export default function LinkedInBotPage() {
             activeCreators,
           });
         }}
+        onScrapeComplete={loadAll}
       />}
       {tab === 'comments' && (
         <CommentsTab
@@ -391,16 +394,19 @@ export default function LinkedInBotPage() {
 
 // =================== OVERVIEW ===================
 function OverviewTab({
-  pendingComments, approvedToday, postedTotal, activeProspects, meetingProspects, activeCreators, prospects, comments, onSendSlack,
+  pendingComments, approvedToday, postedTotal, activeProspects, meetingProspects, activeCreators, prospects, comments, onSendSlack, onScrapeComplete,
 }: {
   pendingComments: number; approvedToday: number; postedTotal: number;
   activeProspects: number; meetingProspects: number; activeCreators: number;
   prospects: (LIProspect & { id: string })[];
   comments: (LIComment & { id: string })[];
   onSendSlack: () => Promise<boolean>;
+  onScrapeComplete?: () => void;
 }) {
   const [slackSending, setSlackSending] = useState(false);
   const [slackSent, setSlackSent] = useState<'ok' | 'error' | null>(null);
+  const [scraping, setScraping] = useState(false);
+  const [scrapeResult, setScrapeResult] = useState<{ ok: boolean; saved?: number; totalPosts?: number; error?: string } | null>(null);
 
   async function handleSendSlack() {
     setSlackSending(true);
@@ -409,6 +415,24 @@ function OverviewTab({
     setSlackSent(ok ? 'ok' : 'error');
     setSlackSending(false);
     if (ok) setTimeout(() => setSlackSent(null), 3000);
+  }
+
+  async function handleScrape() {
+    setScraping(true);
+    setScrapeResult(null);
+    try {
+      const res = await fetch('/.netlify/functions/li-scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maxPosts: 3 }),
+      });
+      const data = await res.json();
+      setScrapeResult(data);
+      if (data.ok && onScrapeComplete) onScrapeComplete();
+    } catch (err: any) {
+      setScrapeResult({ ok: false, error: err.message });
+    }
+    setScraping(false);
   }
   const stats = [
     { label: 'Pendientes de aprobar', value: pendingComments, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
@@ -434,24 +458,50 @@ function OverviewTab({
       {/* KPI Cards + Slack */}
       <div className="flex items-center justify-between flex-wrap gap-3 mb-1">
         <h3 className="font-semibold text-[#032149]">KPIs</h3>
-        <button
-          onClick={handleSendSlack}
-          disabled={slackSending}
-          className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${
-            slackSent === 'ok'
-              ? 'bg-green-50 text-green-600 border-green-200'
-              : slackSent === 'error'
-              ? 'bg-red-50 text-red-600 border-red-200'
-              : 'bg-white text-slate-600 border-slate-200 hover:border-[#6351d5] hover:text-[#6351d5]'
-          } disabled:opacity-50`}
-        >
-          {slackSending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Bell className="w-4 h-4" />
-          )}
-          {slackSent === 'ok' ? 'Enviado a Slack' : slackSent === 'error' ? 'Error al enviar' : 'Enviar resumen a Slack'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleScrape}
+            disabled={scraping}
+            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${
+              scrapeResult?.ok
+                ? 'bg-green-50 text-green-600 border-green-200'
+                : scrapeResult && !scrapeResult.ok
+                ? 'bg-red-50 text-red-600 border-red-200'
+                : 'bg-[#6351d5] text-white border-[#6351d5] hover:bg-[#5241c5]'
+            } disabled:opacity-50`}
+          >
+            {scraping ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Zap className="w-4 h-4" />
+            )}
+            {scraping
+              ? 'Scraping + IA...'
+              : scrapeResult?.ok
+              ? `${scrapeResult.saved} comentarios nuevos`
+              : scrapeResult?.error
+              ? 'Error'
+              : 'Lanzar Scraper'}
+          </button>
+          <button
+            onClick={handleSendSlack}
+            disabled={slackSending}
+            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${
+              slackSent === 'ok'
+                ? 'bg-green-50 text-green-600 border-green-200'
+                : slackSent === 'error'
+                ? 'bg-red-50 text-red-600 border-red-200'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#6351d5] hover:text-[#6351d5]'
+            } disabled:opacity-50`}
+          >
+            {slackSending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Bell className="w-4 h-4" />
+            )}
+            {slackSent === 'ok' ? 'Enviado a Slack' : slackSent === 'error' ? 'Error al enviar' : 'Slack'}
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map((s) => (
