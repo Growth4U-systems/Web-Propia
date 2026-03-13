@@ -271,10 +271,10 @@ export default async (req: Request, _context: Context) => {
           const content = post.content || '';
           if (!content || content.length < 50) { skipped++; continue; }
 
-          const authorName = post.author?.name || post.query || 'Unknown';
-          const authorUrl = post.author?.linkedinUrl || post.query || '';
+          const authorName = post.author?.name || 'Unknown';
+          const authorUrl = post.author?.linkedinUrl || (typeof post.query === 'string' ? post.query : post.query?.profilePublicIdentifier) || '';
           const authorTitle = post.author?.title || '';
-          const creator = findCreator(authorUrl) || findCreator(post.query || '');
+          const creator = findCreator(authorUrl);
 
           const commentDraft = await generateComment(authorName, content);
           if (!commentDraft) {
