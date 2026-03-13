@@ -7,12 +7,10 @@
 [functions]
   node_bundler = "esbuild"
 
-# Trust Score proxy → Vercel (Martin's app)
-[[redirects]]
-  from = "/trust-score/*"
-  to = "https://trust.growth4u.io/trust-score/:splat"
-  status = 200
-  force = true
+# Trust Score proxy → Vercel via Edge Function (rewrites Host header)
+[[edge_functions]]
+  function = "trust-score-proxy"
+  path = "/trust-score/*"
 
 # Redirect old trust score URL to new one
 [[redirects]]
