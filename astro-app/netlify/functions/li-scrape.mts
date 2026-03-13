@@ -68,6 +68,18 @@ function findCreator(postAuthorUrl: string) {
   return CREATORS.find((c) => clean(c.url) === clean(postAuthorUrl));
 }
 
+// Lead magnets disponibles — solo sugerir si hay match natural con el tema del post
+const LEAD_MAGNETS = [
+  { slug: 'cac-sostenible', tema: 'CAC, coste de adquisición, unit economics, rentabilidad', url: 'https://growth4u.io/recursos/cac-sostenible/' },
+  { slug: 'meseta-de-crecimiento', tema: 'estancamiento, meseta, plateau, crecimiento estancado', url: 'https://growth4u.io/recursos/meseta-de-crecimiento/' },
+  { slug: 'sistema-de-growth', tema: 'sistema de growth, framework, proceso de growth marketing', url: 'https://growth4u.io/recursos/sistema-de-growth/' },
+  { slug: 'david-vs-goliat', tema: 'competir contra grandes, startup vs enterprise, diferenciación', url: 'https://growth4u.io/recursos/david-vs-goliat/' },
+  { slug: 'kit-de-liberacion', tema: 'tiempo del founder, delegación, operaciones, escalar equipo', url: 'https://growth4u.io/recursos/kit-de-liberacion/' },
+  { slug: 'dashboard-de-attribution', tema: 'attribution, atribución, marketing analytics, medir ROI', url: 'https://growth4u.io/recursos/dashboard-de-attribution/' },
+];
+
+const LEAD_MAGNET_CONTEXT = LEAD_MAGNETS.map((lm) => `- "${lm.slug}": ${lm.tema} → ${lm.url}`).join('\n');
+
 async function generateComment(authorName: string, content: string): Promise<string> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -78,7 +90,7 @@ async function generateComment(authorName: string, content: string): Promise<str
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
+      max_tokens: 400,
       messages: [{
         role: 'user',
         content: `Eres el community manager de Growth4U, una consultora de Growth Marketing para startups y scale-ups tech B2B/B2C.
@@ -90,14 +102,18 @@ ${content.slice(0, 1500)}
 """
 
 Reglas:
-- Máximo 3-4 líneas (280 chars aprox)
+- Máximo 3-5 líneas
 - Tono profesional pero cercano, nunca corporativo
 - Aporta valor: añade un dato, perspectiva o pregunta inteligente
 - NO seas genérico ("gran post", "totalmente de acuerdo")
-- NO menciones Growth4U ni vendas nada
 - Si el post es en inglés, comenta en inglés
 - Si el post es en español, comenta en español
 - Empieza directamente con el comentario, sin explicación
+
+RECURSOS DISPONIBLES (solo usar si hay match NATURAL con el tema del post):
+${LEAD_MAGNET_CONTEXT}
+
+Si el post trata un tema que conecta claramente con alguno de estos recursos, puedes cerrar el comentario de forma sutil mencionando que "publicamos algo sobre esto" o "escribimos un framework sobre este tema" e incluir el link. NO fuerces el recurso si no hay conexión clara. La mayoría de comentarios (~70%) deberían ser puramente de valor sin link.
 
 Solo devuelve el comentario, nada más.`,
       }],
