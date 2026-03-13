@@ -573,19 +573,19 @@ function OverviewTab({
 
       // Step 3: Process results in batches of 5
       let totalSaved = 0;
-      let remaining = 999;
-      while (remaining > 0) {
+      let offset = 0;
+      let hasMore = true;
+      while (hasMore) {
         const processRes = await fetch('/.netlify/functions/li-scrape?action=process', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ datasetId }),
+          body: JSON.stringify({ datasetId, offset }),
         });
         const processData = await processRes.json();
         totalSaved += processData.saved || 0;
-        remaining = processData.remaining || 0;
-        setScrapeResult({ ok: true, saved: totalSaved, totalPosts: processData.totalInDataset } as any);
-        // If no remaining or we've done enough batches, stop
-        if (remaining <= 0 || totalSaved > 50) break;
+        offset = processData.nextOffset || (offset + 5);
+        hasMore = processData.hasMore === true;
+        setScrapeResult({ ok: true, saved: totalSaved } as any);
       }
 
       setScrapeResult({ ok: true, saved: totalSaved });

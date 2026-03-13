@@ -241,22 +241,21 @@ export default async (req: Request, _context: Context) => {
 
       const body = await req.json().catch(() => ({}));
       const datasetId = (body as any)?.datasetId || url.searchParams.get('datasetId');
+      const offset = (body as any)?.offset || 0;
       if (!datasetId) {
         return new Response(JSON.stringify({ error: 'Missing datasetId' }), { status: 400, headers: CORS_HEADERS });
       }
 
-      // Fetch posts from Apify dataset
+      // Fetch posts from Apify dataset with offset + limit
+      const batchSize = 5;
       const itemsRes = await fetch(
-        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`
+        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}&offset=${offset}&limit=${batchSize}`
       );
-      const posts = await itemsRes.json();
+      const batch = await itemsRes.json();
 
-      if (!Array.isArray(posts) || posts.length === 0) {
-        return new Response(JSON.stringify({ ok: true, phase: 'process', saved: 0, message: 'No posts found' }), { status: 200, headers: CORS_HEADERS });
+      if (!Array.isArray(batch) || batch.length === 0) {
+        return new Response(JSON.stringify({ ok: true, phase: 'done', saved: 0, remaining: 0, message: 'All posts processed' }), { status: 200, headers: CORS_HEADERS });
       }
-
-      // Process max 5 posts per call to stay within timeout
-      const batch = posts.slice(0, 5);
       let saved = 0;
       let skipped = 0;
       let errors = 0;
@@ -292,9 +291,9 @@ export default async (req: Request, _context: Context) => {
       return new Response(JSON.stringify({
         ok: true,
         phase: 'process',
-        totalInDataset: posts.length,
         processed: batch.length,
-        remaining: posts.length - batch.length,
+        nextOffset: offset + batch.length,
+        hasMore: batch.length === batchSize,
         saved,
         skipped,
         errors,
