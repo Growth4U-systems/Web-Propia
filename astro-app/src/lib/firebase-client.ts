@@ -556,7 +556,7 @@ export interface LIComment {
   postUrl: string;
   postSnippet: string;
   commentDraft: string;
-  commentType: 'outbound' | 'authority';
+  commentType: 'outbound' | 'authority' | 'growth' | 'founder';
   status: 'pending' | 'approved' | 'rejected' | 'posted';
   createdAt?: Date;
   updatedAt?: Date;

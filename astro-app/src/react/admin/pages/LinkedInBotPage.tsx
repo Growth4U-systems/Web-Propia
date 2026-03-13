@@ -689,8 +689,10 @@ function OverviewTab({
   }));
 
   // Comment types
-  const outboundCount = comments.filter((c) => c.commentType === 'outbound').length;
+  const growthCount = comments.filter((c) => c.commentType === 'growth').length;
+  const founderCount = comments.filter((c) => c.commentType === 'founder').length;
   const authorityCount = comments.filter((c) => c.commentType === 'authority').length;
+  const outboundCount = comments.filter((c) => !c.commentType || c.commentType === 'outbound').length;
 
   return (
     <div className="space-y-6">
@@ -725,6 +727,7 @@ function OverviewTab({
           <button
             onClick={handleProspectScan}
             disabled={prospecting}
+            title={prospectResult?.error || ''}
             className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${
               prospectResult?.ok
                 ? 'bg-green-50 text-green-600 border-green-200'
@@ -743,7 +746,7 @@ function OverviewTab({
               : prospectResult?.ok
               ? `${prospectResult.candidatesSaved} candidatos`
               : prospectResult?.error
-              ? 'Error'
+              ? prospectResult.error.length > 40 ? 'Error' : prospectResult.error
               : 'Buscar Candidatos'}
           </button>
           <button
@@ -803,24 +806,29 @@ function OverviewTab({
         {/* Comment split */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h3 className="font-semibold text-[#032149] mb-4">Comentarios por tipo</h3>
-          <div className="flex items-end gap-8 h-40">
-            <div className="flex flex-col items-center flex-1">
-              <div
-                className="w-full bg-blue-100 rounded-t-lg transition-all"
-                style={{ height: `${Math.max((outboundCount / Math.max(outboundCount + authorityCount, 1)) * 120, 8)}px` }}
-              />
-              <p className="text-2xl font-bold text-blue-600 mt-2">{outboundCount}</p>
-              <p className="text-xs text-slate-500">Outbound</p>
-            </div>
-            <div className="flex flex-col items-center flex-1">
-              <div
-                className="w-full bg-purple-100 rounded-t-lg transition-all"
-                style={{ height: `${Math.max((authorityCount / Math.max(outboundCount + authorityCount, 1)) * 120, 8)}px` }}
-              />
-              <p className="text-2xl font-bold text-purple-600 mt-2">{authorityCount}</p>
-              <p className="text-xs text-slate-500">Autoridad</p>
-            </div>
-          </div>
+          {(() => {
+            const total = Math.max(growthCount + founderCount + authorityCount + outboundCount, 1);
+            const bars = [
+              { label: 'Growth', count: growthCount, color: 'bg-green-100', text: 'text-green-600' },
+              { label: 'Founder', count: founderCount, color: 'bg-blue-100', text: 'text-blue-600' },
+              { label: 'VC', count: authorityCount, color: 'bg-purple-100', text: 'text-purple-600' },
+              { label: 'Otro', count: outboundCount, color: 'bg-slate-100', text: 'text-slate-600' },
+            ];
+            return (
+              <div className="flex items-end gap-4 h-40">
+                {bars.map((b) => (
+                  <div key={b.label} className="flex flex-col items-center flex-1">
+                    <div
+                      className={`w-full ${b.color} rounded-t-lg transition-all`}
+                      style={{ height: `${Math.max((b.count / total) * 120, 8)}px` }}
+                    />
+                    <p className={`text-2xl font-bold ${b.text} mt-2`}>{b.count}</p>
+                    <p className="text-xs text-slate-500">{b.label}</p>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
