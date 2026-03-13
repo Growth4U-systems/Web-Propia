@@ -119,6 +119,10 @@ Solo devuelve el comentario, nada más.`,
       }],
     }),
   });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Claude API ${res.status}: ${errText.slice(0, 200)}`);
+  }
   const data = await res.json();
   return data?.content?.[0]?.text || '';
 }
@@ -259,6 +263,7 @@ export default async (req: Request, _context: Context) => {
       let saved = 0;
       let skipped = 0;
       let errors = 0;
+      const errorDetails: string[] = [];
 
       for (const post of batch) {
         try {
@@ -272,7 +277,11 @@ export default async (req: Request, _context: Context) => {
           const creator = findCreator(authorUrl) || findCreator(post.query || '');
 
           const commentDraft = await generateComment(authorName, content);
-          if (!commentDraft) { errors++; continue; }
+          if (!commentDraft) {
+            errorDetails.push(`Empty comment for ${authorName}`);
+            errors++;
+            continue;
+          }
 
           const ok = await saveComment({
             profileName: authorName,
@@ -284,8 +293,15 @@ export default async (req: Request, _context: Context) => {
             commentType: creator?.category === 'VC' ? 'authority' : 'outbound',
           });
 
-          if (ok) saved++; else errors++;
-        } catch { errors++; }
+          if (ok) saved++;
+          else {
+            errorDetails.push(`Failed to save comment for ${authorName}`);
+            errors++;
+          }
+        } catch (e: any) {
+          errorDetails.push(e.message || 'Unknown error');
+          errors++;
+        }
       }
 
       return new Response(JSON.stringify({
@@ -297,6 +313,7 @@ export default async (req: Request, _context: Context) => {
         saved,
         skipped,
         errors,
+        errorDetails: errorDetails.slice(0, 5),
       }), { status: 200, headers: CORS_HEADERS });
     }
 
