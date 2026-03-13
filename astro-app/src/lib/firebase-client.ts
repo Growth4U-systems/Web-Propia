@@ -548,4 +548,249 @@ export async function deleteLIScheduledPost(id: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// LinkedIn Bot — Comments
+export interface LIComment {
+  profileName: string;
+  profileUrl: string;
+  profileTitle: string;
+  postUrl: string;
+  postSnippet: string;
+  commentDraft: string;
+  commentType: 'outbound' | 'authority';
+  status: 'pending' | 'approved' | 'rejected' | 'posted';
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllLIComments() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'li_comments');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      profileName: data.profileName || '',
+      profileUrl: data.profileUrl || '',
+      profileTitle: data.profileTitle || '',
+      postUrl: data.postUrl || '',
+      postSnippet: data.postSnippet || '',
+      commentDraft: data.commentDraft || '',
+      commentType: data.commentType || 'outbound',
+      status: data.status || 'pending',
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createLIComment(comment: Omit<LIComment, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'li_comments');
+  const docRef = await addDoc(ref, { ...comment, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateLIComment(id: string, updates: Partial<LIComment>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'li_comments', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteLIComment(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'li_comments', id);
+  await deleteDoc(ref);
+}
+
+// LinkedIn Bot — Prospects
+export type ProspectProfileType = 'ceo' | 'cto' | 'cmo' | 'coo' | 'vp_growth' | 'head_growth' | 'founder' | 'growth_expert' | 'other';
+
+export interface LIProspect {
+  name: string;
+  title: string;
+  company: string;
+  linkedinUrl: string;
+  email: string;
+  source: string;
+  profileType: ProspectProfileType;
+  funnelStage: 'detected' | 'connected' | 'nurturing' | 'meeting' | 'disqualified';
+  // Company intelligence
+  companySector: string;
+  companySize: string;
+  fundingStage: string;
+  painPoints: string;
+  // G4U match
+  g4uMatch: string;
+  outreachMessage: string;
+  tags: string[];
+  notes: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllLIProspects() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'li_prospects');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      name: data.name || '',
+      title: data.title || '',
+      company: data.company || '',
+      linkedinUrl: data.linkedinUrl || '',
+      email: data.email || '',
+      source: data.source || '',
+      profileType: (data.profileType || 'other') as ProspectProfileType,
+      funnelStage: data.funnelStage || 'detected',
+      companySector: data.companySector || '',
+      companySize: data.companySize || '',
+      fundingStage: data.fundingStage || '',
+      painPoints: data.painPoints || '',
+      g4uMatch: data.g4uMatch || '',
+      outreachMessage: data.outreachMessage || '',
+      tags: data.tags || [],
+      notes: data.notes || '',
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createLIProspect(prospect: Omit<LIProspect, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'li_prospects');
+  const docRef = await addDoc(ref, { ...prospect, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateLIProspect(id: string, updates: Partial<LIProspect>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'li_prospects', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteLIProspect(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'li_prospects', id);
+  await deleteDoc(ref);
+}
+
+// LinkedIn Bot — Creator Network
+export interface LICreator {
+  name: string;
+  linkedinUrl: string;
+  category: string;
+  lastPostDate: string;
+  lastCommentDate: string;
+  commentCount: number;
+  notes: string;
+  active: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllLICreators() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'li_creators');
+  const q = query(ref, orderBy('name', 'asc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      name: data.name || '',
+      linkedinUrl: data.linkedinUrl || '',
+      category: data.category || '',
+      lastPostDate: data.lastPostDate || '',
+      lastCommentDate: data.lastCommentDate || '',
+      commentCount: data.commentCount || 0,
+      notes: data.notes || '',
+      active: data.active !== false,
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createLICreator(creator: Omit<LICreator, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'li_creators');
+  const docRef = await addDoc(ref, { ...creator, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateLICreator(id: string, updates: Partial<LICreator>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'li_creators', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteLICreator(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'li_creators', id);
+  await deleteDoc(ref);
+}
+
+// Slack Notifications — via Netlify Function proxy (avoids CORS)
+const SLACK_PROXY_URL = '/.netlify/functions/slack';
+
+export async function sendSlackNotification(text: string, blocks?: any[]): Promise<boolean> {
+  try {
+    const payload: any = { text };
+    if (blocks) payload.blocks = blocks;
+    const res = await fetch(SLACK_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function sendLIBotSlackSummary(data: {
+  pendingComments: number;
+  approvedToday: number;
+  postedTotal: number;
+  activeProspects: number;
+  uncuratedProspects: number;
+  meetingProspects: number;
+  activeCreators: number;
+}): Promise<boolean> {
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: 'LinkedIn Bot — Resumen diario', emoji: true },
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: `*Comentarios pendientes:*\n${data.pendingComments}` },
+        { type: 'mrkdwn', text: `*Aprobados hoy:*\n${data.approvedToday}` },
+        { type: 'mrkdwn', text: `*Total publicados:*\n${data.postedTotal}` },
+        { type: 'mrkdwn', text: `*Prospects activos:*\n${data.activeProspects}` },
+        { type: 'mrkdwn', text: `*Sin curar:*\n${data.uncuratedProspects}` },
+        { type: 'mrkdwn', text: `*En reunión:*\n${data.meetingProspects}` },
+      ],
+    },
+    {
+      type: 'context',
+      elements: [
+        { type: 'mrkdwn', text: `Creators activos: ${data.activeCreators} · <https://growth4u.io/admin/linkedin-bot/|Ver dashboard>` },
+      ],
+    },
+    { type: 'divider' },
+  ];
+
+  const urgentItems: string[] = [];
+  if (data.pendingComments > 0) urgentItems.push(`${data.pendingComments} comentarios esperan aprobación`);
+  if (data.uncuratedProspects > 0) urgentItems.push(`${data.uncuratedProspects} prospects sin curar`);
+
+  if (urgentItems.length > 0) {
+    blocks.push({
+      type: 'section',
+      text: { type: 'mrkdwn', text: `*Acción requerida:*\n${urgentItems.map((i) => `• ${i}`).join('\n')}` },
+    } as any);
+  }
+
+  return sendSlackNotification(
+    `LinkedIn Bot: ${data.pendingComments} pendientes, ${data.activeProspects} prospects activos`,
+    blocks,
+  );
+}
+
 export { db, auth, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, limit, where, serverTimestamp };

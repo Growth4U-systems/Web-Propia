@@ -14,9 +14,10 @@ import {
   Users,
   Camera,
   LinkedinIcon,
+  Bot,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
-import { signInWithGoogle, signOutUser, onAuthChange } from '../../lib/firebase-client';
+import { signInWithGoogle, signOutUser, onAuthChange, getAllLIComments, getAllLIProspects } from '../../lib/firebase-client';
 
 export default function AdminLayout() {
   const [user, setUser] = useState<User | null>(null);
@@ -24,6 +25,7 @@ export default function AdminLayout() {
   const [error, setError] = useState('');
   const [signingIn, setSigningIn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [liBotBadge, setLiBotBadge] = useState(0);
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -33,6 +35,15 @@ export default function AdminLayout() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([getAllLIComments(), getAllLIProspects()]).then(([comments, prospects]) => {
+      const pending = comments.filter((c: any) => c.status === 'pending').length;
+      const uncurated = prospects.filter((p: any) => p.funnelStage === 'detected' && !p.companySector).length;
+      setLiBotBadge(pending + uncurated);
+    }).catch(() => {});
+  }, [user]);
 
   const handleGoogleSignIn = async () => {
     setSigningIn(true);
@@ -48,13 +59,14 @@ export default function AdminLayout() {
     await signOutUser();
   };
 
-  const navigation = [
+  const navigation: { name: string; href: string; icon: any; badge?: number }[] = [
     { name: 'Dashboard', href: '/admin/', icon: LayoutDashboard },
     { name: 'Blog', href: '/admin/blog/', icon: FileText },
     { name: 'Casos de Éxito', href: '/admin/casos-de-exito/', icon: Trophy },
     { name: 'Lead Magnets', href: '/admin/lead-magnets/', icon: Download },
     { name: 'Instagram', href: '/admin/instagram/', icon: Camera },
     { name: 'LinkedIn', href: '/admin/linkedin/', icon: LinkedinIcon },
+    { name: 'LinkedIn Bot', href: '/admin/linkedin-bot/', icon: Bot, badge: liBotBadge },
     { name: 'SEO & GEO', href: '/admin/seo/', icon: Search },
     { name: 'Feedback', href: '/admin/feedback/', icon: MessageSquare },
     { name: 'Leads', href: '/admin/leads/', icon: Users },
@@ -162,7 +174,14 @@ export default function AdminLayout() {
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
-                  {item.name}
+                  <span className="flex-1">{item.name}</span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
