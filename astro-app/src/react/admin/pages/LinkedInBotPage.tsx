@@ -145,6 +145,38 @@ const CREATOR_SEED: { name: string; linkedinUrl: string; category: CreatorCatego
   { name: 'Itxaso del Palacio', linkedinUrl: 'https://www.linkedin.com/in/itxasodp/', category: 'VC' },
 ];
 
+type FounderProspectType = 'ceo' | 'cto' | 'cmo' | 'coo' | 'vp_growth' | 'head_growth' | 'founder' | 'growth_expert' | 'other';
+
+const FOUNDER_PROSPECTS: { name: string; title: string; company: string; profileType: FounderProspectType }[] = [
+  { name: 'Alex Dantart', title: 'x21 Founder, x32 Investor, LinkedIn Top Voice', company: '', profileType: 'founder' },
+  { name: 'Miquel Martí', title: 'CEO Tech Barcelona', company: 'Tech Barcelona', profileType: 'ceo' },
+  { name: 'Emilio Frójan', title: 'CEO Velca, Forbes 30u30', company: 'Velca', profileType: 'ceo' },
+  { name: 'Jesús Alonso Gallo', title: 'Emprendedor x4, Inversor x80', company: '', profileType: 'founder' },
+  { name: 'Carlos Ortiz', title: 'Co-Founder Aloha Poké, Startup Advisor', company: 'Aloha Poké', profileType: 'founder' },
+  { name: 'Greg Isenberg', title: 'CEO Late Checkout', company: 'Late Checkout', profileType: 'ceo' },
+  { name: 'Brian Balfour', title: 'Founder/CEO Reforge', company: 'Reforge', profileType: 'ceo' },
+  { name: 'Barbara Mallet', title: 'Emprendedora', company: '', profileType: 'founder' },
+  { name: 'Juan Cruz', title: 'Emprendedor', company: '', profileType: 'founder' },
+  { name: 'Javier Romero', title: 'Emprendedor', company: '', profileType: 'founder' },
+  { name: 'Juan Pablo Montoya', title: 'Emprendedor', company: '', profileType: 'founder' },
+  { name: 'Luis Monje', title: 'Emprendedor / Ventas', company: '', profileType: 'founder' },
+  { name: 'Luis Díaz del Dedo', title: 'Founder/CEO', company: '', profileType: 'founder' },
+  { name: 'Jordi Romero', title: 'CEO Factorial', company: 'Factorial', profileType: 'ceo' },
+  { name: 'Bernat Farrero', title: 'Co-Founder Factorial', company: 'Factorial', profileType: 'founder' },
+  { name: 'Carlos Blanco', title: 'Serial entrepreneur, inversor', company: '', profileType: 'founder' },
+  { name: 'Oscar Pierre', title: 'CEO Glovo', company: 'Glovo', profileType: 'ceo' },
+  { name: 'Euge Oller', title: 'Fundador Emprende Aprendiendo', company: 'Emprende Aprendiendo', profileType: 'founder' },
+  { name: 'Jesús Hijas', title: 'Emprendedor / Creador', company: '', profileType: 'founder' },
+  { name: 'Jorge Branger', title: 'Emprendedor / Creador', company: '', profileType: 'founder' },
+  { name: 'Daniel Olmedo', title: 'Emprendedor / Creador', company: '', profileType: 'founder' },
+  { name: 'Mathieu Carenzo', title: 'Emprendedor / Creador', company: '', profileType: 'founder' },
+];
+
+// Map founder names to LinkedIn URLs from CREATOR_SEED
+const FOUNDER_URL_MAP = new Map(
+  CREATOR_SEED.filter((c) => c.category === 'Founder').map((c) => [c.name, c.linkedinUrl])
+);
+
 const CATEGORY_COLORS: Record<string, string> = {
   Growth: 'bg-green-50 text-green-600 border-green-200',
   Founder: 'bg-blue-50 text-blue-600 border-blue-200',
@@ -263,6 +295,32 @@ export default function LinkedInBotPage() {
     setShowAddCreator(false);
   }
 
+  async function seedFounderProspects() {
+    const existing = new Set(prospects.map((p) => p.name.toLowerCase()));
+    const toAdd = FOUNDER_PROSPECTS.filter((f) => !existing.has(f.name.toLowerCase()));
+    for (const f of toAdd) {
+      const linkedinUrl = FOUNDER_URL_MAP.get(f.name) || '';
+      await addProspect({
+        name: f.name,
+        title: f.title,
+        company: f.company,
+        linkedinUrl,
+        email: '',
+        source: 'linkedin-creator-network',
+        profileType: f.profileType as any,
+        funnelStage: 'detected',
+        companySector: '',
+        companySize: '',
+        fundingStage: '',
+        painPoints: '',
+        g4uMatch: '',
+        outreachMessage: '',
+        tags: ['founder-creator'],
+        notes: '',
+      });
+    }
+  }
+
   // --- Computed stats ---
   const pendingComments = comments.filter((c) => c.status === 'pending').length;
   const approvedToday = comments.filter(
@@ -375,6 +433,7 @@ export default function LinkedInBotPage() {
           showAdd={showAddProspect}
           setShowAdd={setShowAddProspect}
           onAdd={addProspect}
+          onSeedFounders={seedFounderProspects}
         />
       )}
       {tab === 'creators' && (
@@ -768,7 +827,7 @@ function CommentsTab({
 
 // =================== PROSPECTS ===================
 function ProspectsTab({
-  prospects, filter, setFilter, onChangeStage, onUpdateField, onDelete, showAdd, setShowAdd, onAdd,
+  prospects, filter, setFilter, onChangeStage, onUpdateField, onDelete, showAdd, setShowAdd, onAdd, onSeedFounders,
 }: {
   prospects: (LIProspect & { id: string })[];
   filter: ProspectFilter;
@@ -779,7 +838,9 @@ function ProspectsTab({
   showAdd: boolean;
   setShowAdd: (v: boolean) => void;
   onAdd: (data: Omit<LIProspect, 'createdAt' | 'updatedAt'>) => void;
+  onSeedFounders: () => Promise<void>;
 }) {
+  const [seeding, setSeeding] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const filters: { value: ProspectFilter; label: string }[] = [
     { value: 'all', label: 'Todos' },
@@ -804,12 +865,22 @@ function ProspectsTab({
             </button>
           ))}
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#6351d5] text-white rounded-lg hover:bg-[#5040b0]"
-        >
-          <Plus className="w-4 h-4" /> Añadir
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => { setSeeding(true); await onSeedFounders(); setSeeding(false); }}
+            disabled={seeding}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white text-slate-600 border border-slate-200 rounded-lg hover:border-[#6351d5] hover:text-[#6351d5] disabled:opacity-50"
+          >
+            {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+            {seeding ? 'Cargando...' : 'Seed 22 Founders'}
+          </button>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#6351d5] text-white rounded-lg hover:bg-[#5040b0]"
+          >
+            <Plus className="w-4 h-4" /> Añadir
+          </button>
+        </div>
       </div>
 
       {showAdd && <AddProspectForm onAdd={onAdd} onCancel={() => setShowAdd(false)} />}
