@@ -39,12 +39,17 @@ import {
   updateLICreator,
   deleteLICreator,
   sendLIBotSlackSummary,
+  getAllLICandidates,
+  updateLICandidate,
+  deleteLICandidate,
   type LIComment,
   type LIProspect,
   type LICreator,
+  type LICandidate,
 } from '../../../lib/firebase-client';
 
-type Tab = 'overview' | 'comments' | 'prospects' | 'creators';
+type Tab = 'overview' | 'comments' | 'candidates' | 'prospects' | 'creators';
+type CandidateFilter = 'all' | 'pending' | 'approved' | 'rejected';
 type CommentFilter = 'all' | 'pending' | 'approved' | 'rejected' | 'posted';
 type ProspectFilter = 'all' | 'detected' | 'connected' | 'nurturing' | 'meeting' | 'disqualified';
 
@@ -188,9 +193,11 @@ export default function LinkedInBotPage() {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<(LIComment & { id: string })[]>([]);
   const [prospects, setProspects] = useState<(LIProspect & { id: string })[]>([]);
+  const [candidates, setCandidates] = useState<(LICandidate & { id: string })[]>([]);
   const [creators, setCreators] = useState<(LICreator & { id: string })[]>([]);
   const [commentFilter, setCommentFilter] = useState<CommentFilter>('all');
   const [prospectFilter, setProspectFilter] = useState<ProspectFilter>('all');
+  const [candidateFilter, setCandidateFilter] = useState<CandidateFilter>('all');
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
   const [showAddProspect, setShowAddProspect] = useState(false);
@@ -200,9 +207,10 @@ export default function LinkedInBotPage() {
 
   async function loadAll() {
     setLoading(true);
-    const [c, p, cr] = await Promise.all([getAllLIComments(), getAllLIProspects(), getAllLICreators()]);
+    const [c, p, ca, cr] = await Promise.all([getAllLIComments(), getAllLIProspects(), getAllLICandidates(), getAllLICreators()]);
     setComments(c as any);
     setProspects(p as any);
+    setCandidates(ca as any);
     setCreators(cr as any);
     setLoading(false);
   }
@@ -258,6 +266,46 @@ export default function LinkedInBotPage() {
     const id = await createLIProspect(data);
     setProspects((prev) => [{ ...data, id, createdAt: new Date(), updatedAt: new Date() } as any, ...prev]);
     setShowAddProspect(false);
+  }
+
+  // --- Candidate actions ---
+  async function approveCandidate(id: string) {
+    const candidate = candidates.find((c) => c.id === id);
+    if (!candidate) return;
+    // Move to prospects
+    await createLIProspect({
+      name: candidate.name,
+      title: candidate.title,
+      company: candidate.company,
+      linkedinUrl: candidate.linkedinUrl,
+      email: '',
+      source: `linkedin-interaction:${candidate.interactionType}`,
+      profileType: candidate.profileType,
+      funnelStage: 'detected',
+      companySector: '',
+      companySize: '',
+      fundingStage: '',
+      painPoints: '',
+      g4uMatch: '',
+      outreachMessage: '',
+      tags: ['from-candidate'],
+      notes: `Detectado via ${candidate.interactionType} en post de ${candidate.sourceCreatorName}. ${candidate.reason}`,
+    });
+    await updateLICandidate(id, { status: 'approved' });
+    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'approved' as const } : c)));
+    // Reload prospects to show the new one
+    const freshProspects = await getAllLIProspects();
+    setProspects(freshProspects as any);
+  }
+
+  async function rejectCandidate(id: string) {
+    await updateLICandidate(id, { status: 'rejected' });
+    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'rejected' as const } : c)));
+  }
+
+  async function removeCandidate(id: string) {
+    await deleteLICandidate(id);
+    setCandidates((prev) => prev.filter((c) => c.id !== id));
   }
 
   // --- Creator actions ---
@@ -331,12 +379,16 @@ export default function LinkedInBotPage() {
   const meetingProspects = prospects.filter((p) => p.funnelStage === 'meeting').length;
   const activeCreators = creators.filter((c) => c.active).length;
 
+  const pendingCandidates = candidates.filter((c) => c.status === 'pending').length;
+
   const filteredComments = commentFilter === 'all' ? comments : comments.filter((c) => c.status === commentFilter);
   const filteredProspects = prospectFilter === 'all' ? prospects : prospects.filter((p) => p.funnelStage === prospectFilter);
+  const filteredCandidates = candidateFilter === 'all' ? candidates : candidates.filter((c) => c.status === candidateFilter);
 
   const tabs: { id: Tab; label: string; icon: any; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'comments', label: 'Comentarios', icon: MessageSquare, badge: pendingComments },
+    { id: 'candidates', label: 'Candidatos', icon: Eye, badge: pendingCandidates },
     { id: 'prospects', label: 'Prospects', icon: Users, badge: activeProspects },
     { id: 'creators', label: 'Creator Network', icon: Network, badge: activeCreators },
   ];
@@ -420,6 +472,16 @@ export default function LinkedInBotPage() {
           onSaveEdit={saveEditComment}
           onCancelEdit={() => setEditingComment(null)}
           setEditDraft={setEditDraft}
+        />
+      )}
+      {tab === 'candidates' && (
+        <CandidatesTab
+          candidates={filteredCandidates}
+          filter={candidateFilter}
+          setFilter={setCandidateFilter}
+          onApprove={approveCandidate}
+          onReject={rejectCandidate}
+          onDelete={removeCandidate}
         />
       )}
       {tab === 'prospects' && (
@@ -813,6 +875,144 @@ function CommentsTab({
                     </a>
                   )}
                   <button onClick={() => onDelete(c.id)} className="p-2 text-red-300 hover:bg-red-50 rounded-lg" title="Eliminar">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =================== CANDIDATES ===================
+function CandidatesTab({
+  candidates, filter, setFilter, onApprove, onReject, onDelete,
+}: {
+  candidates: (LICandidate & { id: string })[];
+  filter: CandidateFilter;
+  setFilter: (f: CandidateFilter) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const filters: { value: CandidateFilter; label: string }[] = [
+    { value: 'all', label: 'Todos' },
+    { value: 'pending', label: 'Pendientes' },
+    { value: 'approved', label: 'Aprobados' },
+    { value: 'rejected', label: 'Rechazados' },
+  ];
+
+  const interactionIcons: Record<string, string> = {
+    like: '👍',
+    comment: '💬',
+    repost: '🔁',
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {filters.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => setFilter(f.value)}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                filter === f.value
+                  ? 'bg-[#032149] text-white border-[#032149]'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-slate-400">
+          {candidates.filter((c) => c.status === 'pending').length} pendientes de validar
+        </p>
+      </div>
+
+      {candidates.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+          <Eye className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500">No hay candidatos todavía</p>
+          <p className="text-sm text-slate-400 mt-1">Los candidatos aparecerán cuando el scraper detecte interacciones de C-levels en los posts de tu red</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {candidates.map((c) => (
+            <div key={c.id} className={`bg-white rounded-xl border p-4 ${
+              c.status === 'approved' ? 'border-green-200 bg-green-50/30' :
+              c.status === 'rejected' ? 'border-slate-200 opacity-50' :
+              'border-slate-200'
+            }`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{interactionIcons[c.interactionType] || '👤'}</span>
+                    <h4 className="font-semibold text-[#032149] truncate">{c.name}</h4>
+                    {c.status === 'approved' && (
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-600 font-medium">Aprobado</span>
+                    )}
+                    {c.status === 'rejected' && (
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-500 font-medium">Rechazado</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-600">{c.title}</p>
+                  {c.company && <p className="text-sm text-slate-400">{c.company}</p>}
+                  <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                    <span>Fuente: {c.sourceCreatorName}</span>
+                    {c.reason && <span className="text-[#6351d5] font-medium">• {c.reason}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {c.linkedinUrl && (
+                    <a
+                      href={c.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-blue-50"
+                      title="Ver perfil"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                  {c.sourcePostUrl && (
+                    <a
+                      href={c.sourcePostUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 text-slate-400 hover:text-purple-600 rounded-lg hover:bg-purple-50"
+                      title="Ver post"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </a>
+                  )}
+                  {c.status === 'pending' && (
+                    <>
+                      <button
+                        onClick={() => onApprove(c.id)}
+                        className="p-2 text-slate-400 hover:text-green-600 rounded-lg hover:bg-green-50"
+                        title="Aprobar → mover a Prospects"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onReject(c.id)}
+                        className="p-2 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-amber-50"
+                        title="Rechazar"
+                      >
+                        <Ban className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => onDelete(c.id)}
+                    className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50"
+                    title="Eliminar"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

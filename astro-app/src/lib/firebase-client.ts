@@ -724,6 +724,62 @@ export async function deleteLICreator(id: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// LinkedIn Bot — Candidates (pre-validation, before becoming prospects)
+export interface LICandidate {
+  name: string;
+  title: string;
+  company: string;
+  linkedinUrl: string;
+  sourcePostUrl: string;       // post where they interacted
+  sourceCreatorName: string;   // whose post they interacted with
+  interactionType: 'like' | 'comment' | 'repost';
+  profileType: ProspectProfileType;
+  reason: string;              // why AI flagged them (e.g. "CTO at fintech")
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllLICandidates() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'li_candidates');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      name: data.name || '',
+      title: data.title || '',
+      company: data.company || '',
+      linkedinUrl: data.linkedinUrl || '',
+      sourcePostUrl: data.sourcePostUrl || '',
+      sourceCreatorName: data.sourceCreatorName || '',
+      interactionType: data.interactionType || 'like',
+      profileType: (data.profileType || 'other') as ProspectProfileType,
+      reason: data.reason || '',
+      status: data.status || 'pending',
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createLICandidate(candidate: Omit<LICandidate, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'li_candidates');
+  const docRef = await addDoc(ref, { ...candidate, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateLICandidate(id: string, updates: Partial<LICandidate>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'li_candidates', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteLICandidate(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'li_candidates', id);
+  await deleteDoc(ref);
+}
+
 // Slack Notifications — via Netlify Function proxy (avoids CORS)
 const SLACK_PROXY_URL = '/.netlify/functions/slack';
 
