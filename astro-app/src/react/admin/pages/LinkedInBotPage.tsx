@@ -387,10 +387,10 @@ export default function LinkedInBotPage() {
 
   const tabs: { id: Tab; label: string; icon: any; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'creators', label: 'Creator Network', icon: Network, badge: activeCreators },
     { id: 'comments', label: 'Comentarios', icon: MessageSquare, badge: pendingComments },
     { id: 'candidates', label: 'Candidatos', icon: Eye, badge: pendingCandidates },
     { id: 'prospects', label: 'Prospects', icon: Users, badge: activeProspects },
-    { id: 'creators', label: 'Creator Network', icon: Network, badge: activeCreators },
   ];
 
   if (loading) {
@@ -528,6 +528,8 @@ function OverviewTab({
   const [slackSent, setSlackSent] = useState<'ok' | 'error' | null>(null);
   const [scraping, setScraping] = useState(false);
   const [scrapeResult, setScrapeResult] = useState<{ ok: boolean; saved?: number; totalPosts?: number; error?: string } | null>(null);
+  const [prospecting, setProspecting] = useState(false);
+  const [prospectResult, setProspectResult] = useState<{ ok: boolean; candidatesSaved?: number; error?: string } | null>(null);
 
   async function handleSendSlack() {
     setSlackSending(true);
@@ -555,6 +557,35 @@ function OverviewTab({
     }
     setScraping(false);
   }
+  async function handleProspectScan() {
+    setProspecting(true);
+    setProspectResult(null);
+    try {
+      // Use posted comments as source posts (we already interacted with them)
+      const postedComments = comments.filter((c) => c.status === 'posted' || c.status === 'approved');
+      const posts = postedComments.slice(0, 10).map((c) => ({
+        postUrl: c.postUrl,
+        creatorName: c.profileName,
+      }));
+      if (posts.length === 0) {
+        setProspectResult({ ok: false, error: 'No hay posts con comentarios aprobados/publicados' });
+        setProspecting(false);
+        return;
+      }
+      const res = await fetch('/.netlify/functions/li-prospect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ posts, maxReactions: 50, maxComments: 30 }),
+      });
+      const data = await res.json();
+      setProspectResult(data);
+      if (data.ok && onScrapeComplete) onScrapeComplete();
+    } catch (err: any) {
+      setProspectResult({ ok: false, error: err.message });
+    }
+    setProspecting(false);
+  }
+
   const stats = [
     { label: 'Pendientes de aprobar', value: pendingComments, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
     { label: 'Aprobados hoy', value: approvedToday, color: 'text-green-600', bg: 'bg-green-50 border-green-200' },
@@ -603,6 +634,30 @@ function OverviewTab({
               : scrapeResult?.error
               ? 'Error'
               : 'Lanzar Scraper'}
+          </button>
+          <button
+            onClick={handleProspectScan}
+            disabled={prospecting}
+            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${
+              prospectResult?.ok
+                ? 'bg-green-50 text-green-600 border-green-200'
+                : prospectResult && !prospectResult.ok
+                ? 'bg-red-50 text-red-600 border-red-200'
+                : 'bg-white text-[#0faec1] border-[#0faec1] hover:bg-[#0faec1]/10'
+            } disabled:opacity-50`}
+          >
+            {prospecting ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Users className="w-4 h-4" />
+            )}
+            {prospecting
+              ? 'Escaneando...'
+              : prospectResult?.ok
+              ? `${prospectResult.candidatesSaved} candidatos`
+              : prospectResult?.error
+              ? 'Error'
+              : 'Buscar Candidatos'}
           </button>
           <button
             onClick={handleSendSlack}
