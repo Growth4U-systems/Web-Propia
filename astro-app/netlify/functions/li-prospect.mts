@@ -43,22 +43,28 @@ function detectProfileType(headline: string): string {
   return 'other';
 }
 
-// Extract person from Apify harvestapi actor output
-// Reactions format: { actor: { name, position, linkedinUrl } }
-// Comments format: { actor: { name, position, linkedinUrl } }
+// Extract person from Apify harvestapi actor output (profileScraperMode: "main")
+// Returns: { actor: { name, position, linkedinUrl, location: { countryCode, linkedinText, parsed: { city, country } }, publicIdentifier } }
 function extractPerson(item: any, _type: 'reaction' | 'comment'): {
   name: string; title: string; company: string; linkedinUrl: string;
+  country: string; location: string;
 } | null {
-  // harvestapi actors use "actor" field for the person
   const actor = item.actor || item.author || item;
   const name = actor.name || `${actor.firstName || ''} ${actor.lastName || ''}`.trim();
-  // "position" is the field harvestapi uses for the headline/title
   const title = actor.position || actor.headline || actor.title || '';
-  const linkedinUrl = actor.linkedinUrl || actor.profileUrl || '';
+  // Prefer public profile URL over internal ID URL
+  const publicId = actor.publicIdentifier;
+  const linkedinUrl = publicId
+    ? `https://www.linkedin.com/in/${publicId}/`
+    : actor.linkedinUrl || actor.profileUrl || '';
   if (!name || !title) return null;
   const atMatch = title.match(/(?:at|en|@)\s+(.+?)(?:\s*[|,]|$)/i);
   const company = atMatch ? atMatch[1].trim() : '';
-  return { name, title, company, linkedinUrl };
+  // Location from "main" profile mode
+  const loc = actor.location || {};
+  const country = loc.countryCode || '';
+  const location = loc.linkedinText || loc.parsed?.text || '';
+  return { name, title, company, linkedinUrl, country, location };
 }
 
 async function generateReason(person: { name: string; title: string; company: string }): Promise<string> {
@@ -89,6 +95,7 @@ async function generateReason(person: { name: string; title: string; company: st
 
 async function saveCandidate(candidate: {
   name: string; title: string; company: string; linkedinUrl: string;
+  country: string; location: string;
   sourcePostUrl: string; sourceCreatorName: string; interactionType: string;
   profileType: string; reason: string;
 }): Promise<boolean> {
@@ -103,6 +110,8 @@ async function saveCandidate(candidate: {
         title: { stringValue: safe(candidate.title) },
         company: { stringValue: safe(candidate.company) },
         linkedinUrl: { stringValue: safe(candidate.linkedinUrl) },
+        country: { stringValue: safe(candidate.country) },
+        location: { stringValue: safe(candidate.location) },
         sourcePostUrl: { stringValue: safe(candidate.sourcePostUrl) },
         sourceCreatorName: { stringValue: safe(candidate.sourceCreatorName) },
         interactionType: { stringValue: safe(candidate.interactionType) },
@@ -173,17 +182,18 @@ export default async (req: Request, _context: Context) => {
       const postUrlList = posts.map((p) => p.postUrl);
 
       // Launch both actors in parallel
-      // Apify actors expect: { posts: string[], maxItems: number }
+      // Apify actors expect: { posts: string[], maxItems: number, profileScraperMode: "main" }
+      // "main" mode returns location/country data ($0.002/profile)
       const [reactionsRun, commentsRun] = await Promise.all([
         fetch(`https://api.apify.com/v2/acts/${REACTIONS_ACTOR}/runs?token=${APIFY_TOKEN}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ posts: postUrlList, maxItems: maxReactions }),
+          body: JSON.stringify({ posts: postUrlList, maxItems: maxReactions, profileScraperMode: 'main' }),
         }).then((r) => r.json()),
         fetch(`https://api.apify.com/v2/acts/${COMMENTS_ACTOR}/runs?token=${APIFY_TOKEN}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ posts: postUrlList, maxItems: maxComments }),
+          body: JSON.stringify({ posts: postUrlList, maxItems: maxComments, profileScraperMode: 'main' }),
         }).then((r) => r.json()),
       ]);
 
@@ -268,7 +278,7 @@ export default async (req: Request, _context: Context) => {
 
       // Combine all people
       const allPeople: {
-        person: { name: string; title: string; company: string; linkedinUrl: string };
+        person: { name: string; title: string; company: string; linkedinUrl: string; country: string; location: string };
         interactionType: 'like' | 'comment';
         postUrl: string;
       }[] = [];
@@ -328,6 +338,8 @@ export default async (req: Request, _context: Context) => {
             title: person.title,
             company: person.company,
             linkedinUrl: person.linkedinUrl,
+            country: person.country,
+            location: person.location,
             sourcePostUrl: postUrl,
             sourceCreatorName: creatorName,
             interactionType,

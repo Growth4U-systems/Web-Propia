@@ -280,6 +280,8 @@ export default function LinkedInBotPage() {
       linkedinUrl: candidate.linkedinUrl,
       email: '',
       source: `linkedin-interaction:${candidate.interactionType}`,
+      country: candidate.country || '',
+      location: candidate.location || '',
       profileType: candidate.profileType,
       funnelStage: 'detected',
       companySector: '',
@@ -288,6 +290,7 @@ export default function LinkedInBotPage() {
       painPoints: '',
       g4uMatch: '',
       outreachMessage: '',
+      connectionMessage: '',
       tags: ['from-candidate'],
       notes: `Detectado via ${candidate.interactionType} en post de ${candidate.sourceCreatorName}. ${candidate.reason}`,
     });
@@ -355,6 +358,8 @@ export default function LinkedInBotPage() {
         linkedinUrl,
         email: '',
         source: 'linkedin-creator-network',
+        country: '',
+        location: '',
         profileType: f.profileType as any,
         funnelStage: 'detected',
         companySector: '',
@@ -363,6 +368,7 @@ export default function LinkedInBotPage() {
         painPoints: '',
         g4uMatch: '',
         outreachMessage: '',
+        connectionMessage: '',
         tags: ['founder-creator'],
         notes: '',
       });
@@ -1115,7 +1121,14 @@ function CandidatesTab({
                     )}
                   </div>
                   <p className="text-sm text-slate-600">{c.title}</p>
-                  {c.company && <p className="text-sm text-slate-400">{c.company}</p>}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {c.company && <span className="text-sm text-slate-400">{c.company}</span>}
+                    {c.location && (
+                      <span className="text-xs text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                        {c.country ? `${c.country === 'ES' ? '\uD83C\uDDEA\uD83C\uDDF8' : c.country === 'US' ? '\uD83C\uDDFA\uD83C\uDDF8' : c.country === 'GB' ? '\uD83C\uDDEC\uD83C\uDDE7' : c.country === 'MX' ? '\uD83C\uDDF2\uD83C\uDDFD' : c.country === 'AR' ? '\uD83C\uDDE6\uD83C\uDDF7' : c.country === 'CO' ? '\uD83C\uDDE8\uD83C\uDDF4' : c.country === 'CL' ? '\uD83C\uDDE8\uD83C\uDDF1' : '\uD83C\uDF10'} ` : ''}{c.location}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                     <span>Fuente: {c.sourceCreatorName}</span>
                     {c.reason && <span className="text-[#6351d5] font-medium">• {c.reason}</span>}
@@ -1265,6 +1278,9 @@ function ProspectsTab({
                       {profileType && profileType.value !== 'other' && (
                         <span className={`text-xs px-1.5 py-0.5 rounded border ${profileType.color}`}>{profileType.label}</span>
                       )}
+                      {p.location && (
+                        <span className="text-xs px-1.5 py-0.5 rounded border bg-slate-50 text-slate-400 border-slate-100">{p.location}</span>
+                      )}
                       {p.companySector && (
                         <span className="text-xs px-1.5 py-0.5 rounded border bg-slate-50 text-slate-500 border-slate-200">{p.companySector}</span>
                       )}
@@ -1365,6 +1381,46 @@ function ProspectsTab({
                       </div>
                     </div>
 
+                    {/* Connection Message */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <UserPlus className="w-3.5 h-3.5" /> Mensaje de conexión
+                      </h4>
+                      <textarea
+                        value={p.connectionMessage}
+                        onChange={(e) => onUpdateField(p.id, { connectionMessage: e.target.value })}
+                        placeholder="Mensaje corto para solicitud de conexión en LinkedIn (max 300 chars)..."
+                        rows={2}
+                        maxLength={300}
+                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]"
+                      />
+                      <div className="flex items-center gap-2 mt-1">
+                        <button
+                          onClick={async () => {
+                            const res = await fetch('/.netlify/functions/li-scrape?action=connection-msg', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ name: p.name, title: p.title, company: p.company, notes: p.notes, painPoints: p.painPoints }),
+                            });
+                            const data = await res.json();
+                            if (data.message) onUpdateField(p.id, { connectionMessage: data.message });
+                          }}
+                          className="flex items-center gap-1 text-xs text-[#6351d5] hover:underline"
+                        >
+                          <Sparkles className="w-3 h-3" /> Generar con IA
+                        </button>
+                        {p.connectionMessage && (
+                          <button onClick={() => navigator.clipboard.writeText(p.connectionMessage)}
+                            className="flex items-center gap-1 text-xs text-[#6351d5] hover:underline">
+                            <Copy className="w-3 h-3" /> Copiar
+                          </button>
+                        )}
+                        {p.connectionMessage && (
+                          <span className="text-xs text-slate-400 ml-auto">{p.connectionMessage.length}/300</span>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Outreach Message */}
                     <div>
                       <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -1412,6 +1468,7 @@ function AddProspectForm({ onAdd, onCancel }: {
 }) {
   const [form, setForm] = useState({
     name: '', title: '', company: '', linkedinUrl: '', email: '', source: '', notes: '',
+    country: '', location: '',
     profileType: 'other' as LIProspect['profileType'],
     companySector: '', companySize: '', fundingStage: '',
   });
@@ -1451,7 +1508,7 @@ function AddProspectForm({ onAdd, onCancel }: {
         <button
           onClick={() => form.name && onAdd({
             ...form, funnelStage: 'detected', tags: [],
-            fundingStage: form.fundingStage, painPoints: '', g4uMatch: '', outreachMessage: '',
+            fundingStage: form.fundingStage, painPoints: '', g4uMatch: '', outreachMessage: '', connectionMessage: '',
           })}
           disabled={!form.name}
           className="px-4 py-2 text-sm bg-[#6351d5] text-white rounded-lg hover:bg-[#5040b0] disabled:opacity-40"

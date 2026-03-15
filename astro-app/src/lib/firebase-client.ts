@@ -610,6 +610,8 @@ export interface LIProspect {
   linkedinUrl: string;
   email: string;
   source: string;
+  country: string;
+  location: string;
   profileType: ProspectProfileType;
   funnelStage: 'detected' | 'connected' | 'nurturing' | 'meeting' | 'disqualified';
   // Company intelligence
@@ -620,6 +622,7 @@ export interface LIProspect {
   // G4U match
   g4uMatch: string;
   outreachMessage: string;
+  connectionMessage: string;
   tags: string[];
   notes: string;
   createdAt?: Date;
@@ -640,6 +643,8 @@ export async function getAllLIProspects() {
       linkedinUrl: data.linkedinUrl || '',
       email: data.email || '',
       source: data.source || '',
+      country: data.country || '',
+      location: data.location || '',
       profileType: (data.profileType || 'other') as ProspectProfileType,
       funnelStage: data.funnelStage || 'detected',
       companySector: data.companySector || '',
@@ -648,6 +653,7 @@ export async function getAllLIProspects() {
       painPoints: data.painPoints || '',
       g4uMatch: data.g4uMatch || '',
       outreachMessage: data.outreachMessage || '',
+      connectionMessage: data.connectionMessage || '',
       tags: data.tags || [],
       notes: data.notes || '',
       createdAt: data.createdAt?.toDate() || null,
@@ -730,6 +736,8 @@ export interface LICandidate {
   title: string;
   company: string;
   linkedinUrl: string;
+  country: string;             // country code (e.g. "ES", "US")
+  location: string;            // full location text (e.g. "Madrid, Spain")
   sourcePostUrl: string;       // post where they interacted
   sourceCreatorName: string;   // whose post they interacted with
   interactionType: 'like' | 'comment' | 'repost';
@@ -752,6 +760,8 @@ export async function getAllLICandidates() {
       title: data.title || '',
       company: data.company || '',
       linkedinUrl: data.linkedinUrl || '',
+      country: data.country || '',
+      location: data.location || '',
       sourcePostUrl: data.sourcePostUrl || '',
       sourceCreatorName: data.sourceCreatorName || '',
       interactionType: data.interactionType || 'like',

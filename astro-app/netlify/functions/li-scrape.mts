@@ -340,6 +340,56 @@ export default async (req: Request, _context: Context) => {
       }), { status: 200, headers: CORS_HEADERS });
     }
 
+    // ---- ACTION: CONNECTION-MSG ----
+    // Generate a LinkedIn connection message using Claude
+    if (action === 'connection-msg') {
+      if (!ANTHROPIC_KEY) {
+        return new Response(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const { name, title, company, notes, painPoints } = body as any;
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 200,
+          messages: [{
+            role: 'user',
+            content: `Genera un mensaje de conexión de LinkedIn para enviar a ${name} (${title}${company ? ` en ${company}` : ''}).
+
+Contexto de Growth4U: Somos una consultora de Growth Marketing especializada en startups y scale-ups tech B2B/B2C. Ayudamos con estrategia de crecimiento, CAC sostenible, attribution y GEO.
+
+${painPoints ? `Pain points detectados: ${painPoints}` : ''}
+${notes ? `Notas: ${notes}` : ''}
+
+Reglas:
+- MÁXIMO 280 caracteres (límite de LinkedIn)
+- Personalizado a su perfil, NO genérico
+- Menciona algo específico de su rol o empresa
+- Tono cercano y profesional, como si fuera un peer
+- NO vendas directamente, busca conexión genuina
+- Si hay pain points, referencia sutilmente cómo se relaciona
+- Si el perfil es en inglés, escribe en inglés
+- Si es hispano, escribe en español
+- Solo devuelve el mensaje, nada más.`,
+          }],
+        }),
+      });
+      if (!res.ok) {
+        return new Response(JSON.stringify({ error: 'Claude API error' }), { status: 500, headers: CORS_HEADERS });
+      }
+      const data = await res.json();
+      const message = data?.content?.[0]?.text || '';
+      return new Response(JSON.stringify({ ok: true, message }), { status: 200, headers: CORS_HEADERS });
+    }
+
     return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: CORS_HEADERS });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS_HEADERS });
