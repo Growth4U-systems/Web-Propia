@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import StaticLeadMagnetGate from '../../react/StaticLeadMagnetGate';
-import { SITE_URL } from '../../lib/constants';
+import { SITE_URL, generateOgImage } from '../../lib/constants';
 
 const slug = 'cac-sostenible';
 const title = 'El Sistema CAC Sostenible';
@@ -221,6 +221,7 @@ const breadcrumbSchema = {
   title={`${title} | Growth4U`}
   description={description}
   canonical={`${SITE_URL}/recursos/${slug}/`}
+  ogImage={generateOgImage(title)}
   jsonLd={[breadcrumbSchema]}
 >
   <main class="min-h-screen bg-white">

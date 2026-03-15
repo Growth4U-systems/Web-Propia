@@ -38,6 +38,13 @@ export const COLORS = {
 // Trust Score Analyzer
 export const TRUST_SCORE_URL = '/trust-score/';
 
+// OG Image generator (Cloudinary text overlay on branded background)
+export function generateOgImage(title: string, subtitle = 'Growth4U | Recurso Gratuito'): string {
+  const encodedTitle = encodeURIComponent(title);
+  const encodedSubtitle = encodeURIComponent(subtitle);
+  return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/w_1200,h_630,c_fill,e_colorize:100,co_rgb:032149/l_text:arial_44_bold_center:${encodedTitle},co_white,g_center,y_-20,w_900,c_fit/l_text:arial_22_bold:${encodedSubtitle},co_rgb:45b6f7,g_south,y_70/sample`;
+}
+
 // Social
 export const LINKEDIN_URL = 'https://www.linkedin.com/company/growth4u/';
 export const TRUSTPILOT_URL = 'https://www.trustpilot.com/evaluate/growth4u.io';

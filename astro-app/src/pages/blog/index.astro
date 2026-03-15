@@ -71,51 +71,94 @@ function formatDate(dateStr: string) {
   title="Blog | Growth4U"
   description="Guías y estrategias de Growth para Fintech en España: growth hacking, outreach B2B, influencer marketing, unit economics, GEO y más."
 >
-  <!-- Floating Nav -->
-  <div class="fixed top-6 inset-x-0 z-50 flex justify-center px-4">
-    <nav class="nav-island w-full max-w-6xl">
-      <div class="px-6 sm:px-8">
-        <div class="flex items-center justify-between h-16">
+  <!-- ── Blog Header (estilo MyInvestor) ──────────────────────────── -->
+  <header class="blog-header fixed top-0 inset-x-0 z-50">
+    <!-- Barra superior: logo + búsqueda + CTA -->
+    <div class="blog-header-gradient">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between h-14">
           <a href="/" class="flex items-center cursor-pointer group flex-shrink-0">
-            <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="133" height="20" class="h-5 md:h-6 w-auto object-contain transition-transform group-hover:scale-105" />
+            <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="133" height="20" class="h-5 md:h-6 w-auto object-contain brightness-0 invert transition-transform group-hover:scale-105" />
           </a>
-          <div class="hidden md:flex items-center gap-6">
-            <a href="/" class="hover:text-[#6351d5] transition-colors px-2 py-2 rounded-md text-sm font-medium text-[#032149]">Home</a>
-            <span class="text-[#6351d5] px-2 py-2 rounded-md text-sm font-bold">Blog</span>
+
+          <div class="flex items-center gap-3">
+            <!-- Búsqueda toggle -->
+            <button id="search-toggle" class="text-white/80 hover:text-white transition-colors p-2" aria-label="Buscar">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </button>
+            <!-- CTA -->
+            <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
+               class="hidden sm:inline-flex border-2 border-white text-white hover:bg-white hover:text-[#6351d5] font-bold py-1.5 px-5 rounded-full text-sm transition-all duration-300">
+              Agenda tu demo
+            </a>
+            <!-- Hamburger mobile -->
+            <button id="blog-menu-toggle" class="md:hidden text-white p-2" aria-label="Menú">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
           </div>
-          <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer" class="bg-[#6351d5] hover:bg-[#3f45fe] text-white font-bold py-2 px-5 rounded-full text-sm transition-all duration-300 shadow-lg">
-            {t.nav.cta}
-          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de categorías (desktop) -->
+    <nav class="blog-header-gradient-sub hidden md:block">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center gap-1 h-10 overflow-x-auto" style="scrollbar-width:none;">
+          {SECTIONS.map((section) => (
+            <a href={`#section-${section.key}`}
+               class="blog-cat-link whitespace-nowrap px-4 py-1.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/15 rounded-full transition-all duration-200"
+               data-section={section.key}>
+              {section.label}
+            </a>
+          ))}
         </div>
       </div>
     </nav>
-  </div>
 
-  <section class="pt-36 pb-24 px-4 bg-white">
-    <div class="max-w-6xl mx-auto">
-
-      <!-- Header -->
-      <div class="text-center mb-10">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-[#032149] mb-3">Blog Growth4U</h1>
-        <p class="text-lg text-slate-500 max-w-xl mx-auto">
-          Recursos para escalar tu fintech sin depender de paid media.
-        </p>
+    <!-- Menú mobile (oculto por defecto) -->
+    <div id="blog-mobile-menu" class="md:hidden hidden blog-header-gradient-sub">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
+        {SECTIONS.map((section) => (
+          <a href={`#section-${section.key}`}
+             class="blog-cat-link px-4 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/15 rounded-lg transition-all"
+             data-section={section.key}>
+            {section.label}
+          </a>
+        ))}
+        <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
+           class="sm:hidden mt-2 text-center border-2 border-white text-white hover:bg-white hover:text-[#6351d5] font-bold py-2 px-5 rounded-full text-sm transition-all duration-300">
+          Agenda tu demo
+        </a>
       </div>
+    </div>
 
-      <!-- ── Buscador ─────────────────────────────────────────────────── -->
-      <div class="flex items-center gap-0 mb-14 max-w-2xl mx-auto shadow-md rounded-2xl overflow-hidden border border-slate-200">
+    <!-- Barra de búsqueda expandible -->
+    <div id="search-bar" class="hidden bg-white border-b border-slate-200 shadow-sm">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
         <input
           id="blog-search"
           type="text"
-          placeholder="¿Qué estás buscando?"
-          class="flex-1 px-5 py-4 text-base text-[#032149] placeholder-slate-400 outline-none bg-white"
+          placeholder="Buscar artículos..."
+          class="flex-1 text-base text-[#032149] placeholder-slate-400 outline-none bg-transparent"
         />
-        <button id="search-btn" class="bg-[#0faec1] hover:bg-[#0d9aaa] text-white px-6 py-4 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        <button id="search-close" class="text-slate-400 hover:text-slate-600 p-1" aria-label="Cerrar búsqueda">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
+    </div>
+  </header>
+
+  <section class="pt-28 md:pt-24 pb-24 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
 
       <!-- ── Resultados de búsqueda (oculto por defecto) ──────────────── -->
       <div id="search-results" class="hidden mb-16">
@@ -134,7 +177,7 @@ function formatDate(dateStr: string) {
           if (sectionPosts.length === 0) return null;
           const isGuias = section.key === 'guias';
           return (
-            <div class="mb-14 section-block" data-section={section.key}>
+            <div id={`section-${section.key}`} class="mb-14 section-block scroll-mt-28" data-section={section.key}>
               <!-- Cabecera sección -->
               <div class="mb-5">
                 <h2 class="text-2xl font-extrabold text-[#032149]">{section.label}</h2>
@@ -266,14 +309,28 @@ function formatDate(dateStr: string) {
       });
     });
 
-    // ── Búsqueda ──────────────────────────────────────────────────────────
-    const input      = document.getElementById('blog-search') as HTMLInputElement;
-    const searchBtn  = document.getElementById('search-btn')!;
-    const clearBtn   = document.getElementById('clear-search')!;
-    const resultsBox = document.getElementById('search-results')!;
-    const sectionsBox= document.getElementById('sections-container')!;
-    const searchGrid = document.getElementById('search-grid')!;
-    const countEl    = document.getElementById('search-count')!;
+    // ── Búsqueda expandible ─────────────────────────────────────────────
+    const searchToggle = document.getElementById('search-toggle')!;
+    const searchBar    = document.getElementById('search-bar')!;
+    const searchClose  = document.getElementById('search-close')!;
+    const input        = document.getElementById('blog-search') as HTMLInputElement;
+    const clearBtn     = document.getElementById('clear-search')!;
+    const resultsBox   = document.getElementById('search-results')!;
+    const sectionsBox  = document.getElementById('sections-container')!;
+    const searchGrid   = document.getElementById('search-grid')!;
+    const countEl      = document.getElementById('search-count')!;
+
+    searchToggle.addEventListener('click', () => {
+      searchBar.classList.toggle('hidden');
+      if (!searchBar.classList.contains('hidden')) {
+        input.focus();
+      }
+    });
+
+    searchClose.addEventListener('click', () => {
+      searchBar.classList.add('hidden');
+      clearSearch();
+    });
 
     const allCards = Array.from(
       document.querySelectorAll<HTMLElement>('#sections-container .post-card')
@@ -307,12 +364,62 @@ function formatDate(dateStr: string) {
     }
 
     input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-    input.addEventListener('input', () => { if (!input.value) clearSearch(); });
-    searchBtn.addEventListener('click', doSearch);
-    clearBtn.addEventListener('click', clearSearch);
+    input.addEventListener('input', () => {
+      if (!input.value) clearSearch();
+      else doSearch();
+    });
+    clearBtn.addEventListener('click', () => {
+      clearSearch();
+      searchBar.classList.add('hidden');
+    });
+
+    // ── Mobile menu toggle ──────────────────────────────────────────────
+    const menuToggle = document.getElementById('blog-menu-toggle')!;
+    const mobileMenu = document.getElementById('blog-mobile-menu')!;
+
+    menuToggle.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Cerrar mobile menu al hacer click en un link
+    mobileMenu.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+      });
+    });
+
+    // ── Active category highlight on scroll ─────────────────────────────
+    const catLinks = document.querySelectorAll<HTMLAnchorElement>('.blog-cat-link');
+    const sectionEls = document.querySelectorAll<HTMLElement>('.section-block');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const key = (entry.target as HTMLElement).dataset.section;
+          catLinks.forEach(link => {
+            if (link.dataset.section === key) {
+              link.classList.add('bg-white/20', 'text-white');
+              link.classList.remove('text-white/80');
+            } else {
+              link.classList.remove('bg-white/20', 'text-white');
+              link.classList.add('text-white/80');
+            }
+          });
+        }
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+
+    sectionEls.forEach(el => observer.observe(el));
   </script>
 
   <style>
     .carousel-track::-webkit-scrollbar { display: none; }
+
+    .blog-header-gradient {
+      background: linear-gradient(135deg, #6351d5 0%, #3f45fe 40%, #45b6f7 75%, #0faec1 100%);
+    }
+    .blog-header-gradient-sub {
+      background: linear-gradient(135deg, #5242b8 0%, #3539d6 40%, #3a9fd6 75%, #0d9aaa 100%);
+    }
   </style>
 </BaseLayout>
