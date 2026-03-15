@@ -256,28 +256,28 @@ function formatDate(dateStr: string) {
                     </button>
                   </div>
                 ) : (
-                  /* Categorías: grid 2 col compacto */
+                  /* Categorías: filas horizontales compactas */
                   <div class="section-grid">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-3">
                       {sectionPosts.map((post, i) => (
                         <a href={`/blog/${post.slug}/`}
                            data-title={post.title.toLowerCase()}
                            data-excerpt={(post.excerpt || '').toLowerCase()}
                            class:list={[
-                             'post-card bg-white rounded-lg overflow-hidden border border-slate-100 hover:shadow-md transition-all duration-300 group/card',
+                             'post-card flex gap-3 bg-white rounded-lg border border-slate-100 hover:shadow-md transition-all duration-300 p-2.5 group/card',
                              i >= 6 && 'hidden extra-card',
                            ]}>
-                          <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
+                          <div class="flex-shrink-0 w-28 h-20 rounded-md overflow-hidden bg-slate-100">
                             {post.image ? (
                               <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
                             ) : (
                               <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
                             )}
                           </div>
-                          <div class="p-3">
+                          <div class="flex flex-col justify-center min-w-0">
                             <span class="text-[10px] font-bold text-[#6351d5] uppercase tracking-widest">{post.category}</span>
                             <h3 class="font-bold text-sm text-[#032149] group-hover/card:text-[#6351d5] transition-colors line-clamp-2 leading-snug mt-0.5">{post.title}</h3>
-                            <p class="text-slate-400 text-xs line-clamp-1 mt-1">{post.excerpt}</p>
+                            <p class="text-slate-400 text-xs line-clamp-1 mt-0.5">{post.excerpt}</p>
                           </div>
                         </a>
                       ))}
