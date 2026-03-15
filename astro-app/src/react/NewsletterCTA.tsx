@@ -52,7 +52,7 @@ export default function NewsletterCTA() {
         </div>
         <p className="text-white/70 text-sm mb-6 leading-relaxed">
           Recibirás el primer email en los próximos minutos. Cada semana, una guía práctica
-          sobre growth fintech directamente en tu bandeja.
+          sobre growth para empresas tech directamente en tu bandeja.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <a

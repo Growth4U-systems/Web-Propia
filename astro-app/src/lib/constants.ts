@@ -39,10 +39,18 @@ export const COLORS = {
 export const TRUST_SCORE_URL = '/trust-score/';
 
 // OG Image generator (Cloudinary text overlay on branded background)
-export function generateOgImage(title: string, subtitle = 'Growth4U | Recurso Gratuito'): string {
-  const encodedTitle = encodeURIComponent(title);
-  const encodedSubtitle = encodeURIComponent(subtitle);
-  return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/w_1200,h_630,c_fill,e_colorize:100,co_rgb:032149/l_text:arial_44_bold_center:${encodedTitle},co_white,g_center,y_-20,w_900,c_fit/l_text:arial_22_bold:${encodedSubtitle},co_rgb:45b6f7,g_south,y_70/sample`;
+export function generateOgImage(title: string): string {
+  const t = encodeURIComponent(title);
+  const CL = CLOUDINARY_CLOUD_NAME;
+  return [
+    `https://res.cloudinary.com/${CL}/image/upload`,
+    'w_1200,h_630,c_fill,e_colorize:100,co_rgb:032149',                  // navy base
+    'l_brand:growth4u-logo,w_52,h_52,c_fit,r_max,g_north_west,x_72,y_48', // logo top-left
+    'l_text:arial_20_bold:Growth4U,co_rgb:45b6f7,g_north_west,x_138,y_62', // brand name
+    `l_text:arial_48_bold_center:${t},co_white,g_west,x_72,y_20,w_1050,c_fit`, // title
+    'l_text:arial_20:growth4u.io,co_rgb:6351d5,g_south_west,x_72,y_48',   // url bottom-left
+    'sample',
+  ].join('/');
 }
 
 // Social
