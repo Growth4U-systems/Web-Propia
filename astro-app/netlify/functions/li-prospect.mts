@@ -173,19 +173,20 @@ export default async (req: Request, _context: Context) => {
         );
       }
 
-      const postUrls = posts.map((p) => p.postUrl);
+      const postUrlList = posts.map((p) => p.postUrl);
 
       // Launch both actors in parallel
+      // Apify actors expect: { posts: string[], maxItems: number }
       const [reactionsRun, commentsRun] = await Promise.all([
         fetch(`https://api.apify.com/v2/acts/${REACTIONS_ACTOR}/runs?token=${APIFY_TOKEN}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postUrls, maxReactions }),
+          body: JSON.stringify({ posts: postUrlList, maxItems: maxReactions }),
         }).then((r) => r.json()),
         fetch(`https://api.apify.com/v2/acts/${COMMENTS_ACTOR}/runs?token=${APIFY_TOKEN}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postUrls, maxComments }),
+          body: JSON.stringify({ posts: postUrlList, maxItems: maxComments }),
         }).then((r) => r.json()),
       ]);
 
