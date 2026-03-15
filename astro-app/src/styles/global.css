@@ -153,23 +153,30 @@ body {
 }
 
 .prose table {
-  @apply min-w-full divide-y divide-slate-200 border border-slate-200 rounded-lg;
+  @apply w-full border-collapse border border-slate-200 rounded-lg text-sm mb-6;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .prose thead {
-  @apply bg-slate-50;
+  @apply bg-[#032149] text-white;
 }
 
 .prose th {
-  @apply px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider;
+  @apply px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap;
+}
+
+.prose tbody tr {
+  @apply border-t border-slate-200;
+}
+
+.prose tbody tr:nth-child(even) {
+  @apply bg-slate-50;
 }
 
 .prose td {
-  @apply px-6 py-4 whitespace-nowrap text-sm text-slate-600 border-t border-slate-100;
-}
-
-.prose .table-wrapper {
-  @apply overflow-x-auto -mx-4 px-4 mb-6;
+  @apply px-4 py-3 text-sm text-slate-600;
 }
 
 /* Task list checkboxes */
