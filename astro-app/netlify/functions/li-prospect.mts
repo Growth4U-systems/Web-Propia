@@ -43,31 +43,22 @@ function detectProfileType(headline: string): string {
   return 'other';
 }
 
-function extractPerson(item: any, type: 'reaction' | 'comment'): {
+// Extract person from Apify harvestapi actor output
+// Reactions format: { actor: { name, position, linkedinUrl } }
+// Comments format: { actor: { name, position, linkedinUrl } }
+function extractPerson(item: any, _type: 'reaction' | 'comment'): {
   name: string; title: string; company: string; linkedinUrl: string;
 } | null {
-  if (type === 'reaction') {
-    const firstName = item.firstName || item.author?.firstName || '';
-    const lastName = item.lastName || item.author?.lastName || '';
-    const name = (item.name || `${firstName} ${lastName}`).trim();
-    const title = item.headline || item.title || item.author?.headline || '';
-    const linkedinUrl = item.profileUrl || item.linkedinUrl || item.author?.linkedinUrl || '';
-    if (!name || !title) return null;
-    const atMatch = title.match(/(?:at|en|@)\s+(.+?)(?:\s*\||$)/i);
-    const company = atMatch ? atMatch[1].trim() : '';
-    return { name, title, company, linkedinUrl };
-  } else {
-    const author = item.author || item;
-    const firstName = author.firstName || '';
-    const lastName = author.lastName || '';
-    const name = (author.name || `${firstName} ${lastName}`).trim();
-    const title = author.headline || author.title || '';
-    const linkedinUrl = author.profileUrl || author.linkedinUrl || '';
-    if (!name || !title) return null;
-    const atMatch = title.match(/(?:at|en|@)\s+(.+?)(?:\s*\||$)/i);
-    const company = atMatch ? atMatch[1].trim() : '';
-    return { name, title, company, linkedinUrl };
-  }
+  // harvestapi actors use "actor" field for the person
+  const actor = item.actor || item.author || item;
+  const name = actor.name || `${actor.firstName || ''} ${actor.lastName || ''}`.trim();
+  // "position" is the field harvestapi uses for the headline/title
+  const title = actor.position || actor.headline || actor.title || '';
+  const linkedinUrl = actor.linkedinUrl || actor.profileUrl || '';
+  if (!name || !title) return null;
+  const atMatch = title.match(/(?:at|en|@)\s+(.+?)(?:\s*[|,]|$)/i);
+  const company = atMatch ? atMatch[1].trim() : '';
+  return { name, title, company, linkedinUrl };
 }
 
 async function generateReason(person: { name: string; title: string; company: string }): Promise<string> {
