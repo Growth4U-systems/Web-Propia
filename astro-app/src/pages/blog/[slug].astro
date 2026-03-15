@@ -7,6 +7,7 @@ import ServiceBanner from '../../components/ServiceBanner.astro';
 import BlogFAQ from '../../components/BlogFAQ.astro';
 import { getAllPosts } from '../../lib/firebase-fetch';
 import { BOOKING_LINK, SITE_URL } from '../../lib/constants';
+import { getAuthorByName } from '../../data/authors';
 import { marked } from 'marked';
 
 export async function getStaticPaths() {
@@ -25,7 +26,11 @@ if (!post) {
 // Render markdown to HTML at build time
 const htmlContent = marked.parse(post.content || '', { gfm: true });
 
-// Article schema
+// Resolve author profile (if exists in our team)
+const authorProfile = getAuthorByName(post.author);
+const authorUrl = authorProfile ? `${SITE_URL}/equipo/${authorProfile.slug}/` : undefined;
+
+// Article schema — enhanced with author URL and sameAs for E-E-A-T
 const articleSchema = {
   '@context': 'https://schema.org',
   '@type': 'Article',
@@ -34,7 +39,16 @@ const articleSchema = {
   image: post.image,
   datePublished: post.createdAt || new Date().toISOString(),
   dateModified: post.updatedAt || post.createdAt || new Date().toISOString(),
-  author: { '@type': 'Person', name: post.author },
+  author: {
+    '@type': 'Person',
+    name: post.author,
+    ...(authorProfile && {
+      url: authorUrl,
+      image: authorProfile.photo,
+      jobTitle: authorProfile.role,
+      sameAs: [authorProfile.linkedin],
+    }),
+  },
   publisher: {
     '@type': 'Organization',
     name: 'Growth4U',
@@ -106,7 +120,23 @@ const featuredMagnet = LEAD_MAGNETS[lmIndex];
       {post.category}
     </span>
     <h1 class="text-4xl md:text-5xl font-extrabold mb-6 text-[#032149] leading-tight">{post.title}</h1>
-    <div class="flex items-center gap-4 text-slate-500 text-sm mb-8 border-b border-slate-100 pb-8">
+    <div class="flex flex-wrap items-center gap-4 text-slate-500 text-sm mb-8 border-b border-slate-100 pb-8">
+      {/* Author byline */}
+      {authorProfile ? (
+        <a href={`/equipo/${authorProfile.slug}/`} class="flex items-center gap-2 hover:text-[#6351d5] transition-colors group">
+          <img
+            src={authorProfile.photo}
+            alt={authorProfile.name}
+            width="28"
+            height="28"
+            class="w-7 h-7 rounded-full object-cover ring-2 ring-slate-200 group-hover:ring-[#6351d5]/40 transition-all"
+          />
+          <span class="font-medium text-[#032149] group-hover:text-[#6351d5] transition-colors">{post.author}</span>
+        </a>
+      ) : (
+        <span class="font-medium text-[#032149]">{post.author}</span>
+      )}
+      <span>&bull;</span>
       <span class="flex items-center gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         {post.readTime}

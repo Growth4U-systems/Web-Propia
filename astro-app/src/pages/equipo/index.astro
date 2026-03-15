@@ -1,0 +1,141 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { AUTHORS } from '../../data/authors';
+import { getAllPosts } from '../../lib/firebase-fetch';
+import { BOOKING_LINK, SITE_URL } from '../../lib/constants';
+
+const allPosts = await getAllPosts();
+
+// Count posts per author
+function countPostsByAuthor(authorName: string): number {
+  return allPosts.filter((p) => p.author === authorName).length;
+}
+
+const teamSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Growth4U',
+  url: SITE_URL,
+  member: AUTHORS.map((a) => ({
+    '@type': 'Person',
+    name: a.name,
+    jobTitle: a.role,
+    url: `${SITE_URL}/equipo/${a.slug}/`,
+    image: a.photo,
+    sameAs: [a.linkedin],
+  })),
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Equipo', item: `${SITE_URL}/equipo/` },
+  ],
+};
+---
+
+<BaseLayout
+  title="Equipo | Growth4U — Quiénes somos"
+  description="Conoce al equipo de Growth4U: especialistas en growth marketing, SEO y automatización para empresas tech. +10 años de experiencia escalando fintechs."
+  jsonLd={[teamSchema, breadcrumbSchema]}
+>
+  <!-- Nav -->
+  <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-100">
+    <div class="max-w-5xl mx-auto px-4 h-20 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-0 cursor-pointer">
+        <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U" width="133" height="20" class="h-6 w-auto" />
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="/blog/" class="text-sm font-bold text-[#032149] hover:text-[#6351d5] transition-colors">Blog</a>
+        <a href="/servicios/" class="text-sm font-bold text-[#032149] hover:text-[#6351d5] transition-colors">Servicios</a>
+        <a
+          href={BOOKING_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hidden sm:inline-flex bg-[#6351d5] hover:bg-[#5242b8] text-white font-bold py-2 px-5 rounded-full text-sm transition-all shadow-lg shadow-[#6351d5]/20"
+        >
+          Agendar Llamada
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="pt-32 pb-20">
+    <!-- Hero -->
+    <section class="max-w-5xl mx-auto px-4 text-center mb-20">
+      <span class="inline-block px-4 py-1.5 bg-[#6351d5]/10 text-[#6351d5] rounded-full text-xs font-bold uppercase tracking-wider mb-6">
+        Nuestro equipo
+      </span>
+      <h1 class="text-4xl md:text-5xl font-extrabold text-[#032149] mb-6 leading-tight">
+        Las personas detrás de<br /><span class="text-[#6351d5]">tu motor de crecimiento</span>
+      </h1>
+      <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+        Más de 10 años escalando empresas tech. Hemos llevado fintechs de 0 a 500K usuarios, reducido el CAC un 70% y lanzado productos en nuevos mercados.
+      </p>
+    </section>
+
+    <!-- Team grid -->
+    <section class="max-w-5xl mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {AUTHORS.map((author) => {
+          const postCount = countPostsByAuthor(author.name);
+          return (
+            <a
+              href={`/equipo/${author.slug}/`}
+              class="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#6351d5]/20 transition-all duration-300 overflow-hidden"
+            >
+              <div class="aspect-square overflow-hidden bg-slate-100">
+                <img
+                  src={author.photo}
+                  alt={author.name}
+                  width="400"
+                  height="400"
+                  loading="lazy"
+                  class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500"
+                />
+              </div>
+              <div class="p-6">
+                <h2 class="text-xl font-bold text-[#032149] mb-1 group-hover:text-[#6351d5] transition-colors">
+                  {author.name}
+                </h2>
+                <p class="text-sm font-bold text-[#6351d5] mb-3">{author.role}</p>
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">{author.bio}</p>
+                <div class="flex items-center gap-3">
+                  {postCount > 0 && (
+                    <span class="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+                      {postCount} artículos
+                    </span>
+                  )}
+                  <span class="text-xs text-[#6351d5] font-bold group-hover:underline ml-auto">
+                    Ver perfil →
+                  </span>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="max-w-3xl mx-auto px-4 mt-20">
+      <div class="bg-[#032149] rounded-2xl p-8 md:p-12 text-center">
+        <p class="text-[#a89cf7] text-xs font-bold uppercase tracking-wider mb-3">¿Quieres trabajar con nosotros?</p>
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">
+          Hablamos 30 minutos y te decimos<br />dónde está tu mayor oportunidad
+        </h2>
+        <p class="text-slate-400 text-sm mb-6">Sin compromiso. Sin ventas agresivas. Solo estrategia.</p>
+        <a
+          href={BOOKING_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 bg-[#6351d5] hover:bg-[#5242b8] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#6351d5]/30"
+        >
+          Agendar sesión gratuita →
+        </a>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

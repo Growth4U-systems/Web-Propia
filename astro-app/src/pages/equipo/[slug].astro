@@ -1,0 +1,231 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { AUTHORS, getAuthorBySlug } from '../../data/authors';
+import { getAllPosts, type BlogPost } from '../../lib/firebase-fetch';
+import { BOOKING_LINK, SITE_URL } from '../../lib/constants';
+
+export function getStaticPaths() {
+  return AUTHORS.map((a) => ({ params: { slug: a.slug } }));
+}
+
+const { slug } = Astro.params;
+const author = getAuthorBySlug(slug);
+
+if (!author) {
+  return Astro.redirect('/404/');
+}
+
+const allPosts = await getAllPosts();
+const authorPosts = allPosts
+  .filter((p) => p.author === author.name)
+  .sort((a, b) => {
+    const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return db - da;
+  });
+
+// Person schema with sameAs for E-E-A-T
+const personSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: author.name,
+  jobTitle: author.role,
+  url: `${SITE_URL}/equipo/${author.slug}/`,
+  image: author.photo,
+  sameAs: [author.linkedin],
+  worksFor: {
+    '@type': 'Organization',
+    name: 'Growth4U',
+    url: SITE_URL,
+  },
+  description: author.bioLong,
+  knowsAbout: author.credentials,
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Equipo', item: `${SITE_URL}/equipo/` },
+    { '@type': 'ListItem', position: 3, name: author.name, item: `${SITE_URL}/equipo/${author.slug}/` },
+  ],
+};
+---
+
+<BaseLayout
+  title={`${author.name} — ${author.role} | Growth4U`}
+  description={author.bioLong.slice(0, 160)}
+  ogImage={author.photo}
+  jsonLd={[personSchema, breadcrumbSchema]}
+>
+  <!-- Nav -->
+  <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-100">
+    <div class="max-w-5xl mx-auto px-4 h-20 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-0 cursor-pointer">
+        <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U" width="133" height="20" class="h-6 w-auto" />
+      </a>
+      <a href="/equipo/" class="text-sm font-bold text-[#6351d5] flex items-center gap-2 hover:underline">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Equipo
+      </a>
+    </div>
+  </nav>
+
+  <main class="pt-32 pb-20">
+    <!-- Author header -->
+    <section class="max-w-4xl mx-auto px-4">
+      <div class="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+        <!-- Photo -->
+        <div class="flex-shrink-0">
+          <div class="relative">
+            <div class="absolute -top-3 -right-3 w-48 h-48 border-t-4 border-r-4 border-[#45b6f7] rounded-tr-3xl z-0"></div>
+            <div class="absolute -bottom-3 -left-3 w-48 h-48 border-b-4 border-l-4 border-[#1a3690] rounded-bl-3xl z-0"></div>
+            <img
+              src={author.photo}
+              alt={author.name}
+              width="192"
+              height="192"
+              class="w-48 h-48 object-cover rounded-xl shadow-2xl relative z-10"
+            />
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1">
+          <h1 class="text-3xl md:text-4xl font-extrabold text-[#032149] mb-2">{author.name}</h1>
+          <p class="text-lg font-bold text-[#6351d5] mb-4">{author.role}</p>
+          <p class="text-slate-600 leading-relaxed mb-6">{author.bioLong}</p>
+
+          <!-- Credentials -->
+          <ul class="space-y-2 mb-6">
+            {author.credentials.map((cred) => (
+              <li class="flex items-start gap-2 text-sm text-slate-700">
+                <svg class="w-4 h-4 text-[#0faec1] flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {cred}
+              </li>
+            ))}
+          </ul>
+
+          <!-- LinkedIn -->
+          <a
+            href={author.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 bg-[#0077B5] hover:bg-[#005e93] text-white font-bold py-2.5 px-5 rounded-full text-sm transition-all shadow-md"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+            Ver perfil en LinkedIn
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Articles by this author -->
+    {authorPosts.length > 0 && (
+      <section class="max-w-4xl mx-auto px-4 mt-20">
+        <h2 class="text-2xl font-bold text-[#032149] mb-2">
+          Artículos de {author.name.split(' ')[0]}
+        </h2>
+        <p class="text-slate-500 text-sm mb-8">{authorPosts.length} artículos publicados</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {authorPosts.slice(0, 12).map((post) => {
+            const date = post.createdAt
+              ? new Date(post.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })
+              : '';
+            return (
+              <a
+                href={`/blog/${post.slug}/`}
+                class="group bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-[#6351d5]/20 transition-all overflow-hidden"
+              >
+                {post.image && (
+                  <div class="aspect-video overflow-hidden bg-slate-100">
+                    <img
+                      src={post.image}
+                      alt={post.title}
+                      width="400"
+                      height="225"
+                      loading="lazy"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                <div class="p-4">
+                  <span class="text-xs font-bold text-[#6351d5] uppercase tracking-wider">{post.category}</span>
+                  <h3 class="text-sm font-bold text-[#032149] mt-1 mb-2 line-clamp-2 group-hover:text-[#6351d5] transition-colors">
+                    {post.title}
+                  </h3>
+                  <div class="flex items-center gap-2 text-xs text-slate-400">
+                    <span>{post.readTime}</span>
+                    {date && <><span>&bull;</span><span>{date}</span></>}
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+
+        {authorPosts.length > 12 && (
+          <div class="text-center mt-8">
+            <a
+              href="/blog/"
+              class="inline-flex items-center gap-2 text-[#6351d5] font-bold text-sm hover:underline"
+            >
+              Ver todos los artículos →
+            </a>
+          </div>
+        )}
+      </section>
+    )}
+
+    <!-- Other team members -->
+    <section class="max-w-4xl mx-auto px-4 mt-20">
+      <h2 class="text-2xl font-bold text-[#032149] mb-8">Otros miembros del equipo</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {AUTHORS.filter((a) => a.slug !== author.slug).map((member) => (
+          <a
+            href={`/equipo/${member.slug}/`}
+            class="group flex items-center gap-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-[#6351d5]/20 transition-all p-4"
+          >
+            <img
+              src={member.photo}
+              alt={member.name}
+              width="64"
+              height="64"
+              loading="lazy"
+              class="w-16 h-16 object-cover rounded-lg filter grayscale group-hover:grayscale-0 transition-all"
+            />
+            <div>
+              <h3 class="font-bold text-[#032149] group-hover:text-[#6351d5] transition-colors">{member.name}</h3>
+              <p class="text-sm text-[#6351d5] font-medium">{member.role}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="max-w-3xl mx-auto px-4 mt-20">
+      <div class="bg-[#032149] rounded-2xl p-8 md:p-12 text-center">
+        <p class="text-[#a89cf7] text-xs font-bold uppercase tracking-wider mb-3">¿Quieres trabajar con nosotros?</p>
+        <h2 class="text-2xl font-bold text-white mb-4">
+          Agenda una sesión gratuita con el equipo
+        </h2>
+        <p class="text-slate-400 text-sm mb-6">30 minutos. Sin compromiso. Solo estrategia.</p>
+        <a
+          href={BOOKING_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 bg-[#6351d5] hover:bg-[#5242b8] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#6351d5]/30"
+        >
+          Agendar sesión gratuita →
+        </a>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

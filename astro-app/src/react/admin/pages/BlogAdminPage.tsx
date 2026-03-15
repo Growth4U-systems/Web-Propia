@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { getAllPosts, createPost, updatePost, deletePost, createSlug } from '../../../lib/firebase-client';
 import type { BlogPost, BlogPostInput } from '../../../lib/firebase-client';
+import { AUTHOR_NAMES } from '../../../data/authors';
 
 const NETLIFY_BUILD_HOOK = 'https://api.netlify.com/build_hooks/69a9ce0e98ff45fea8db5696';
 const CLOUDINARY_CLOUD_NAME = 'dsc0jsbkz';
@@ -715,15 +716,19 @@ export default function BlogAdminPage() {
               {/* Author */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Autor
+                  Autor <span className="text-red-400">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.author}
                   onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
-                  placeholder="Equipo Growth4U"
-                />
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  required
+                >
+                  <option value="">Seleccionar autor...</option>
+                  {AUTHOR_NAMES.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Image Upload */}
