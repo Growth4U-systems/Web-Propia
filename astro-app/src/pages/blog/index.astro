@@ -33,13 +33,13 @@ const PILLAR_SLUGS = new Set([
   'stack-martech-fintech-espana-guia-completa',
 ]);
 
-const SECTIONS = [
-  { key: 'guias',     label: 'Guías completas',  sub: 'PILLAR PAGES' },
-  { key: 'Growth',    label: 'Growth',            sub: 'ÚLTIMOS POSTS' },
-  { key: 'Marketing', label: 'Marketing',         sub: 'ÚLTIMOS POSTS' },
-  { key: 'GEO',       label: 'GEO & Búsqueda IA', sub: 'ÚLTIMOS POSTS' },
-  { key: 'Estrategia',label: 'Estrategia',        sub: 'ÚLTIMOS POSTS' },
-  { key: 'Producto',  label: 'Producto',          sub: 'ÚLTIMOS POSTS' },
+const NAV_SECTIONS = [
+  { key: 'guias',      label: 'Guías completas' },
+  { key: 'Growth',     label: 'Growth' },
+  { key: 'Marketing',  label: 'Marketing' },
+  { key: 'GEO',        label: 'GEO & Búsqueda IA' },
+  { key: 'Estrategia', label: 'Estrategia' },
+  { key: 'Producto',   label: 'Producto' },
 ];
 
 const LEAD_MAGNETS = [
@@ -75,19 +75,6 @@ const allNonPillar = uniquePosts
   .filter(p => !PILLAR_SLUGS.has(p.slug))
   .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-function postsForSection(key: string) {
-  if (key === 'guias') return uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug));
-  return uniquePosts.filter(p => p.category === key && !PILLAR_SLUGS.has(p.slug));
-}
-
-function formatDate(dateStr: string) {
-  if (!dateStr) return '';
-  try {
-    return new Date(dateStr).toLocaleDateString('es-ES', {
-      day: 'numeric', month: 'long', year: 'numeric',
-    });
-  } catch { return ''; }
-}
 ---
 
 <BaseLayout
@@ -119,11 +106,10 @@ function formatDate(dateStr: string) {
     <nav class="blog-header-gradient-sub">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         <div class="flex items-center gap-1 h-10 overflow-x-auto" style="scrollbar-width:none;-ms-overflow-style:none;">
-          {SECTIONS.map((section) => (
-            <a href={`#section-${section.key}`}
-               class="blog-cat-link whitespace-nowrap px-3 md:px-4 py-1.5 text-xs md:text-sm font-medium text-white/80 hover:text-white hover:bg-white/15 rounded-full transition-all duration-200"
-               data-section={section.key}>
-              {section.label}
+          {NAV_SECTIONS.map((s) => (
+            <a href={`/blog/categoria/${s.key}/`}
+               class="whitespace-nowrap px-3 md:px-4 py-1.5 text-xs md:text-sm font-medium text-white/80 hover:text-white hover:bg-white/15 rounded-full transition-all duration-200">
+              {s.label}
             </a>
           ))}
         </div>
@@ -212,46 +198,29 @@ function formatDate(dateStr: string) {
       <!-- ─────────────────────────────────────────────────────────── -->
       <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10" id="sections-container">
 
-        <!-- Columna principal: grid 2 col de cards -->
+        <!-- Columna principal: grid 2 col mezclado -->
         <div>
-          {SECTIONS.map((section) => {
-            const sectionPosts = postsForSection(section.key);
-            if (sectionPosts.length === 0) return null;
-            return (
-              <div id={`section-${section.key}`} class="mb-12 section-block scroll-mt-32" data-section={section.key}>
-                <h2 class="text-2xl font-extrabold text-[#032149] mb-6">{section.label}</h2>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {sectionPosts.slice(0, 6).map((post) => (
-                    <a href={`/blog/${post.slug}/`}
-                       data-title={post.title.toLowerCase()}
-                       data-excerpt={(post.excerpt || '').toLowerCase()}
-                       class="post-card bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group/card">
-                      <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
-                        {post.image ? (
-                          <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
-                        ) : (
-                          <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
-                        )}
-                      </div>
-                      <div class="p-4">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category || section.label}</span>
-                        <h3 class="font-extrabold text-[#032149] group-hover/card:text-[#6351d5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
-                      </div>
-                    </a>
-                  ))}
+          <h2 class="text-2xl font-extrabold text-[#032149] mb-6">DESTACADOS</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {allNonPillar.slice(4, 16).map((post) => (
+              <a href={`/blog/${post.slug}/`}
+                 data-title={post.title.toLowerCase()}
+                 data-excerpt={(post.excerpt || '').toLowerCase()}
+                 class="post-card bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group/card">
+                <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
+                  {post.image ? (
+                    <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
+                  ) : (
+                    <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
+                  )}
                 </div>
-
-                {sectionPosts.length > 6 && (
-                  <div class="text-center mt-5">
-                    <button class="show-more-btn text-[#6351d5] font-semibold text-sm hover:underline" data-section={section.key}>
-                      Ver todos ({sectionPosts.length} artículos)
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                <div class="p-4">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
+                  <h3 class="font-extrabold text-[#032149] group-hover/card:text-[#6351d5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
 
         <!-- Sidebar -->
@@ -311,18 +280,6 @@ function formatDate(dateStr: string) {
   <Footer t={t} bookingLink={BOOKING_LINK} />
 
   <script>
-    // ── "Ver más" — muestra posts extra inline ──────────────────────────
-    document.querySelectorAll<HTMLButtonElement>('.show-more-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const section = btn.closest('.section-block')!;
-        const grid = section.querySelector('.grid')!;
-        // All hidden cards after the 6 visible
-        const hiddenCards = section.querySelectorAll<HTMLElement>('.post-card.hidden');
-        hiddenCards.forEach(c => c.classList.remove('hidden'));
-        btn.remove();
-      });
-    });
-
     // ── Búsqueda ────────────────────────────────────────────────────────
     const searchToggle = document.getElementById('search-toggle')!;
     const searchBar    = document.getElementById('search-bar')!;
@@ -366,24 +323,6 @@ function formatDate(dateStr: string) {
     input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
     input.addEventListener('input', () => { if (!input.value) clearSearch(); else doSearch(); });
     clearBtn.addEventListener('click', () => { clearSearch(); searchBar.classList.add('hidden'); });
-
-    // ── Active category on scroll ───────────────────────────────────────
-    const catLinks = document.querySelectorAll<HTMLAnchorElement>('.blog-cat-link');
-    const sectionEls = document.querySelectorAll<HTMLElement>('.section-block');
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const key = (entry.target as HTMLElement).dataset.section;
-          catLinks.forEach(link => {
-            const match = link.dataset.section === key;
-            link.classList.toggle('bg-white/20', match);
-            link.classList.toggle('text-white', match);
-            link.classList.toggle('text-white/80', !match);
-          });
-        }
-      });
-    }, { rootMargin: '-30% 0px -60% 0px' });
-    sectionEls.forEach(el => obs.observe(el));
   </script>
 
   <style>

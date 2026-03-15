@@ -1,0 +1,220 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Footer from '../../../components/Footer.astro';
+import { getTranslations } from '../../../i18n/utils';
+import { getAllPosts } from '../../../lib/firebase-fetch';
+import { BOOKING_LINK } from '../../../lib/constants';
+
+const t = getTranslations('es');
+
+// Definición de categorías con descripción para el hero
+const CATEGORIES: Record<string, { label: string; description: string }> = {
+  guias: {
+    label: 'Guías Completas',
+    description: 'Pillar pages con todo lo que necesitas saber sobre growth, marketing y herramientas para escalar tu empresa tech. Guías detalladas paso a paso.',
+  },
+  Growth: {
+    label: 'Growth',
+    description: 'Estrategias de crecimiento sostenible para empresas tech. Frameworks, métricas y tácticas probadas para escalar sin depender de paid media.',
+  },
+  Marketing: {
+    label: 'Marketing',
+    description: 'Marketing digital para empresas tech B2B y B2C. Content marketing, email, SEO, paid media y estrategias de adquisición que funcionan.',
+  },
+  GEO: {
+    label: 'GEO & Búsqueda IA',
+    description: 'Generative Engine Optimization: cómo aparecer en ChatGPT, Perplexity y los AI Overviews de Google. El futuro del SEO ya está aquí.',
+  },
+  Estrategia: {
+    label: 'Estrategia',
+    description: 'Estrategia de negocio, go-to-market, unit economics y decisiones clave para fundadores y CMOs de empresas tech.',
+  },
+  Producto: {
+    label: 'Producto',
+    description: 'Product-led growth, activación, onboarding y retención. Cómo construir productos que crecen solos.',
+  },
+};
+
+const PILLAR_SLUGS = new Set([
+  'agencia-growth-hacking-fintech-espana',
+  'agencia-influencer-marketing-financiero-fintech-espana',
+  'agencia-outreach-b2b-fintech-espana',
+  'agencia-afiliados-referidos-fintech-espana',
+  'agencia-estrategia-gtm-fintech-espana',
+  'agencia-founder-led-growth-fintech',
+  'herramientas-para-crear-contenido-digital',
+  'herramientas-outreach-y-prospeccion-b2b',
+  'plataformas-afiliados-e-influencers',
+  'automatizacion-marketing-growth-fintech',
+  'herramientas-gtm-lanzamiento-producto-b2b',
+  'herramientas-atribucion-marketing-fintech',
+  'unit-economics-fintech-cac-ltv-payback',
+  'geo-para-fintechs-guia-completa-ia-chatgpt-perplexity',
+  'stack-martech-fintech-espana-guia-completa',
+]);
+
+const NAV_SECTIONS = [
+  { key: 'guias', label: 'Guías completas' },
+  { key: 'Growth', label: 'Growth' },
+  { key: 'Marketing', label: 'Marketing' },
+  { key: 'GEO', label: 'GEO & Búsqueda IA' },
+  { key: 'Estrategia', label: 'Estrategia' },
+  { key: 'Producto', label: 'Producto' },
+];
+
+export function getStaticPaths() {
+  return Object.keys(CATEGORIES).map(key => ({ params: { key } }));
+}
+
+const { key } = Astro.params;
+const cat = CATEGORIES[key!];
+if (!cat) return Astro.redirect('/blog/');
+
+let posts: Awaited<ReturnType<typeof getAllPosts>> = [];
+try { posts = await getAllPosts(); } catch {}
+
+const seen = new Set<string>();
+const uniquePosts = posts.filter(p => {
+  if (seen.has(p.slug)) return false;
+  seen.add(p.slug);
+  return true;
+});
+
+// Posts de esta categoría
+const categoryPosts = key === 'guias'
+  ? uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug))
+  : uniquePosts
+      .filter(p => p.category === key && !PILLAR_SLUGS.has(p.slug))
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+// Más leídos (sidebar)
+const popularPosts = uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug)).slice(0, 5);
+---
+
+<BaseLayout
+  title={`${cat.label} | Blog Growth4U`}
+  description={cat.description}
+>
+  <!-- Header -->
+  <header class="blog-header fixed top-0 inset-x-0 z-50">
+    <div class="blog-header-gradient">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between h-14">
+          <a href="/" class="flex items-center cursor-pointer group flex-shrink-0">
+            <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="133" height="20" class="h-5 md:h-6 w-auto object-contain brightness-0 invert transition-transform group-hover:scale-105" />
+          </a>
+          <div class="flex items-center gap-3">
+            <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
+               class="hidden sm:inline-flex border-2 border-white text-white hover:bg-white hover:text-[#6351d5] font-bold py-1.5 px-5 rounded-full text-sm transition-all duration-300">
+              Agenda tu demo
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <nav class="blog-header-gradient-sub">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center gap-1 h-10 overflow-x-auto" style="scrollbar-width:none;-ms-overflow-style:none;">
+          {NAV_SECTIONS.map((s) => (
+            <a href={`/blog/categoria/${s.key}/`}
+               class:list={[
+                 'whitespace-nowrap px-3 md:px-4 py-1.5 text-xs md:text-sm font-medium rounded-full transition-all duration-200',
+                 s.key === key ? 'bg-white/20 text-white font-bold' : 'text-white/80 hover:text-white hover:bg-white/15',
+               ]}>
+              {s.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="pt-28 pb-24 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
+
+      <!-- ── Hero Banner (estilo MyInvestor "Mundo Hipotecas") ────── -->
+      <section class="border border-slate-200 rounded-2xl p-8 md:p-12 text-center mb-12">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-[#032149] uppercase tracking-wide mb-5">{cat.label}</h1>
+        <div class="w-20 h-0.5 bg-[#032149] mx-auto mb-5"></div>
+        <p class="text-slate-500 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">{cat.description}</p>
+      </section>
+
+      <!-- ── Grid de posts + sidebar ─────────────────────────────── -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
+
+        <!-- Posts grid -->
+        <div>
+          {categoryPosts.length === 0 ? (
+            <p class="text-slate-400 text-center py-12">No hay artículos en esta categoría aún.</p>
+          ) : (
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {categoryPosts.map((post) => (
+                <a href={`/blog/${post.slug}/`}
+                   class="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group/card">
+                  <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
+                    {post.image ? (
+                      <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
+                    ) : (
+                      <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
+                    )}
+                  </div>
+                  <div class="p-4">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category || cat.label}</span>
+                    <h3 class="font-extrabold text-[#032149] group-hover/card:text-[#6351d5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="hidden lg:block">
+          <div class="sticky top-28 space-y-6">
+            <div class="rounded-xl overflow-hidden shadow-sm">
+              <div class="bg-[#6351d5] text-white text-center font-bold py-2.5 px-4 text-sm">
+                Artículos más leídos
+              </div>
+              <div class="bg-white divide-y divide-slate-100">
+                {popularPosts.map((post) => (
+                  <a href={`/blog/${post.slug}/`} class="block px-4 py-3 hover:bg-slate-50 transition-colors group/pop">
+                    <p class="font-semibold text-sm text-[#032149] group-hover/pop:text-[#6351d5] transition-colors line-clamp-2 leading-snug">{post.title}</p>
+                    <span class="text-[#6351d5] text-xs font-medium mt-1 inline-block">Leer artículo</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-[#032149] to-[#6351d5] rounded-xl p-5 text-center">
+              <p class="text-white font-bold mb-1">¿Listo para escalar?</p>
+              <p class="text-white/60 text-xs mb-4">Consulta estratégica gratuita de 30 min.</p>
+              <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
+                 class="inline-block bg-white text-[#6351d5] font-bold py-2 px-5 rounded-full text-sm hover:shadow-lg transition-all">
+                Agenda tu demo
+              </a>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+
+      <!-- Volver al blog -->
+      <div class="text-center mt-12">
+        <a href="/blog/" class="text-[#6351d5] font-semibold text-sm hover:underline">&larr; Volver al blog</a>
+      </div>
+
+    </div>
+  </main>
+
+  <Footer t={t} bookingLink={BOOKING_LINK} />
+
+  <style>
+    .blog-header-gradient-sub div::-webkit-scrollbar { display: none; }
+    .blog-header-gradient {
+      background: linear-gradient(135deg, #6351d5 0%, #3f45fe 40%, #45b6f7 75%, #0faec1 100%);
+    }
+    .blog-header-gradient-sub {
+      background: linear-gradient(135deg, #5242b8 0%, #3539d6 40%, #3a9fd6 75%, #0d9aaa 100%);
+    }
+  </style>
+</BaseLayout>
