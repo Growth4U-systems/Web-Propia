@@ -599,14 +599,17 @@ function OverviewTab({
     setProspecting(true);
     setProspectResult(null);
     try {
-      // Use posted/approved comments as source posts
-      const postedComments = comments.filter((c) => c.status === 'posted' || c.status === 'approved');
-      const posts = postedComments.slice(0, 10).map((c) => ({
-        postUrl: c.postUrl,
-        creatorName: c.profileName,
-      }));
+      // Use all scraped comments as source posts (dedup by postUrl)
+      const seenUrls = new Set<string>();
+      const posts: { postUrl: string; creatorName: string }[] = [];
+      for (const c of comments) {
+        if (!c.postUrl || seenUrls.has(c.postUrl)) continue;
+        seenUrls.add(c.postUrl);
+        posts.push({ postUrl: c.postUrl, creatorName: c.profileName });
+        if (posts.length >= 15) break;
+      }
       if (posts.length === 0) {
-        setProspectResult({ ok: false, error: 'No hay posts con comentarios aprobados/publicados' });
+        setProspectResult({ ok: false, error: 'No hay posts scrapeados. Lanza el scraper primero.' });
         setProspecting(false);
         return;
       }
@@ -659,6 +662,7 @@ function OverviewTab({
           }),
         });
         const processData = await processRes.json();
+        if (processData.error) throw new Error(processData.error);
         totalSaved += processData.saved || 0;
         offset = processData.nextOffset || (offset + 10);
         hasMore = processData.hasMore === true;

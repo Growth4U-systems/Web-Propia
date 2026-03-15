@@ -93,7 +93,17 @@ const LEAD_MAGNETS = [
 
 const LEAD_MAGNET_CONTEXT = LEAD_MAGNETS.map((lm) => `- "${lm.slug}": ${lm.tema} → ${lm.url}`).join('\n');
 
+// Track comment index to deterministically include lead magnets in ~1 of every 3
+let commentIndex = 0;
+
 async function generateComment(authorName: string, content: string): Promise<string> {
+  const includeResource = (commentIndex % 3) === 0; // every 3rd comment must include a resource
+  commentIndex++;
+
+  const resourceInstruction = includeResource
+    ? `IMPORTANTE: Este comentario DEBE incluir uno de los recursos de abajo. Elige el que mejor conecte con el tema del post. Cierra el comentario de forma natural mencionando "publicamos un recurso sobre esto" o "escribimos un framework que aborda esto" e incluye el link. No lo pongas como CTA agresivo, sino como aporte extra de valor.`
+    : `Si el post conecta claramente con alguno de estos recursos, puedes cerrar el comentario mencionando "publicamos algo sobre esto" e incluir el link. Si no hay conexión clara, haz un comentario puramente de valor sin link.`;
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -123,10 +133,10 @@ Reglas:
 - Si el post es en español, comenta en español
 - Empieza directamente con el comentario, sin explicación
 
-RECURSOS DISPONIBLES (solo usar si hay match NATURAL con el tema del post):
+RECURSOS DE GROWTH4U:
 ${LEAD_MAGNET_CONTEXT}
 
-Si el post trata un tema que conecta claramente con alguno de estos recursos, puedes cerrar el comentario de forma sutil mencionando que "publicamos algo sobre esto" o "escribimos un framework sobre este tema" e incluir el link. NO fuerces el recurso si no hay conexión clara. La mayoría de comentarios (~70%) deberían ser puramente de valor sin link.
+${resourceInstruction}
 
 Solo devuelve el comentario, nada más.`,
       }],
