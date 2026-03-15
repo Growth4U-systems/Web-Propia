@@ -38,19 +38,12 @@ export const COLORS = {
 // Trust Score Analyzer
 export const TRUST_SCORE_URL = '/trust-score/';
 
-// OG Image generator (Cloudinary text overlay on branded background)
+// OG Image generator — matches blog cover style (navy→teal gradient + title)
 export function generateOgImage(title: string): string {
   const t = encodeURIComponent(title);
   const CL = CLOUDINARY_CLOUD_NAME;
-  return [
-    `https://res.cloudinary.com/${CL}/image/upload`,
-    'w_1200,h_630,c_fill,e_colorize:100,co_rgb:032149',                    // navy base
-    'l_brand:growth4u-logo,w_80,h_80,c_fit,r_max,g_north_west,x_72,y_44', // logo top-left
-    'l_text:arial_28_bold:Growth4U,co_rgb:45b6f7,g_north_west,x_168,y_68', // brand name
-    `l_text:arial_60_bold_center:${t},co_white,g_west,x_72,y_30,w_1050,c_fit`, // title
-    'l_text:arial_24:growth4u.io,co_rgb:6351d5,g_south_west,x_72,y_44',   // url bottom-left
-    'sample',
-  ].join('/');
+  const fontSize = title.length > 60 ? 56 : title.length > 45 ? 64 : 72;
+  return `https://res.cloudinary.com/${CL}/image/upload/l_text:arial_${fontSize}_bold_center:${t},co_white,g_center,w_1000,c_fit/brand/og-gradient-bg-v2`;
 }
 
 // Social
