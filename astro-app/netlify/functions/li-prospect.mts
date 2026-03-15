@@ -92,27 +92,33 @@ async function saveCandidate(candidate: {
   sourcePostUrl: string; sourceCreatorName: string; interactionType: string;
   profileType: string; reason: string;
 }): Promise<boolean> {
+  // Ensure all values are strings (Firebase REST API requires stringValue to be a string)
+  const safe = (v: any) => String(v ?? '');
   const res = await fetch(`${FIREBASE_BASE}/li_candidates`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       fields: {
-        name: { stringValue: candidate.name },
-        title: { stringValue: candidate.title },
-        company: { stringValue: candidate.company },
-        linkedinUrl: { stringValue: candidate.linkedinUrl },
-        sourcePostUrl: { stringValue: candidate.sourcePostUrl },
-        sourceCreatorName: { stringValue: candidate.sourceCreatorName },
-        interactionType: { stringValue: candidate.interactionType },
-        profileType: { stringValue: candidate.profileType },
-        reason: { stringValue: candidate.reason },
+        name: { stringValue: safe(candidate.name) },
+        title: { stringValue: safe(candidate.title) },
+        company: { stringValue: safe(candidate.company) },
+        linkedinUrl: { stringValue: safe(candidate.linkedinUrl) },
+        sourcePostUrl: { stringValue: safe(candidate.sourcePostUrl) },
+        sourceCreatorName: { stringValue: safe(candidate.sourceCreatorName) },
+        interactionType: { stringValue: safe(candidate.interactionType) },
+        profileType: { stringValue: safe(candidate.profileType) },
+        reason: { stringValue: safe(candidate.reason) },
         status: { stringValue: 'pending' },
         createdAt: { timestampValue: new Date().toISOString() },
         updatedAt: { timestampValue: new Date().toISOString() },
       },
     }),
   });
-  return res.ok;
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '');
+    throw new Error(`Firebase save failed (${res.status}): ${errBody.slice(0, 200)}`);
+  }
+  return true;
 }
 
 async function getExistingUrls(): Promise<Set<string>> {
@@ -329,12 +335,8 @@ export default async (req: Request, _context: Context) => {
             reason,
           });
 
-          if (ok) {
-            saved++;
-            allExisting.add(cleanUrl);
-          } else {
-            errorDetails.push(`Failed to save ${person.name}`);
-          }
+          saved++;
+          allExisting.add(cleanUrl);
         } catch (e: any) {
           errorDetails.push(e.message || 'Unknown error');
         }
