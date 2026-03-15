@@ -71,7 +71,7 @@ const recentPosts = uniquePosts
 const heroPost = recentPosts[0];
 const subPosts = recentPosts.slice(1, 4);
 
-// Los más leídos: pillar pages (son los más visitados por ser guías)
+// Los más leídos: pillar pages
 const popularPosts = uniquePosts
   .filter(p => PILLAR_SLUGS.has(p.slug))
   .slice(0, 5);
@@ -95,24 +95,20 @@ function formatDate(dateStr: string) {
   title="Blog | Growth4U"
   description="Guías y estrategias de Growth para Fintech en España: growth hacking, outreach B2B, influencer marketing, unit economics, GEO y más."
 >
-  <!-- ── Blog Header (estilo MyInvestor) ──────────────────────────── -->
+  <!-- ── Blog Header ──────────────────────────────────────────────── -->
   <header class="blog-header fixed top-0 inset-x-0 z-50">
-    <!-- Barra superior: logo + búsqueda + CTA -->
     <div class="blog-header-gradient">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         <div class="flex items-center justify-between h-14">
           <a href="/" class="flex items-center cursor-pointer group flex-shrink-0">
             <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="133" height="20" class="h-5 md:h-6 w-auto object-contain brightness-0 invert transition-transform group-hover:scale-105" />
           </a>
-
           <div class="flex items-center gap-3">
-            <!-- Búsqueda toggle -->
             <button id="search-toggle" class="text-white/80 hover:text-white transition-colors p-2" aria-label="Buscar">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
             </button>
-            <!-- CTA -->
             <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
                class="hidden sm:inline-flex border-2 border-white text-white hover:bg-white hover:text-[#6351d5] font-bold py-1.5 px-5 rounded-full text-sm transition-all duration-300">
               Agenda tu demo
@@ -122,7 +118,6 @@ function formatDate(dateStr: string) {
       </div>
     </div>
 
-    <!-- Barra de categorías (siempre visible, scroll horizontal en mobile) -->
     <nav class="blog-header-gradient-sub">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
         <div class="flex items-center gap-1 h-10 overflow-x-auto" style="scrollbar-width:none;-ms-overflow-style:none;">
@@ -137,18 +132,13 @@ function formatDate(dateStr: string) {
       </div>
     </nav>
 
-    <!-- Barra de búsqueda expandible -->
     <div id="search-bar" class="hidden bg-white border-b border-slate-200 shadow-sm">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
-        <input
-          id="blog-search"
-          type="text"
-          placeholder="Buscar artículos..."
-          class="flex-1 text-base text-[#032149] placeholder-slate-400 outline-none bg-transparent"
-        />
+        <input id="blog-search" type="text" placeholder="Buscar artículos..."
+          class="flex-1 text-base text-[#032149] placeholder-slate-400 outline-none bg-transparent" />
         <button id="search-close" class="text-slate-400 hover:text-slate-600 p-1" aria-label="Cerrar búsqueda">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M6 18L18 6M6 6l12 12"/>
@@ -158,10 +148,13 @@ function formatDate(dateStr: string) {
     </div>
   </header>
 
-  <section class="pt-32 pb-24 px-4 bg-white">
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- CONTENIDO                                                        -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <main class="pt-28 pb-24 px-4 bg-slate-50">
     <div class="max-w-6xl mx-auto">
 
-      <!-- ── Resultados de búsqueda (oculto por defecto) ──────────────── -->
+      <!-- Resultados de búsqueda -->
       <div id="search-results" class="hidden mb-16">
         <div class="flex items-baseline gap-3 mb-6">
           <h2 class="text-xl font-bold text-[#032149]">Resultados</h2>
@@ -171,152 +164,128 @@ function formatDate(dateStr: string) {
         <div id="search-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       </div>
 
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <!-- NOVEDADES — hero (1 grande + 3 pequeños)                     -->
-      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- ── NOVEDADES ─────────────────────────────────────────────── -->
       {heroPost && (
-        <div class="mb-16" id="section-novedades">
-          <h2 class="text-2xl font-extrabold text-[#032149] mb-6 uppercase tracking-wide">Novedades</h2>
+        <section class="mb-12" id="section-novedades">
+          <h2 class="text-xl font-extrabold text-[#032149] mb-5 uppercase tracking-wide">Novedades</h2>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Post principal -->
-            <a href={`/blog/${heroPost.slug}/`} class="group/hero block rounded-xl overflow-hidden border border-slate-100 hover:shadow-xl transition-all duration-300">
-              <div class="aspect-[4/3] bg-slate-100 overflow-hidden">
-                {heroPost.image ? (
-                  <img src={heroPost.image} alt={heroPost.title} class="object-cover w-full h-full group-hover/hero:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
-                )}
-              </div>
-              <div class="p-6">
-                <span class="text-xs font-bold text-[#6351d5] uppercase tracking-wider">{heroPost.category}</span>
-                <h3 class="text-xl md:text-2xl font-extrabold text-[#032149] group-hover/hero:text-[#6351d5] transition-colors mt-2 mb-3 leading-tight">{heroPost.title}</h3>
-                <p class="text-slate-500 text-sm line-clamp-3 leading-relaxed">{heroPost.excerpt}</p>
+          <div class="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-5">
+            <!-- Hero post -->
+            <a href={`/blog/${heroPost.slug}/`} class="group/hero relative block rounded-2xl overflow-hidden bg-slate-200 aspect-[4/3] lg:aspect-auto lg:row-span-1">
+              {heroPost.image && (
+                <img src={heroPost.image} alt={heroPost.title} class="absolute inset-0 w-full h-full object-cover group-hover/hero:scale-105 transition-transform duration-500" />
+              )}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div class="absolute bottom-0 left-0 right-0 p-5 md:p-6">
+                <span class="inline-block text-[10px] font-bold text-white uppercase tracking-widest bg-[#6351d5] px-2 py-0.5 rounded mb-2">{heroPost.category}</span>
+                <h3 class="text-lg md:text-xl font-extrabold text-white leading-tight mb-1">{heroPost.title}</h3>
+                <p class="text-white/70 text-sm line-clamp-2 hidden md:block">{heroPost.excerpt}</p>
               </div>
             </a>
 
-            <!-- 3 posts secundarios -->
-            <div class="flex flex-col gap-4">
+            <!-- 3 sub-posts en columna -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
               {subPosts.map((post) => (
-                <a href={`/blog/${post.slug}/`} class="group/sub flex gap-4 rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg transition-all duration-300 p-3">
-                  <div class="flex-shrink-0 w-32 h-24 rounded-lg overflow-hidden bg-slate-100">
-                    {post.image ? (
-                      <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/sub:scale-105 transition-transform duration-500" loading="lazy" />
-                    ) : (
-                      <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
-                    )}
-                  </div>
-                  <div class="flex flex-col justify-center min-w-0">
-                    <span class="text-xs font-bold text-[#6351d5] uppercase tracking-wider">{post.category}</span>
-                    <h3 class="font-bold text-[#032149] group-hover/sub:text-[#6351d5] transition-colors line-clamp-2 leading-snug mt-1">{post.title}</h3>
-                    <span class="text-slate-400 text-xs mt-1">{formatDate(post.createdAt)}</span>
+                <a href={`/blog/${post.slug}/`} class="group/sub relative block rounded-xl overflow-hidden bg-slate-200 aspect-[16/9] lg:aspect-[3/1]">
+                  {post.image && (
+                    <img src={post.image} alt={post.title} class="absolute inset-0 w-full h-full object-cover group-hover/sub:scale-105 transition-transform duration-500" loading="lazy" />
+                  )}
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div class="absolute bottom-0 left-0 right-0 p-4">
+                    <span class="inline-block text-[10px] font-bold text-white uppercase tracking-widest bg-[#6351d5] px-2 py-0.5 rounded mb-1">{post.category}</span>
+                    <h3 class="font-bold text-white text-sm leading-snug line-clamp-2">{post.title}</h3>
                   </div>
                 </a>
               ))}
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <!-- DESTACADOS — layout 2 columnas con sidebar                   -->
-      <!-- ══════════════════════════════════════════════════════════════ -->
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-10 mb-16">
+      <!-- ── DESTACADOS: contenido + sidebar ───────────────────────── -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
 
-        <!-- Columna principal: secciones por categoría -->
+        <!-- Columna principal -->
         <div id="sections-container">
           {SECTIONS.map((section) => {
             const sectionPosts = postsForSection(section.key);
             if (sectionPosts.length === 0) return null;
             const isGuias = section.key === 'guias';
             return (
-              <div id={`section-${section.key}`} class="mb-14 section-block scroll-mt-32" data-section={section.key}>
-                <!-- Cabecera sección -->
+              <div id={`section-${section.key}`} class="mb-12 section-block scroll-mt-32" data-section={section.key}>
                 <div class="mb-5">
-                  <h2 class="text-2xl font-extrabold text-[#032149]">{section.label}</h2>
+                  <h2 class="text-xl font-extrabold text-[#032149] uppercase tracking-wide">{section.label}</h2>
                   <p class="text-xs font-bold text-slate-400 tracking-widest uppercase mt-0.5">{section.sub}</p>
                 </div>
 
                 {isGuias ? (
-                  /* Guías completas: carrusel horizontal */
+                  /* Guías: carrusel */
                   <div class="relative group/carousel">
-                    <button
-                      class="carousel-prev absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-[#032149] hover:bg-[#6351d5] hover:text-white hover:border-[#6351d5] transition-all opacity-0 group-hover/carousel:opacity-100 disabled:opacity-0"
-                      aria-label="anterior"
-                    >
+                    <button class="carousel-prev absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-[#032149] hover:bg-[#6351d5] hover:text-white hover:border-[#6351d5] transition-all opacity-0 group-hover/carousel:opacity-100" aria-label="anterior">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
                     </button>
-                    <div class="carousel-track flex gap-6 overflow-x-auto pb-2 scroll-smooth" style="scrollbar-width:none;-ms-overflow-style:none;">
+                    <div class="carousel-track flex gap-4 overflow-x-auto pb-2 scroll-smooth" style="scrollbar-width:none;-ms-overflow-style:none;">
                       {sectionPosts.map((post) => (
-                        <a
-                          href={`/blog/${post.slug}/`}
-                          data-title={post.title.toLowerCase()}
-                          data-excerpt={(post.excerpt || '').toLowerCase()}
-                          class="post-card flex-none w-[calc(50%-12px)] min-w-[260px] bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg transition-all duration-300 group/card"
-                        >
-                          <div class="relative aspect-video bg-slate-100 overflow-hidden">
+                        <a href={`/blog/${post.slug}/`}
+                           data-title={post.title.toLowerCase()}
+                           data-excerpt={(post.excerpt || '').toLowerCase()}
+                           class="post-card flex-none w-64 bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg transition-all duration-300 group/card">
+                          <div class="aspect-video bg-slate-100 overflow-hidden">
                             {post.image ? (
                               <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
                             ) : (
                               <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1] flex items-center justify-center">
-                                <span class="text-white/30 text-5xl font-black">{section.label.charAt(0)}</span>
+                                <span class="text-white/30 text-4xl font-black">G</span>
                               </div>
                             )}
                           </div>
-                          <div class="p-5">
-                            <h3 class="font-bold text-[#032149] group-hover/card:text-[#6351d5] transition-colors mb-2 line-clamp-2 leading-snug">{post.title}</h3>
-                            <p class="text-slate-500 text-sm line-clamp-3 leading-relaxed mb-4">{post.excerpt}</p>
-                            <div class="flex items-center justify-between">
-                              <span class="text-[#6351d5] text-sm font-semibold hover:underline">Leer más</span>
-                              <span class="text-slate-400 text-xs">{formatDate(post.createdAt)}</span>
-                            </div>
+                          <div class="p-4">
+                            <h3 class="font-bold text-sm text-[#032149] group-hover/card:text-[#6351d5] transition-colors mb-1 line-clamp-2 leading-snug">{post.title}</h3>
+                            <p class="text-slate-500 text-xs line-clamp-2 leading-relaxed mb-3">{post.excerpt}</p>
+                            <span class="text-[#6351d5] text-xs font-semibold">Leer más</span>
                           </div>
                         </a>
                       ))}
                     </div>
-                    <button
-                      class="carousel-next absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-[#032149] hover:bg-[#6351d5] hover:text-white hover:border-[#6351d5] transition-all opacity-0 group-hover/carousel:opacity-100 disabled:opacity-0"
-                      aria-label="siguiente"
-                    >
+                    <button class="carousel-next absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-[#032149] hover:bg-[#6351d5] hover:text-white hover:border-[#6351d5] transition-all opacity-0 group-hover/carousel:opacity-100" aria-label="siguiente">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
                     </button>
                   </div>
                 ) : (
-                  /* Categorías: grid visible con "Ver más" */
+                  /* Categorías: grid 2 col */
                   <div class="section-grid">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       {sectionPosts.map((post, i) => (
-                        <a
-                          href={`/blog/${post.slug}/`}
-                          data-title={post.title.toLowerCase()}
-                          data-excerpt={(post.excerpt || '').toLowerCase()}
-                          class:list={[
-                            'post-card bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg transition-all duration-300 group/card',
-                            i >= 6 && 'hidden extra-card',
-                          ]}
-                        >
-                          <div class="relative aspect-video bg-slate-100 overflow-hidden">
+                        <a href={`/blog/${post.slug}/`}
+                           data-title={post.title.toLowerCase()}
+                           data-excerpt={(post.excerpt || '').toLowerCase()}
+                           class:list={[
+                             'post-card bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg transition-all duration-300 group/card',
+                             i >= 6 && 'hidden extra-card',
+                           ]}>
+                          <div class="aspect-video bg-slate-100 overflow-hidden">
                             {post.image ? (
                               <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
                             ) : (
                               <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1] flex items-center justify-center">
-                                <span class="text-white/30 text-5xl font-black">{section.label.charAt(0)}</span>
+                                <span class="text-white/30 text-4xl font-black">{section.label.charAt(0)}</span>
                               </div>
                             )}
                           </div>
-                          <div class="p-5">
-                            <h3 class="font-bold text-[#032149] group-hover/card:text-[#6351d5] transition-colors mb-2 line-clamp-2 leading-snug">{post.title}</h3>
-                            <p class="text-slate-500 text-sm line-clamp-3 leading-relaxed mb-4">{post.excerpt}</p>
+                          <div class="p-4">
+                            <span class="text-[10px] font-bold text-[#6351d5] uppercase tracking-widest">{post.category}</span>
+                            <h3 class="font-bold text-[#032149] group-hover/card:text-[#6351d5] transition-colors mb-1 line-clamp-2 leading-snug mt-1">{post.title}</h3>
+                            <p class="text-slate-500 text-xs line-clamp-2 leading-relaxed mb-3">{post.excerpt}</p>
                             <div class="flex items-center justify-between">
-                              <span class="text-[#6351d5] text-sm font-semibold hover:underline">Leer más</span>
-                              <span class="text-slate-400 text-xs">{formatDate(post.createdAt)}</span>
+                              <span class="text-[#6351d5] text-xs font-semibold">Leer más</span>
+                              <span class="text-slate-400 text-[11px]">{formatDate(post.createdAt)}</span>
                             </div>
                           </div>
                         </a>
                       ))}
                     </div>
                     {sectionPosts.length > 6 && (
-                      <div class="text-center mt-6">
+                      <div class="text-center mt-5">
                         <button class="show-more-btn text-[#6351d5] font-semibold text-sm hover:underline">
                           Ver todos ({sectionPosts.length} artículos)
                         </button>
@@ -329,16 +298,16 @@ function formatDate(dateStr: string) {
           })}
         </div>
 
-        <!-- ── Sidebar ──────────────────────────────────────────────── -->
+        <!-- ── Sidebar ────────────────────────────────────────────── -->
         <aside class="hidden lg:block">
-          <div class="sticky top-32 space-y-8">
+          <div class="sticky top-28 space-y-6">
 
             <!-- Artículos más leídos -->
-            <div>
-              <div class="bg-[#6351d5] text-white text-center font-bold py-3 px-4 rounded-t-xl text-sm">
+            <div class="rounded-xl overflow-hidden shadow-sm">
+              <div class="bg-[#6351d5] text-white text-center font-bold py-2.5 px-4 text-sm">
                 Artículos más leídos
               </div>
-              <div class="border border-t-0 border-slate-200 rounded-b-xl divide-y divide-slate-100">
+              <div class="bg-white divide-y divide-slate-100">
                 {popularPosts.map((post) => (
                   <a href={`/blog/${post.slug}/`} class="block px-4 py-3 hover:bg-slate-50 transition-colors group/pop">
                     <p class="font-semibold text-sm text-[#032149] group-hover/pop:text-[#6351d5] transition-colors line-clamp-2 leading-snug">{post.title}</p>
@@ -348,30 +317,30 @@ function formatDate(dateStr: string) {
               </div>
             </div>
 
-            <!-- Recursos gratuitos (Lead Magnets) -->
-            <div>
-              <div class="bg-[#0faec1] text-white text-center font-bold py-3 px-4 rounded-t-xl text-sm">
+            <!-- Recursos gratuitos -->
+            <div class="rounded-xl overflow-hidden shadow-sm">
+              <div class="bg-[#0faec1] text-white text-center font-bold py-2.5 px-4 text-sm">
                 Recursos gratuitos
               </div>
-              <div class="border border-t-0 border-slate-200 rounded-b-xl divide-y divide-slate-100">
+              <div class="bg-white divide-y divide-slate-100">
                 {LEAD_MAGNETS.slice(0, 4).map((lm) => (
                   <a href={`/recursos/${lm.slug}/`} class="block px-4 py-3 hover:bg-slate-50 transition-colors group/lm">
                     <p class="font-semibold text-sm text-[#032149] group-hover/lm:text-[#0faec1] transition-colors leading-snug">{lm.title}</p>
                     <p class="text-slate-400 text-xs mt-0.5 line-clamp-1">{lm.desc}</p>
                   </a>
                 ))}
-                <a href="/recursos/" class="block px-4 py-3 text-center text-[#0faec1] text-sm font-semibold hover:underline">
+                <a href="/recursos/" class="block px-4 py-2.5 text-center text-[#0faec1] text-xs font-semibold hover:underline">
                   Ver todos los recursos
                 </a>
               </div>
             </div>
 
-            <!-- CTA Demo -->
-            <div class="bg-gradient-to-br from-[#032149] to-[#6351d5] rounded-xl p-6 text-center">
-              <p class="text-white font-bold text-lg mb-2">¿Listo para escalar?</p>
-              <p class="text-white/70 text-sm mb-4">Agenda una consulta estratégica gratuita de 30 min.</p>
+            <!-- CTA -->
+            <div class="bg-gradient-to-br from-[#032149] to-[#6351d5] rounded-xl p-5 text-center">
+              <p class="text-white font-bold mb-1">¿Listo para escalar?</p>
+              <p class="text-white/60 text-xs mb-4">Consulta estratégica gratuita de 30 min.</p>
               <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
-                 class="inline-block bg-white text-[#6351d5] font-bold py-2 px-6 rounded-full text-sm hover:shadow-lg transition-all">
+                 class="inline-block bg-white text-[#6351d5] font-bold py-2 px-5 rounded-full text-sm hover:shadow-lg transition-all">
                 Agenda tu demo
               </a>
             </div>
@@ -380,41 +349,36 @@ function formatDate(dateStr: string) {
         </aside>
 
       </div>
-
     </div>
-  </section>
+  </main>
 
   <Footer t={t} bookingLink={BOOKING_LINK} />
 
   <script>
-    // ── Carruseles (solo Guías completas) ─────────────────────────────────
+    // ── Carruseles ──────────────────────────────────────────────────────
     document.querySelectorAll<HTMLElement>('.relative.group\\/carousel').forEach(wrapper => {
       const track = wrapper.querySelector<HTMLElement>('.carousel-track')!;
       const prev  = wrapper.querySelector<HTMLButtonElement>('.carousel-prev')!;
       const next  = wrapper.querySelector<HTMLButtonElement>('.carousel-next')!;
-
       const scroll = (dir: number) => {
         const card = track.querySelector<HTMLElement>('.post-card');
-        const step = card ? card.offsetWidth + 24 : 320;
+        const step = card ? card.offsetWidth + 16 : 272;
         track.scrollBy({ left: dir * step, behavior: 'smooth' });
       };
-
       prev?.addEventListener('click', () => scroll(-1));
       next?.addEventListener('click', () => scroll(1));
     });
 
-    // ── "Ver más" en grids de categoría ───────────────────────────────────
+    // ── "Ver más" ───────────────────────────────────────────────────────
     document.querySelectorAll<HTMLButtonElement>('.show-more-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const grid = btn.closest('.section-grid')!;
-        grid.querySelectorAll<HTMLElement>('.extra-card').forEach(card => {
-          card.classList.remove('hidden');
-        });
+        grid.querySelectorAll<HTMLElement>('.extra-card').forEach(c => c.classList.remove('hidden'));
         btn.closest('div')!.remove();
       });
     });
 
-    // ── Búsqueda expandible ─────────────────────────────────────────────
+    // ── Búsqueda ────────────────────────────────────────────────────────
     const searchToggle = document.getElementById('search-toggle')!;
     const searchBar    = document.getElementById('search-bar')!;
     const searchClose  = document.getElementById('search-close')!;
@@ -427,36 +391,22 @@ function formatDate(dateStr: string) {
 
     searchToggle.addEventListener('click', () => {
       searchBar.classList.toggle('hidden');
-      if (!searchBar.classList.contains('hidden')) {
-        input.focus();
-      }
+      if (!searchBar.classList.contains('hidden')) input.focus();
     });
+    searchClose.addEventListener('click', () => { searchBar.classList.add('hidden'); clearSearch(); });
 
-    searchClose.addEventListener('click', () => {
-      searchBar.classList.add('hidden');
-      clearSearch();
-    });
-
-    const allCards = Array.from(
-      document.querySelectorAll<HTMLElement>('#sections-container .post-card')
-    );
+    const allCards = Array.from(document.querySelectorAll<HTMLElement>('#sections-container .post-card'));
 
     function doSearch() {
       const q = input.value.trim().toLowerCase();
       if (!q) { clearSearch(); return; }
-
-      const matches = allCards.filter(card =>
-        (card.dataset.title || '').includes(q) ||
-        (card.dataset.excerpt || '').includes(q)
-      );
-
+      const matches = allCards.filter(c => (c.dataset.title||'').includes(q) || (c.dataset.excerpt||'').includes(q));
       searchGrid.innerHTML = '';
-      matches.forEach(card => {
-        const clone = card.cloneNode(true) as HTMLElement;
-        clone.classList.remove('flex-none', 'w-[calc(50%-12px)]', 'min-w-[260px]', 'hidden', 'extra-card');
+      matches.forEach(c => {
+        const clone = c.cloneNode(true) as HTMLElement;
+        clone.classList.remove('flex-none', 'w-64', 'hidden', 'extra-card');
         searchGrid.appendChild(clone);
       });
-
       countEl.textContent = `${matches.length} resultado${matches.length !== 1 ? 's' : ''}`;
       resultsBox.classList.remove('hidden');
       sectionsBox.classList.add('hidden');
@@ -469,43 +419,31 @@ function formatDate(dateStr: string) {
     }
 
     input.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-    input.addEventListener('input', () => {
-      if (!input.value) clearSearch();
-      else doSearch();
-    });
-    clearBtn.addEventListener('click', () => {
-      clearSearch();
-      searchBar.classList.add('hidden');
-    });
+    input.addEventListener('input', () => { if (!input.value) clearSearch(); else doSearch(); });
+    clearBtn.addEventListener('click', () => { clearSearch(); searchBar.classList.add('hidden'); });
 
-    // ── Active category highlight on scroll ─────────────────────────────
+    // ── Active category on scroll ───────────────────────────────────────
     const catLinks = document.querySelectorAll<HTMLAnchorElement>('.blog-cat-link');
     const sectionEls = document.querySelectorAll<HTMLElement>('.section-block');
-
-    const observer = new IntersectionObserver((entries) => {
+    const obs = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           const key = (entry.target as HTMLElement).dataset.section;
           catLinks.forEach(link => {
-            if (link.dataset.section === key) {
-              link.classList.add('bg-white/20', 'text-white');
-              link.classList.remove('text-white/80');
-            } else {
-              link.classList.remove('bg-white/20', 'text-white');
-              link.classList.add('text-white/80');
-            }
+            const match = link.dataset.section === key;
+            link.classList.toggle('bg-white/20', match);
+            link.classList.toggle('text-white', match);
+            link.classList.toggle('text-white/80', !match);
           });
         }
       });
     }, { rootMargin: '-30% 0px -60% 0px' });
-
-    sectionEls.forEach(el => observer.observe(el));
+    sectionEls.forEach(el => obs.observe(el));
   </script>
 
   <style>
     .carousel-track::-webkit-scrollbar { display: none; }
     .blog-header-gradient-sub div::-webkit-scrollbar { display: none; }
-
     .blog-header-gradient {
       background: linear-gradient(135deg, #6351d5 0%, #3f45fe 40%, #45b6f7 75%, #0faec1 100%);
     }
