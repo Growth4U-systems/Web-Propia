@@ -164,47 +164,26 @@ function formatDate(dateStr: string) {
         <div id="search-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       </div>
 
-      <!-- ── NOVEDADES ─────────────────────────────────────────────── -->
-      {heroPost && (
+      <!-- ── NOVEDADES — grid 4 cards iguales ────────────────────── -->
+      {recentPosts.length > 0 && (
         <section class="mb-10" id="section-novedades">
           <h2 class="text-lg font-extrabold text-[#032149] mb-4 uppercase tracking-wide">Novedades</h2>
-
-          <div class="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-5">
-            <!-- Hero post: imagen + card blanca debajo -->
-            <a href={`/blog/${heroPost.slug}/`} class="group/hero block rounded-xl overflow-hidden bg-white border border-slate-100 hover:shadow-lg transition-all duration-300">
-              <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
-                {heroPost.image ? (
-                  <img src={heroPost.image} alt={heroPost.title} class="object-cover w-full h-full group-hover/hero:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
-                )}
-              </div>
-              <div class="p-4">
-                <span class="text-[10px] font-bold text-[#6351d5] uppercase tracking-widest">{heroPost.category}</span>
-                <h3 class="text-base font-extrabold text-[#032149] group-hover/hero:text-[#6351d5] transition-colors leading-snug mt-1 line-clamp-2">{heroPost.title}</h3>
-                <p class="text-slate-500 text-xs line-clamp-2 mt-1">{heroPost.excerpt}</p>
-              </div>
-            </a>
-
-            <!-- 3 sub-posts: fila horizontal con thumbnail + texto -->
-            <div class="flex flex-col gap-3">
-              {subPosts.map((post) => (
-                <a href={`/blog/${post.slug}/`} class="group/sub flex gap-3 bg-white rounded-lg border border-slate-100 hover:shadow-md transition-all duration-300 p-2.5">
-                  <div class="flex-shrink-0 w-28 h-20 rounded-md overflow-hidden bg-slate-100">
-                    {post.image ? (
-                      <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/sub:scale-105 transition-transform duration-500" loading="lazy" />
-                    ) : (
-                      <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
-                    )}
-                  </div>
-                  <div class="flex flex-col justify-center min-w-0">
-                    <span class="text-[10px] font-bold text-[#6351d5] uppercase tracking-widest">{post.category}</span>
-                    <h3 class="font-bold text-sm text-[#032149] group-hover/sub:text-[#6351d5] transition-colors line-clamp-2 leading-snug mt-0.5">{post.title}</h3>
-                    <span class="text-slate-400 text-[11px] mt-1">{formatDate(post.createdAt)}</span>
-                  </div>
-                </a>
-              ))}
-            </div>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {recentPosts.map((post) => (
+              <a href={`/blog/${post.slug}/`} class="group/nov block bg-white rounded-lg overflow-hidden border border-slate-100 hover:shadow-md transition-all duration-300">
+                <div class="aspect-[4/3] bg-slate-100 overflow-hidden">
+                  {post.image ? (
+                    <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/nov:scale-105 transition-transform duration-500" loading="lazy" />
+                  ) : (
+                    <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
+                  )}
+                </div>
+                <div class="p-3">
+                  <span class="text-[10px] font-bold text-[#6351d5] uppercase tracking-widest">{post.category}</span>
+                  <h3 class="font-bold text-sm text-[#032149] group-hover/nov:text-[#6351d5] transition-colors line-clamp-2 leading-snug mt-0.5">{post.title}</h3>
+                </div>
+              </a>
+            ))}
           </div>
         </section>
       )}
@@ -256,28 +235,27 @@ function formatDate(dateStr: string) {
                     </button>
                   </div>
                 ) : (
-                  /* Categorías: filas horizontales compactas */
+                  /* Categorías: grid 2 col de cards pequeñas */
                   <div class="section-grid">
-                    <div class="flex flex-col gap-3">
+                    <div class="grid grid-cols-2 gap-4">
                       {sectionPosts.map((post, i) => (
                         <a href={`/blog/${post.slug}/`}
                            data-title={post.title.toLowerCase()}
                            data-excerpt={(post.excerpt || '').toLowerCase()}
                            class:list={[
-                             'post-card flex gap-3 bg-white rounded-lg border border-slate-100 hover:shadow-md transition-all duration-300 p-2.5 group/card',
+                             'post-card bg-white rounded-lg overflow-hidden border border-slate-100 hover:shadow-md transition-all duration-300 group/card',
                              i >= 6 && 'hidden extra-card',
                            ]}>
-                          <div class="flex-shrink-0 w-28 h-20 rounded-md overflow-hidden bg-slate-100">
+                          <div class="aspect-[4/3] bg-slate-100 overflow-hidden">
                             {post.image ? (
                               <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
                             ) : (
                               <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
                             )}
                           </div>
-                          <div class="flex flex-col justify-center min-w-0">
+                          <div class="p-3">
                             <span class="text-[10px] font-bold text-[#6351d5] uppercase tracking-widest">{post.category}</span>
                             <h3 class="font-bold text-sm text-[#032149] group-hover/card:text-[#6351d5] transition-colors line-clamp-2 leading-snug mt-0.5">{post.title}</h3>
-                            <p class="text-slate-400 text-xs line-clamp-1 mt-0.5">{post.excerpt}</p>
                           </div>
                         </a>
                       ))}
