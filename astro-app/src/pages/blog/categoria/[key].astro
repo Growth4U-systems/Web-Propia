@@ -7,6 +7,10 @@ import { BOOKING_LINK } from '../../../lib/constants';
 
 const t = getTranslations('es');
 
+export function getStaticPaths() {
+  return ['guias', 'Growth', 'Marketing', 'GEO', 'Estrategia', 'Producto'].map(key => ({ params: { key } }));
+}
+
 // Definición de categorías con descripción para el hero
 const CATEGORIES: Record<string, { label: string; description: string }> = {
   guias: {
@@ -61,10 +65,6 @@ const NAV_SECTIONS = [
   { key: 'Estrategia', label: 'Estrategia' },
   { key: 'Producto', label: 'Producto' },
 ];
-
-export function getStaticPaths() {
-  return Object.keys(CATEGORIES).map(key => ({ params: { key } }));
-}
 
 const { key } = Astro.params;
 const cat = CATEGORIES[key!];
