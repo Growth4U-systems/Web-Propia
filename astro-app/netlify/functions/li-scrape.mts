@@ -158,24 +158,27 @@ Solo devuelve el comentario en ${postLang}, nada más.`,
 async function saveComment(comment: {
   profileName: string; profileUrl: string; profileTitle: string;
   postUrl: string; postSnippet: string; commentDraft: string; commentType: string;
+  postDate?: string;
 }) {
+  const fields: Record<string, any> = {
+    profileName: { stringValue: comment.profileName },
+    profileUrl: { stringValue: comment.profileUrl },
+    profileTitle: { stringValue: comment.profileTitle || '' },
+    postUrl: { stringValue: comment.postUrl },
+    postSnippet: { stringValue: comment.postSnippet },
+    commentDraft: { stringValue: comment.commentDraft },
+    commentType: { stringValue: comment.commentType },
+    status: { stringValue: 'pending' },
+    createdAt: { timestampValue: new Date().toISOString() },
+    updatedAt: { timestampValue: new Date().toISOString() },
+  };
+  if (comment.postDate) {
+    fields.postDate = { stringValue: comment.postDate };
+  }
   const res = await fetch(`${FIREBASE_BASE}/li_comments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fields: {
-        profileName: { stringValue: comment.profileName },
-        profileUrl: { stringValue: comment.profileUrl },
-        profileTitle: { stringValue: comment.profileTitle || '' },
-        postUrl: { stringValue: comment.postUrl },
-        postSnippet: { stringValue: comment.postSnippet },
-        commentDraft: { stringValue: comment.commentDraft },
-        commentType: { stringValue: comment.commentType },
-        status: { stringValue: 'pending' },
-        createdAt: { timestampValue: new Date().toISOString() },
-        updatedAt: { timestampValue: new Date().toISOString() },
-      },
-    }),
+    body: JSON.stringify({ fields }),
   });
   return res.ok;
 }
@@ -314,6 +317,9 @@ export default async (req: Request, _context: Context) => {
             continue;
           }
 
+          // Extract post date from Apify data
+          const postDate = post.postedAt?.date || '';
+
           const ok = await saveComment({
             profileName: authorName,
             profileUrl: authorUrl,
@@ -322,6 +328,7 @@ export default async (req: Request, _context: Context) => {
             postSnippet: content.slice(0, 300),
             commentDraft,
             commentType: creator?.category === 'VC' ? 'authority' : creator?.category === 'Founder' ? 'founder' : creator?.category === 'Growth' ? 'growth' : 'outbound',
+            postDate,
           });
 
           if (ok) saved++;

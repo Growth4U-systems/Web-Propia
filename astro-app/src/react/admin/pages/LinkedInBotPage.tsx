@@ -534,8 +534,20 @@ function OverviewTab({
   const [slackSent, setSlackSent] = useState<'ok' | 'error' | null>(null);
   const [scraping, setScraping] = useState(false);
   const [scrapeResult, setScrapeResult] = useState<{ ok: boolean; saved?: number; totalPosts?: number; error?: string } | null>(null);
-  const [prospecting, setProspecting] = useState(false);
-  const [prospectResult, setProspectResult] = useState<{ ok: boolean; candidatesSaved?: number; error?: string } | null>(null);
+  const [prospecting, setProspecting] = useState(() => localStorage.getItem('li_prospecting') === 'true');
+  const [prospectResult, setProspectResult] = useState<{ ok: boolean; candidatesSaved?: number; error?: string } | null>(() => {
+    // If was prospecting but page reloaded, clear stale state
+    if (localStorage.getItem('li_prospecting') === 'true') {
+      const started = parseInt(localStorage.getItem('li_prospecting_start') || '0', 10);
+      if (Date.now() - started > 10 * 60 * 1000) {
+        // More than 10 min — assume it finished or failed
+        localStorage.removeItem('li_prospecting');
+        localStorage.removeItem('li_prospecting_start');
+        return null;
+      }
+    }
+    return null;
+  });
 
   async function handleSendSlack() {
     setSlackSending(true);
@@ -604,6 +616,8 @@ function OverviewTab({
   async function handleProspectScan() {
     setProspecting(true);
     setProspectResult(null);
+    localStorage.setItem('li_prospecting', 'true');
+    localStorage.setItem('li_prospecting_start', String(Date.now()));
     try {
       // Use all scraped comments as source posts (dedup by postUrl), include comment draft
       const seenUrls = new Set<string>();
@@ -681,6 +695,8 @@ function OverviewTab({
       setProspectResult({ ok: false, error: err.message });
     }
     setProspecting(false);
+    localStorage.removeItem('li_prospecting');
+    localStorage.removeItem('li_prospecting_start');
   }
 
   const stats = [
@@ -967,6 +983,11 @@ function CommentsTab({
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[c.status]}`}>
                       {statusLabels[c.status]}
                     </span>
+                    {(c as any).postDate && (
+                      <span className="text-xs text-slate-400">
+                        {new Date((c as any).postDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-slate-400 mb-2">{c.profileTitle}</p>
 

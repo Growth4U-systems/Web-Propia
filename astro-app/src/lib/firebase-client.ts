@@ -558,6 +558,7 @@ export interface LIComment {
   commentDraft: string;
   commentType: 'outbound' | 'authority' | 'growth' | 'founder';
   status: 'pending' | 'approved' | 'rejected' | 'posted';
+  postDate?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
