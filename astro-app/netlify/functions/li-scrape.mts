@@ -304,6 +304,9 @@ export default async (req: Request, _context: Context) => {
           const authorTitle = post.author?.title || '';
           const creator = findCreator(authorUrl);
 
+          // Skip posts from authors not in our Creator Network
+          if (!creator) { skipped++; continue; }
+
           const commentDraft = await generateComment(authorName, content);
           if (!commentDraft) {
             errorDetails.push(`Empty comment for ${authorName}`);

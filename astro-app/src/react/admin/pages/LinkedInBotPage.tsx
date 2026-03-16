@@ -292,7 +292,7 @@ export default function LinkedInBotPage() {
       outreachMessage: '',
       connectionMessage: '',
       tags: ['from-candidate'],
-      notes: `Detectado via ${candidate.interactionType} en post de ${candidate.sourceCreatorName}. ${candidate.reason}${candidate.sourceCommentDraft ? `\n\nNuestro comentario: ${candidate.sourceCommentDraft}` : ''}`,
+      notes: `Detectado via ${candidate.interactionType} en post de ${candidate.sourceCreatorName}. ${candidate.reason}${candidate.sourceCommentDraft ? `\n\nPost fuente: ${candidate.sourceCommentDraft.slice(0, 300)}` : ''}`,
     });
     await updateLICandidate(id, { status: 'approved' });
     setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'approved' as const } : c)));
@@ -611,7 +611,7 @@ function OverviewTab({
       for (const c of comments) {
         if (!c.postUrl || seenUrls.has(c.postUrl)) continue;
         seenUrls.add(c.postUrl);
-        posts.push({ postUrl: c.postUrl, creatorName: c.profileName, commentDraft: c.commentDraft || '' });
+        posts.push({ postUrl: c.postUrl, creatorName: c.profileName, postSnippet: c.postSnippet || '' });
         if (posts.length >= 15) break;
       }
       if (posts.length === 0) {
@@ -1134,9 +1134,42 @@ function CandidatesTab({
                     {c.reason && <span className="text-[#6351d5] font-medium">• {c.reason}</span>}
                   </div>
                   {c.sourceCommentDraft && (
-                    <div className="mt-2 p-2 bg-purple-50 border border-purple-100 rounded-lg text-xs text-slate-600">
-                      <span className="text-[#6351d5] font-medium">Nuestro comentario:</span> {c.sourceCommentDraft}
+                    <div className="mt-2 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-600">
+                      <span className="text-slate-500 font-medium">Post con el que interactuó:</span> {c.sourceCommentDraft.slice(0, 200)}{c.sourceCommentDraft.length > 200 ? '...' : ''}
                     </div>
+                  )}
+                  {(c as any).dmDraft ? (
+                    <div className="mt-2 p-2 bg-purple-50 border border-purple-100 rounded-lg text-xs text-slate-600">
+                      <span className="text-[#6351d5] font-medium">DM sugerido:</span> {(c as any).dmDraft}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/.netlify/functions/li-scrape?action=connection-msg', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              name: c.name,
+                              title: c.title,
+                              company: c.company,
+                              notes: `Interactuó (${c.interactionType}) con un post de ${c.sourceCreatorName}. ${c.sourceCommentDraft ? `Contenido del post: ${c.sourceCommentDraft.slice(0, 500)}` : ''}`,
+                              painPoints: c.reason,
+                            }),
+                          });
+                          const data = await res.json();
+                          if (data.message) {
+                            await updateLICandidate(c.id, { dmDraft: data.message } as any);
+                            setCandidates((prev) => prev.map((x) => x.id === c.id ? { ...x, dmDraft: data.message } as any : x));
+                          }
+                        } catch (err) {
+                          console.error('Error generating DM:', err);
+                        }
+                      }}
+                      className="mt-2 flex items-center gap-1 text-xs text-[#6351d5] hover:underline"
+                    >
+                      <Sparkles className="w-3 h-3" /> Generar DM personalizado
+                    </button>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">

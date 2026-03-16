@@ -256,7 +256,7 @@ export default async (req: Request, _context: Context) => {
       const body = await req.json().catch(() => ({}));
       const reactionsDatasetId = (body as any)?.reactionsDatasetId;
       const commentsDatasetId = (body as any)?.commentsDatasetId;
-      const postsData: { postUrl: string; creatorName: string; commentDraft?: string }[] = (body as any)?.postsData || [];
+      const postsData: { postUrl: string; creatorName: string; postSnippet?: string; commentDraft?: string }[] = (body as any)?.postsData || [];
       const offset = (body as any)?.offset || 0;
       const batchSize = 10;
 
@@ -267,7 +267,8 @@ export default async (req: Request, _context: Context) => {
       // Normalize URLs for matching (remove trailing slashes, lowercase)
       const normalizeUrl = (u: string) => u.replace(/\/+$/, '').toLowerCase();
       const creatorMap = new Map(postsData.map((p) => [normalizeUrl(p.postUrl), p.creatorName]));
-      const commentMap = new Map(postsData.filter((p) => p.commentDraft).map((p) => [normalizeUrl(p.postUrl), p.commentDraft!]));
+      // Map post URL → post content snippet (prefer postSnippet, fallback to commentDraft for backwards compat)
+      const snippetMap = new Map(postsData.filter((p) => p.postSnippet || p.commentDraft).map((p) => [normalizeUrl(p.postUrl), (p.postSnippet || p.commentDraft)!]));
       const postUrls = postsData.map((p) => p.postUrl);
 
       // Fuzzy lookup: try exact match, then check if either URL contains the other
@@ -280,7 +281,7 @@ export default async (req: Request, _context: Context) => {
         return fallback;
       };
       const findCreator = (postUrl: string) => findInMap(postUrl, creatorMap, 'Unknown');
-      const findComment = (postUrl: string) => findInMap(postUrl, commentMap, '');
+      const findSnippet = (postUrl: string) => findInMap(postUrl, snippetMap, '');
 
       // Fetch all reactions + comments from Apify datasets
       const [reactionsItems, commentsItems] = await Promise.all([
@@ -364,7 +365,7 @@ export default async (req: Request, _context: Context) => {
             location: person.location,
             sourcePostUrl: postUrl,
             sourceCreatorName: creatorName,
-            sourceCommentDraft: findComment(postUrl),
+            sourceCommentDraft: findSnippet(postUrl),
             interactionType,
             profileType,
             reason,
