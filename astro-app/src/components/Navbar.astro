@@ -1,4 +1,6 @@
 ---
+import { getAlternateUrl, type Locale } from '../i18n/utils';
+
 interface Props {
   t: {
     nav: {
@@ -11,17 +13,18 @@ interface Props {
       cta: string;
     };
   };
-  lang: 'es' | 'en';
+  lang: Locale;
   bookingLink: string;
+  currentPath?: string;
 }
 
-const { t, lang, bookingLink } = Astro.props;
+const { t, lang, bookingLink, currentPath = '/' } = Astro.props;
 
-const langToggleHref = lang === 'es' ? '/en/' : '/';
+const langToggleHref = getAlternateUrl(currentPath, lang === 'es' ? 'en' : 'es');
 const langToggleLabel = lang === 'es' ? 'EN' : 'ES';
+const prefix = lang === 'es' ? '' : '/en';
 const blogHref = lang === 'es' ? '/blog/' : '/en/blog/';
-
-const servicesHref = lang === 'es' ? '/servicios/' : '/en/servicios/';
+const servicesHref = lang === 'es' ? '/servicios/' : '/en/services/';
 
 const navLinks = [
   { href: '#problema', label: t.nav.problem },
@@ -71,7 +74,7 @@ const navLinks = [
           <!-- Language Toggle -->
           <a
             href={langToggleHref}
-            class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full text-xs font-bold text-[#032149] transition-colors border border-slate-200"
+            class="lang-toggle flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full text-xs font-bold text-[#032149] transition-colors border border-slate-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
             {langToggleLabel}
@@ -92,7 +95,7 @@ const navLinks = [
 
         <!-- Mobile Controls -->
         <div class="md:hidden flex items-center gap-4">
-          <a href={langToggleHref} class="text-[#032149] font-bold text-sm">
+          <a href={langToggleHref} class="lang-toggle text-[#032149] font-bold text-sm">
             {langToggleLabel}
           </a>
           <button
@@ -149,6 +152,13 @@ const navLinks = [
   mobileMenu?.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       mobileMenu?.classList.add('hidden');
+    });
+  });
+  // Set language cookie when clicking toggle
+  document.querySelectorAll('.lang-toggle').forEach(el => {
+    el.addEventListener('click', () => {
+      const targetLang = el.textContent?.trim() === 'EN' ? 'en' : 'es';
+      document.cookie = `g4u_lang=${targetLang};path=/;max-age=31536000;SameSite=Lax`;
     });
   });
 </script>

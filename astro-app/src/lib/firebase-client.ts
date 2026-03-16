@@ -740,6 +740,7 @@ export interface LICandidate {
   location: string;            // full location text (e.g. "Madrid, Spain")
   sourcePostUrl: string;       // post where they interacted
   sourceCreatorName: string;   // whose post they interacted with
+  sourceCommentDraft: string;  // comment Growth4U made/would make on that post
   interactionType: 'like' | 'comment' | 'repost';
   profileType: ProspectProfileType;
   reason: string;              // why AI flagged them (e.g. "CTO at fintech")
@@ -764,6 +765,7 @@ export async function getAllLICandidates() {
       location: data.location || '',
       sourcePostUrl: data.sourcePostUrl || '',
       sourceCreatorName: data.sourceCreatorName || '',
+      sourceCommentDraft: data.sourceCommentDraft || '',
       interactionType: data.interactionType || 'like',
       profileType: (data.profileType || 'other') as ProspectProfileType,
       reason: data.reason || '',

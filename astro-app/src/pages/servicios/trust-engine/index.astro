@@ -97,7 +97,7 @@ const pillars = [
   description="El Trust Engine es la metodología propietaria de Growth4U para empresas tech en España. Motor de crecimiento basado en confianza que reduce el CAC hasta un 70% sin depender de paid media."
   jsonLd={[serviceSchema, breadcrumbSchema, faqSchema]}
 >
-  <Navbar t={t} lang="es" bookingLink={BOOKING_LINK} />
+  <Navbar t={t} lang="es" bookingLink={BOOKING_LINK} currentPath={Astro.url.pathname} />
   <!-- Hero -->
   <section class="pt-44 pb-20 bg-white">
     <div class="max-w-4xl mx-auto px-4 text-center">

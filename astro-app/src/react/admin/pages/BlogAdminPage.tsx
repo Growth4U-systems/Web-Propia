@@ -436,14 +436,8 @@ export default function BlogAdminPage() {
       ctx.fillStyle = overlay;
       ctx.fillRect(0, 0, 1200, 630);
 
-      // Title — centered, bold
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const titleFontSize = formData.title.length > 60 ? 64 : formData.title.length > 45 ? 72 : 80;
-      ctx.font = `bold ${titleFontSize}px Arial, sans-serif`;
-      const lineH = titleFontSize * 1.25;
-      wrapText(ctx, formData.title, 600, 315, 1060, lineH);
+      // No text on image — title is rendered as HTML overlay on the blog page
+      // This makes covers language-independent
 
       // Export as blob and upload to Cloudinary
       canvas.toBlob(async (blob) => {

@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
-import { GA4_ID, TRUSTPILOT_BU_ID, SITE_NAME, SITE_URL, SITE_DESCRIPTION, OG_IMAGE, FAVICON, LINKEDIN_URL } from '../lib/constants';
+import { GA4_ID, TRUSTPILOT_BU_ID, SITE_NAME, SITE_URL, SITE_DESCRIPTION, OG_IMAGE, LOGO_IMAGE, FAVICON, LINKEDIN_URL } from '../lib/constants';
+import { getAlternateUrl } from '../i18n/utils';
 import CookieBanner from '../react/CookieBanner';
 
 interface Props {
@@ -29,13 +30,17 @@ const canonicalUrl = canonical ? new URL(canonical, SITE_URL).href : new URL(Ast
 const lang = locale === 'en' ? 'en' : 'es';
 const ogLocale = locale === 'en' ? 'en_US' : 'es_ES';
 
+// Hreflang: compute alternate URLs using proper route segment translation
+const esHref = new URL(getAlternateUrl(Astro.url.pathname, 'es'), SITE_URL).href;
+const enHref = new URL(getAlternateUrl(Astro.url.pathname, 'en'), SITE_URL).href;
+
 // Organization schema - always present (matches existing Next.js exactly)
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Growth4U',
   url: SITE_URL,
-  logo: OG_IMAGE,
+  logo: LOGO_IMAGE,
   sameAs: [LINKEDIN_URL],
 };
 ---
@@ -66,9 +71,9 @@ const organizationSchema = {
     <link rel="canonical" href={canonicalUrl} />
 
     <!-- Hreflang (i18n) -->
-    <link rel="alternate" hreflang="es" href={new URL(Astro.url.pathname.replace(/^\/en/, ''), SITE_URL).href} />
-    <link rel="alternate" hreflang="en" href={new URL(`/en${Astro.url.pathname.replace(/^\/en/, '')}`, SITE_URL).href} />
-    <link rel="alternate" hreflang="x-default" href={new URL(Astro.url.pathname.replace(/^\/en/, ''), SITE_URL).href} />
+    <link rel="alternate" hreflang="es" href={esHref} />
+    <link rel="alternate" hreflang="en" href={enHref} />
+    <link rel="alternate" hreflang="x-default" href={esHref} />
 
     <!-- Robots -->
     {noindex ? (

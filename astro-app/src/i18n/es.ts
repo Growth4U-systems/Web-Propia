@@ -15,5 +15,68 @@ export const es = {
   cases: { title: 'Casos de Éxito', subtitle: 'Resultados reales auditados.', list: [ { company: 'BNEXT', logo: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772741870/yktwzkgnsteswltss6aj.png', stat: '500K', label: 'usuarios en menos de 30 meses', highlight: 'De 0 a 500.000 usuarios con un CAC de €12,50', summary: 'De 0 a 500.000 usuarios construyendo un sistema de confianza delegada con +300 afiliados.', challenge: 'Mercado saturado, Revolut y N26 con ventaja, pereza bancaria española.', solution: 'Trust Engine: nichos desatendidos, incentivo 10€ al instante, +300 afiliados.' }, { company: 'BIT2ME', logo: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772742654/dsmdpntgie9ylq7k8bj4.png', stat: '-70%', label: 'CAC + x7 usuarios', highlight: 'De 250K€/mes en paid a crecimiento sostenible', summary: 'De quemar 250K€/mes en paid a x7 usuarios y €686K revenue por cohorte mensual.', challenge: 'Bear market, 250K€/mes en paid sin retorno, percepción de "caro" post-FTX.', solution: 'Trust Engine: regulación como fortaleza, confianza delegada, paid como amplificador.' }, { company: 'GOCARDLESS', logo: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772742707/rvo2rpitlsa6cv4ymjht.png', stat: '10K €', label: 'MRR en 6 meses', highlight: 'Lanzamiento desde cero en España y Portugal', summary: 'Go-to-market en España y Portugal alcanzando 10K MRR en 6 meses desde cero.', challenge: 'Entrada en nuevos mercados sin presencia de marca previa.', solution: 'Contenido, alianzas estratégicas y ventas inteligentes.' } ], btnRead: 'Leer caso completo', btnHide: 'Ver menos', challengeLabel: 'Reto', solutionLabel: 'Solución' },
   team: { title: 'La confianza es lo importante, conócenos', bioAlfonso: 'Especialista en growth con más de diez años lanzando y escalando productos tech.', bioMartin: 'Especialista en growth técnico con más de diez años creando sistemas de automatización y datos que escalan operaciones.' },
   blog: { title: 'Blog & Insights', subtitle: 'Recursos estratégicos para escalar tu empresa tech.', cta: 'Ver todos los artículos', readTime: 'min lectura', admin: 'Admin', empty: 'Próximamente nuevos artículos...' },
-  footer: { title: 'Escala tu Empresa Tech hoy.', ctaEmail: 'accounts@growth4u.io', ctaCall: 'Agendar Llamada', rights: '© 2025 Growth4U. Todos los derechos reservados.', privacy: 'Política de Privacidad', terms: 'Política de Cookies' }
+  footer: { title: 'Escala tu Empresa Tech hoy.', ctaEmail: 'accounts@growth4u.io', ctaCall: 'Agendar Llamada', rights: '© 2025 Growth4U. Todos los derechos reservados.', privacy: 'Política de Privacidad', terms: 'Política de Cookies' },
+
+  // ── Blog index page ──
+  blogIndex: {
+    title: 'Blog | Growth4U',
+    description: 'Guías y estrategias de Growth para empresas tech en España: growth hacking, outreach B2B, influencer marketing, unit economics, GEO y más.',
+    searchPlaceholder: 'Buscar artículos...',
+    searchLabel: 'Buscar',
+    closeSearch: 'Cerrar búsqueda',
+    results: 'Resultados',
+    clearSearch: 'Limpiar búsqueda',
+    novedades: 'NOVEDADES',
+    destacados: 'DESTACADOS',
+    mostRead: 'Artículos más leídos',
+    readArticle: 'Leer artículo',
+    freeResources: 'Recursos gratuitos',
+    viewAllResources: 'Ver todos los recursos',
+    readyToScale: '¿Listo para escalar?',
+    freeConsultation: 'Consulta estratégica gratuita de 30 min.',
+    bookDemo: 'Agenda tu demo',
+    categories: {
+      guias: 'Guías completas',
+      Growth: 'Growth',
+      Marketing: 'Marketing',
+      GEO: 'GEO & Búsqueda IA',
+      Estrategia: 'Estrategia',
+      Producto: 'Producto',
+    },
+    leadMagnets: [
+      { slug: 'cac-sostenible', title: 'El Sistema CAC Sostenible', desc: 'Reduce tu CAC sin sacrificar calidad de leads.' },
+      { slug: 'meseta-de-crecimiento', title: 'Romper la Meseta de Crecimiento', desc: '4 palancas para volver a escalar.' },
+      { slug: 'sistema-de-growth', title: 'De Tácticas a Sistema de Growth', desc: 'Construye un flywheel de crecimiento.' },
+      { slug: 'david-vs-goliat', title: 'David vs Goliat', desc: 'Compite con grandes sin su presupuesto.' },
+      { slug: 'kit-de-liberacion', title: 'Kit de Liberación del Fundador', desc: 'Deja de ser el cuello de botella.' },
+      { slug: 'dashboard-de-attribution', title: 'Dashboard de Attribution', desc: 'Qué canal te trae los mejores clientes.' },
+    ],
+  },
+
+  // ── Blog post page ──
+  blogPost: {
+    back: 'Volver',
+    dateUnavailable: 'Fecha no disponible',
+    relatedResource: 'Recurso gratuito relacionado',
+    readyToApply: '¿Listo para aplicarlo?',
+    ctaTitle: 'Hablamos 30 minutos y te digo<br/>dónde está tu mayor oportunidad',
+    ctaSubtitle: 'Sin compromiso. Sin ventas agresivas. Solo estrategia.',
+    ctaButton: 'Agendar sesión gratuita →',
+    bottomTitle: '¿Quieres aplicar esto en tu Empresa Tech?',
+    bottomCta: 'Agendar Llamada',
+    leadMagnets: [
+      { slug: 'cac-sostenible', title: 'El Sistema CAC Sostenible', desc: 'Reduce tu CAC sin sacrificar calidad de leads. Framework en 5 pasos.' },
+      { slug: 'meseta-de-crecimiento', title: 'Romper la Meseta de Crecimiento', desc: '4 palancas para volver a escalar cuando el crecimiento se estanca.' },
+      { slug: 'sistema-de-growth', title: 'De Tácticas a Sistema de Growth', desc: 'Construye un flywheel de crecimiento que funciona solo.' },
+      { slug: 'david-vs-goliat', title: 'David vs Goliat: Ventaja Asimétrica', desc: 'Gana cuota de mercado con recursos limitados.' },
+      { slug: 'kit-de-liberacion', title: 'Kit de Liberación del Fundador', desc: 'Deja de ser el cuello de botella de tu empresa.' },
+      { slug: 'dashboard-de-attribution', title: 'Dashboard de Attribution', desc: 'Sabe exactamente qué canal te trae los mejores clientes.' },
+    ],
+  },
+
+  // ── Common / shared ──
+  common: {
+    locale: 'es-ES',
+    langCode: 'es',
+  },
 };

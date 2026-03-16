@@ -47,7 +47,7 @@ const services = [
   description="Servicios especializados en growth marketing para empresas tech en España: GEO (Generative Engine Optimization), Growth Marketing y Trust Engine. Reducimos tu CAC hasta un 70%."
   jsonLd={[breadcrumbSchema]}
 >
-  <Navbar t={t} lang="es" bookingLink={BOOKING_LINK} />
+  <Navbar t={t} lang="es" bookingLink={BOOKING_LINK} currentPath={Astro.url.pathname} />
   <section class="pt-44 pb-20 bg-white">
     <div class="max-w-5xl mx-auto px-4 text-center">
       <span class="inline-block px-4 py-2 rounded-full bg-[#6351d5]/10 text-[#6351d5] font-bold text-sm mb-6">

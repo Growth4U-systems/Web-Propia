@@ -120,7 +120,7 @@ const faqSchema = {
   description="Especialistas en Growth para Empresas Tech. Te ayudamos a crear un motor de crecimiento que perdura en el tiempo y reduce tu CAC apoyándonos en el valor de la confianza."
   jsonLd={[professionalServiceSchema, faqSchema]}
 >
-  <Navbar t={t} lang="es" bookingLink={BOOKING_LINK} />
+  <Navbar t={t} lang="es" bookingLink={BOOKING_LINK} currentPath={Astro.url.pathname} />
   <HeroSection t={t} bookingLink={BOOKING_LINK} />
   <ProblemSection t={t} />
   <ResultsSection t={t} />

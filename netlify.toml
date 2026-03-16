@@ -7,6 +7,11 @@
 [functions]
   node_bundler = "esbuild"
 
+# Language auto-detection (IP + Accept-Language → /en/ redirect)
+[[edge_functions]]
+  function = "lang-redirect"
+  path = "/*"
+
 # Trust Score proxy → Vercel via Edge Function (rewrites Host header)
 [[edge_functions]]
   function = "trust-score-proxy"

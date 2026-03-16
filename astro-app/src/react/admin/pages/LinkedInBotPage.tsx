@@ -292,7 +292,7 @@ export default function LinkedInBotPage() {
       outreachMessage: '',
       connectionMessage: '',
       tags: ['from-candidate'],
-      notes: `Detectado via ${candidate.interactionType} en post de ${candidate.sourceCreatorName}. ${candidate.reason}`,
+      notes: `Detectado via ${candidate.interactionType} en post de ${candidate.sourceCreatorName}. ${candidate.reason}${candidate.sourceCommentDraft ? `\n\nNuestro comentario: ${candidate.sourceCommentDraft}` : ''}`,
     });
     await updateLICandidate(id, { status: 'approved' });
     setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'approved' as const } : c)));
@@ -605,13 +605,13 @@ function OverviewTab({
     setProspecting(true);
     setProspectResult(null);
     try {
-      // Use all scraped comments as source posts (dedup by postUrl)
+      // Use all scraped comments as source posts (dedup by postUrl), include comment draft
       const seenUrls = new Set<string>();
-      const posts: { postUrl: string; creatorName: string }[] = [];
+      const posts: { postUrl: string; creatorName: string; commentDraft?: string }[] = [];
       for (const c of comments) {
         if (!c.postUrl || seenUrls.has(c.postUrl)) continue;
         seenUrls.add(c.postUrl);
-        posts.push({ postUrl: c.postUrl, creatorName: c.profileName });
+        posts.push({ postUrl: c.postUrl, creatorName: c.profileName, commentDraft: c.commentDraft || '' });
         if (posts.length >= 15) break;
       }
       if (posts.length === 0) {
@@ -1133,6 +1133,11 @@ function CandidatesTab({
                     <span>Fuente: {c.sourceCreatorName}</span>
                     {c.reason && <span className="text-[#6351d5] font-medium">• {c.reason}</span>}
                   </div>
+                  {c.sourceCommentDraft && (
+                    <div className="mt-2 p-2 bg-purple-50 border border-purple-100 rounded-lg text-xs text-slate-600">
+                      <span className="text-[#6351d5] font-medium">Nuestro comentario:</span> {c.sourceCommentDraft}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {c.linkedinUrl && (

@@ -96,8 +96,8 @@ async function generateReason(person: { name: string; title: string; company: st
 async function saveCandidate(candidate: {
   name: string; title: string; company: string; linkedinUrl: string;
   country: string; location: string;
-  sourcePostUrl: string; sourceCreatorName: string; interactionType: string;
-  profileType: string; reason: string;
+  sourcePostUrl: string; sourceCreatorName: string; sourceCommentDraft: string;
+  interactionType: string; profileType: string; reason: string;
 }): Promise<boolean> {
   // Ensure all values are strings (Firebase REST API requires stringValue to be a string)
   const safe = (v: any) => String(v ?? '');
@@ -114,6 +114,7 @@ async function saveCandidate(candidate: {
         location: { stringValue: safe(candidate.location) },
         sourcePostUrl: { stringValue: safe(candidate.sourcePostUrl) },
         sourceCreatorName: { stringValue: safe(candidate.sourceCreatorName) },
+        sourceCommentDraft: { stringValue: safe(candidate.sourceCommentDraft) },
         interactionType: { stringValue: safe(candidate.interactionType) },
         profileType: { stringValue: safe(candidate.profileType) },
         reason: { stringValue: safe(candidate.reason) },
@@ -255,7 +256,7 @@ export default async (req: Request, _context: Context) => {
       const body = await req.json().catch(() => ({}));
       const reactionsDatasetId = (body as any)?.reactionsDatasetId;
       const commentsDatasetId = (body as any)?.commentsDatasetId;
-      const postsData: { postUrl: string; creatorName: string }[] = (body as any)?.postsData || [];
+      const postsData: { postUrl: string; creatorName: string; commentDraft?: string }[] = (body as any)?.postsData || [];
       const offset = (body as any)?.offset || 0;
       const batchSize = 10;
 
@@ -263,8 +264,23 @@ export default async (req: Request, _context: Context) => {
         return new Response(JSON.stringify({ error: 'Missing dataset IDs' }), { status: 400, headers: CORS_HEADERS });
       }
 
-      const creatorMap = new Map(postsData.map((p) => [p.postUrl, p.creatorName]));
+      // Normalize URLs for matching (remove trailing slashes, lowercase)
+      const normalizeUrl = (u: string) => u.replace(/\/+$/, '').toLowerCase();
+      const creatorMap = new Map(postsData.map((p) => [normalizeUrl(p.postUrl), p.creatorName]));
+      const commentMap = new Map(postsData.filter((p) => p.commentDraft).map((p) => [normalizeUrl(p.postUrl), p.commentDraft!]));
       const postUrls = postsData.map((p) => p.postUrl);
+
+      // Fuzzy lookup: try exact match, then check if either URL contains the other
+      const findInMap = (postUrl: string, map: Map<string, string>, fallback: string): string => {
+        const norm = normalizeUrl(postUrl);
+        if (map.has(norm)) return map.get(norm)!;
+        for (const [key, val] of map) {
+          if (norm.includes(key) || key.includes(norm)) return val;
+        }
+        return fallback;
+      };
+      const findCreator = (postUrl: string) => findInMap(postUrl, creatorMap, 'Unknown');
+      const findComment = (postUrl: string) => findInMap(postUrl, commentMap, '');
 
       // Fetch all reactions + comments from Apify datasets
       const [reactionsItems, commentsItems] = await Promise.all([
@@ -283,18 +299,24 @@ export default async (req: Request, _context: Context) => {
         postUrl: string;
       }[] = [];
 
+      // Helper: Apify query can be { post: "url" } object or a plain string
+      const extractPostUrl = (item: any): string => {
+        if (item.postUrl) return item.postUrl;
+        if (typeof item.query === 'string') return item.query;
+        if (item.query?.post) return item.query.post;
+        return postUrls[0] || '';
+      };
+
       for (const r of (reactionsItems || [])) {
         const person = extractPerson(r, 'reaction');
         if (!person) continue;
-        const postUrl = r.postUrl || r.query || postUrls[0] || '';
-        allPeople.push({ person, interactionType: 'like', postUrl });
+        allPeople.push({ person, interactionType: 'like', postUrl: extractPostUrl(r) });
       }
 
       for (const c of (commentsItems || [])) {
         const person = extractPerson(c, 'comment');
         if (!person) continue;
-        const postUrl = c.postUrl || c.query || postUrls[0] || '';
-        allPeople.push({ person, interactionType: 'comment', postUrl });
+        allPeople.push({ person, interactionType: 'comment', postUrl: extractPostUrl(c) });
       }
 
       // Apply offset + batch for processing (Claude reason generation is slow)
@@ -331,7 +353,7 @@ export default async (req: Request, _context: Context) => {
 
           const reason = await generateReason(person);
           const profileType = detectProfileType(person.title);
-          const creatorName = creatorMap.get(postUrl) || 'Unknown';
+          const creatorName = findCreator(postUrl);
 
           const ok = await saveCandidate({
             name: person.name,
@@ -342,6 +364,7 @@ export default async (req: Request, _context: Context) => {
             location: person.location,
             sourcePostUrl: postUrl,
             sourceCreatorName: creatorName,
+            sourceCommentDraft: findComment(postUrl),
             interactionType,
             profileType,
             reason,

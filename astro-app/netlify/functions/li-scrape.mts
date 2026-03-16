@@ -100,6 +100,11 @@ async function generateComment(authorName: string, content: string): Promise<str
   const includeResource = (commentIndex % 3) === 0; // every 3rd comment must include a resource
   commentIndex++;
 
+  // Detect language from post content — count Spanish-specific patterns vs English ones
+  const spanishSignals = (content.match(/\b(de|en|los|las|del|para|por|que|una?|con|como|pero|más|también|sobre|esto|esta|puede|tiene|hacer|ser|está|hay|sin|desde|entre|cada|cuando|porque|mejor|todo|solo|mucho|otro|nuestro|empresa|negocio|crecimiento|marketing)\b/gi) || []).length;
+  const englishSignals = (content.match(/\b(the|is|are|was|were|have|has|been|will|would|could|should|with|from|this|that|they|their|which|about|into|more|also|just|than|very|most|some|only|your|what|when|how|growth|business|company|marketing|team|product)\b/gi) || []).length;
+  const postLang = englishSignals > spanishSignals ? 'inglés' : 'español';
+
   const resourceInstruction = includeResource
     ? `IMPORTANTE: Este comentario DEBE incluir uno de los recursos de abajo. Elige el que mejor conecte con el tema del post. Cierra el comentario de forma natural mencionando "publicamos un recurso sobre esto" o "escribimos un framework que aborda esto" e incluye el link. No lo pongas como CTA agresivo, sino como aporte extra de valor.`
     : `Si el post conecta claramente con alguno de estos recursos, puedes cerrar el comentario mencionando "publicamos algo sobre esto" e incluir el link. Si no hay conexión clara, haz un comentario puramente de valor sin link.`;
@@ -124,13 +129,13 @@ Genera un comentario para este post de LinkedIn de ${authorName}:
 ${content.slice(0, 1500)}
 """
 
+IDIOMA: El post está en ${postLang}. Tu comentario DEBE estar 100% en ${postLang}. No mezcles idiomas.
+
 Reglas:
 - Máximo 3-5 líneas
 - Tono profesional pero cercano, nunca corporativo
 - Aporta valor: añade un dato, perspectiva o pregunta inteligente
 - NO seas genérico ("gran post", "totalmente de acuerdo")
-- Si el post es en inglés, comenta en inglés
-- Si el post es en español, comenta en español
 - Empieza directamente con el comentario, sin explicación
 
 RECURSOS DE GROWTH4U:
@@ -138,7 +143,7 @@ ${LEAD_MAGNET_CONTEXT}
 
 ${resourceInstruction}
 
-Solo devuelve el comentario, nada más.`,
+Solo devuelve el comentario en ${postLang}, nada más.`,
       }],
     }),
   });

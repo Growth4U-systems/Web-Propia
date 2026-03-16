@@ -4,7 +4,8 @@ export const SITE_DESCRIPTION = 'Especialistas en Growth para Empresas Tech. Te 
 
 export const BOOKING_LINK = 'https://api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN';
 
-export const OG_IMAGE = 'https://i.imgur.com/imHxGWI.png';
+export const LOGO_IMAGE = 'https://i.imgur.com/imHxGWI.png';
+export const OG_IMAGE = `https://res.cloudinary.com/dsc0jsbkz/image/upload/l_text:arial_72_bold_center:Growth4U,co_white,g_center,w_1000,c_fit/brand/og-gradient-bg-v2`;
 export const FAVICON = 'https://i.imgur.com/h5sWS3W.png';
 
 // Analytics

@@ -81,7 +81,7 @@ const faqSchema = {
   description="Posiciona tu empresa tech en las respuestas de ChatGPT, Perplexity y Gemini. Servicio GEO especializado en empresas tech para el mercado español. Primera agencia GEO tech en España."
   jsonLd={[serviceSchema, breadcrumbSchema, faqSchema]}
 >
-  <Navbar t={t} lang="es" bookingLink={BOOKING_LINK} />
+  <Navbar t={t} lang="es" bookingLink={BOOKING_LINK} currentPath={Astro.url.pathname} />
   <!-- Hero -->
   <section class="pt-44 pb-20 bg-white relative overflow-hidden">
     <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">

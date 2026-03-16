@@ -15,5 +15,68 @@ export const en = {
   cases: { title: 'Success Stories', subtitle: 'Real audited results.', list: [ { company: 'BNEXT', logo: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772741870/yktwzkgnsteswltss6aj.png', stat: '500K', label: 'Active users', highlight: 'achieved in 30 months', summary: 'From 0 to 500,000 users in 30 months, without spending millions on advertising.', challenge: 'Scaling the user base in a competitive market without relying exclusively on massive paid media.', solution: 'We built a growth system based on trust and virality.' }, { company: 'BIT2ME', logo: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772742654/dsmdpntgie9ylq7k8bj4.png', stat: '-70%', label: 'CAC Reduction', highlight: 'implementing Trust Engine', summary: 'We reduced CAC by 70% implementing the Trust Engine.', challenge: 'Acquisition cost skyrocketed due to ad saturation and mistrust in the crypto sector.', solution: 'We optimized data, segmentation and activation to double the value of each client.' }, { company: 'GOCARDLESS', logo: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772742707/rvo2rpitlsa6cv4ymjht.png', stat: '10K €', label: 'MRR reached', highlight: 'in 6 months from launch', summary: 'Launch from scratch in Spain and Portugal reaching 10k MRR quickly.', challenge: 'Entry into new markets without previous brand presence.', solution: 'Strategy focused on content, alliances and intelligent sales.' } ], btnRead: 'Read full case', btnHide: 'Show less', challengeLabel: 'Challenge', solutionLabel: 'Solution' },
   team: { title: 'Trust is what matters, get to know us', bioAlfonso: 'Growth specialist with more than ten years launching and scaling tech products.', bioMartin: 'Technical growth specialist with more than ten years creating automation and data systems that scale operations.' },
   blog: { title: 'Blog & Insights', subtitle: 'Strategic resources to scale your tech company.', cta: 'View all articles', readTime: 'min read', admin: 'Admin', empty: 'Coming soon...' },
-  footer: { title: 'Scale your Tech Company today.', ctaEmail: 'accounts@growth4u.io', ctaCall: 'Book a Call', rights: '© 2025 Growth4U. All rights reserved.', privacy: 'Privacy Policy', terms: 'Cookie Policy' }
+  footer: { title: 'Scale your Tech Company today.', ctaEmail: 'accounts@growth4u.io', ctaCall: 'Book a Call', rights: '© 2025 Growth4U. All rights reserved.', privacy: 'Privacy Policy', terms: 'Cookie Policy' },
+
+  // ── Blog index page ──
+  blogIndex: {
+    title: 'Blog | Growth4U',
+    description: 'Growth guides and strategies for tech companies: growth hacking, B2B outreach, influencer marketing, unit economics, GEO and more.',
+    searchPlaceholder: 'Search articles...',
+    searchLabel: 'Search',
+    closeSearch: 'Close search',
+    results: 'Results',
+    clearSearch: 'Clear search',
+    novedades: 'LATEST',
+    destacados: 'FEATURED',
+    mostRead: 'Most read articles',
+    readArticle: 'Read article',
+    freeResources: 'Free resources',
+    viewAllResources: 'View all resources',
+    readyToScale: 'Ready to scale?',
+    freeConsultation: 'Free 30-min strategy session.',
+    bookDemo: 'Book your demo',
+    categories: {
+      guias: 'Complete guides',
+      Growth: 'Growth',
+      Marketing: 'Marketing',
+      GEO: 'GEO & AI Search',
+      Estrategia: 'Strategy',
+      Producto: 'Product',
+    },
+    leadMagnets: [
+      { slug: 'cac-sostenible', title: 'The Sustainable CAC System', desc: 'Reduce your CAC without sacrificing lead quality.' },
+      { slug: 'meseta-de-crecimiento', title: 'Breaking the Growth Plateau', desc: '4 levers to scale again when growth stalls.' },
+      { slug: 'sistema-de-growth', title: 'From Tactics to Growth System', desc: 'Build a self-sustaining growth flywheel.' },
+      { slug: 'david-vs-goliat', title: 'David vs Goliath', desc: 'Compete with giants without their budget.' },
+      { slug: 'kit-de-liberacion', title: 'Founder Liberation Kit', desc: 'Stop being the bottleneck.' },
+      { slug: 'dashboard-de-attribution', title: 'Attribution Dashboard', desc: 'Know exactly which channel brings your best customers.' },
+    ],
+  },
+
+  // ── Blog post page ──
+  blogPost: {
+    back: 'Back',
+    dateUnavailable: 'Date unavailable',
+    relatedResource: 'Related free resource',
+    readyToApply: 'Ready to apply this?',
+    ctaTitle: 'Let\'s talk for 30 minutes and I\'ll tell you<br/>where your biggest opportunity is',
+    ctaSubtitle: 'No commitment. No aggressive sales. Just strategy.',
+    ctaButton: 'Book a free session →',
+    bottomTitle: 'Want to apply this to your Tech Company?',
+    bottomCta: 'Book a Call',
+    leadMagnets: [
+      { slug: 'cac-sostenible', title: 'The Sustainable CAC System', desc: 'Reduce your CAC without sacrificing lead quality. 5-step framework.' },
+      { slug: 'meseta-de-crecimiento', title: 'Breaking the Growth Plateau', desc: '4 levers to scale again when growth stalls.' },
+      { slug: 'sistema-de-growth', title: 'From Tactics to Growth System', desc: 'Build a self-sustaining growth flywheel.' },
+      { slug: 'david-vs-goliat', title: 'David vs Goliath: Asymmetric Advantage', desc: 'Win market share with limited resources.' },
+      { slug: 'kit-de-liberacion', title: 'Founder Liberation Kit', desc: 'Stop being the bottleneck of your company.' },
+      { slug: 'dashboard-de-attribution', title: 'Attribution Dashboard', desc: 'Know exactly which channel brings your best customers.' },
+    ],
+  },
+
+  // ── Common / shared ──
+  common: {
+    locale: 'en-US',
+    langCode: 'en',
+  },
 };
