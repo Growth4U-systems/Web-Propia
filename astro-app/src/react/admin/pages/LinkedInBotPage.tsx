@@ -752,8 +752,8 @@ function OverviewTab({
           </button>
           <button
             onClick={handleProspectScan}
-            disabled={prospecting}
-            title={prospectResult?.error || ''}
+            disabled={prospecting || comments.length === 0}
+            title={comments.length === 0 ? 'Lanza el scraper primero para tener posts' : prospectResult?.error || ''}
             className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${
               prospectResult?.ok
                 ? 'bg-green-50 text-green-600 border-green-200'
