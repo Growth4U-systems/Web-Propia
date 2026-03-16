@@ -374,10 +374,10 @@ export default async (req: Request, _context: Context) => {
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 200,
+          max_tokens: 500,
           messages: [{
             role: 'user',
-            content: `Genera un mensaje de conexión de LinkedIn para enviar a ${name} (${title}${company ? ` en ${company}` : ''}).
+            content: `Genera un mensaje directo (DM) de LinkedIn para enviar a ${name} (${title}${company ? ` en ${company}` : ''}).
 
 Contexto de Growth4U: Somos una consultora de Growth Marketing especializada en startups y scale-ups tech B2B/B2C. Ayudamos con estrategia de crecimiento, CAC sostenible, attribution y GEO.
 
@@ -385,12 +385,13 @@ ${painPoints ? `Pain points detectados: ${painPoints}` : ''}
 ${notes ? `Notas: ${notes}` : ''}
 
 Reglas:
-- MÁXIMO 280 caracteres (límite de LinkedIn)
-- Personalizado a su perfil, NO genérico
-- Menciona algo específico de su rol o empresa
+- Mensaje de 3-5 frases (entre 300 y 600 caracteres)
+- Personalizado a su perfil y situación, NO genérico
+- Menciona algo específico de su rol, empresa o pain points
 - Tono cercano y profesional, como si fuera un peer
-- NO vendas directamente, busca conexión genuina
-- Si hay pain points, referencia sutilmente cómo se relaciona
+- Ofrece valor primero (insight, recurso, perspectiva) antes de pedir algo
+- Cierra con una pregunta abierta o propuesta concreta de valor
+- NO vendas directamente, busca iniciar conversación genuina
 - Si el perfil es en inglés, escribe en inglés
 - Si es hispano, escribe en español
 - Solo devuelve el mensaje, nada más.`,

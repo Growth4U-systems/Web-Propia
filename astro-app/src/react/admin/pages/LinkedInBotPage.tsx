@@ -1159,39 +1159,6 @@ function CandidatesTab({
                       <span className="text-slate-500 font-medium">Post con el que interactuó:</span> {c.sourceCommentDraft.slice(0, 200)}{c.sourceCommentDraft.length > 200 ? '...' : ''}
                     </div>
                   )}
-                  {(c as any).dmDraft ? (
-                    <div className="mt-2 p-2 bg-purple-50 border border-purple-100 rounded-lg text-xs text-slate-600">
-                      <span className="text-[#6351d5] font-medium">DM sugerido:</span> {(c as any).dmDraft}
-                    </div>
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        try {
-                          const res = await fetch('/.netlify/functions/li-scrape?action=connection-msg', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              name: c.name,
-                              title: c.title,
-                              company: c.company,
-                              notes: `Interactuó (${c.interactionType}) con un post de ${c.sourceCreatorName}. ${c.sourceCommentDraft ? `Contenido del post: ${c.sourceCommentDraft.slice(0, 500)}` : ''}`,
-                              painPoints: c.reason,
-                            }),
-                          });
-                          const data = await res.json();
-                          if (data.message) {
-                            await updateLICandidate(c.id, { dmDraft: data.message } as any);
-                            setCandidates((prev) => prev.map((x) => x.id === c.id ? { ...x, dmDraft: data.message } as any : x));
-                          }
-                        } catch (err) {
-                          console.error('Error generating DM:', err);
-                        }
-                      }}
-                      className="mt-2 flex items-center gap-1 text-xs text-[#6351d5] hover:underline"
-                    >
-                      <Sparkles className="w-3 h-3" /> Generar DM personalizado
-                    </button>
-                  )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {c.linkedinUrl && (
@@ -1483,7 +1450,7 @@ function ProspectsTab({
                     {/* Outreach Message */}
                     <div>
                       <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <Send className="w-3.5 h-3.5" /> Mensaje de outreach
+                        <Send className="w-3.5 h-3.5" /> Mensaje de outreach (DM)
                       </h4>
                       <textarea
                         value={p.outreachMessage}
@@ -1492,12 +1459,34 @@ function ProspectsTab({
                         rows={3}
                         className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]"
                       />
-                      {p.outreachMessage && (
-                        <button onClick={() => navigator.clipboard.writeText(p.outreachMessage)}
-                          className="mt-1 flex items-center gap-1 text-xs text-[#6351d5] hover:underline">
-                          <Copy className="w-3 h-3" /> Copiar mensaje
+                      <div className="flex items-center gap-2 mt-1">
+                        <button
+                          onClick={async () => {
+                            const res = await fetch('/.netlify/functions/li-scrape?action=connection-msg', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                name: p.name,
+                                title: p.title,
+                                company: p.company,
+                                notes: `${p.notes || ''}\n${p.painPoints ? `Pain points: ${p.painPoints}` : ''}`,
+                                painPoints: p.painPoints,
+                              }),
+                            });
+                            const data = await res.json();
+                            if (data.message) onUpdateField(p.id, { outreachMessage: data.message });
+                          }}
+                          className="flex items-center gap-1 text-xs text-[#6351d5] hover:underline"
+                        >
+                          <Sparkles className="w-3 h-3" /> Generar DM personalizado
                         </button>
-                      )}
+                        {p.outreachMessage && (
+                          <button onClick={() => navigator.clipboard.writeText(p.outreachMessage)}
+                            className="flex items-center gap-1 text-xs text-[#6351d5] hover:underline">
+                            <Copy className="w-3 h-3" /> Copiar mensaje
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Notes */}
