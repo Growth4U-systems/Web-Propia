@@ -579,6 +579,7 @@ export async function getAllLIComments() {
       commentDraft: data.commentDraft || '',
       commentType: data.commentType || 'outbound',
       status: data.status || 'pending',
+      postDate: data.postDate || '',
       createdAt: data.createdAt?.toDate() || null,
       updatedAt: data.updatedAt?.toDate() || null,
     };

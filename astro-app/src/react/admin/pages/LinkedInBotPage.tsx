@@ -983,9 +983,9 @@ function CommentsTab({
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[c.status]}`}>
                       {statusLabels[c.status]}
                     </span>
-                    {(c as any).postDate && (
+                    {c.postDate && (
                       <span className="text-xs text-slate-400">
-                        {new Date((c as any).postDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(c.postDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
                   </div>
