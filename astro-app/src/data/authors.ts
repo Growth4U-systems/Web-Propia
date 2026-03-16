@@ -20,7 +20,7 @@ export const AUTHORS: Author[] = [
     role: 'Founder & CEO',
     roleEn: 'Founder & CEO',
     photo: 'https://i.imgur.com/O3vyNQB.png',
-    linkedin: 'https://www.linkedin.com/in/alfonsosainzdebaranda/',
+    linkedin: 'https://www.linkedin.com/in/alfonsosbla/?locale=es_ES',
     bio: 'Especialista en growth con más de diez años lanzando y escalando productos tech.',
     bioEn: 'Growth specialist with over ten years launching and scaling tech products.',
     bioLong:
@@ -48,7 +48,7 @@ export const AUTHORS: Author[] = [
     role: 'Founder & COO',
     roleEn: 'Founder & COO',
     photo: 'https://i.imgur.com/CvKj1sd.png',
-    linkedin: 'https://www.linkedin.com/in/martinfila/',
+    linkedin: 'https://www.linkedin.com/in/martin-fila/',
     bio: 'Especialista en growth técnico con más de diez años creando sistemas de automatización y datos que escalan operaciones.',
     bioEn: 'Technical growth specialist with over ten years building automation and data systems that scale operations.',
     bioLong:
