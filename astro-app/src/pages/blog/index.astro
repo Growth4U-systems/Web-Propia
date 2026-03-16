@@ -156,15 +156,12 @@ const allNonPillar = uniquePosts
           <!-- Hero card: imagen izquierda + texto derecha -->
           <a href={`/blog/${heroPost.slug}/`}
              class="group/hero flex flex-col md:flex-row bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 mb-6">
-            <div class="md:w-1/2 aspect-[4/3] md:aspect-auto bg-slate-100 overflow-hidden relative">
+            <div class="md:w-1/2 aspect-[4/3] md:aspect-auto bg-slate-100 overflow-hidden">
               {heroPost.image ? (
-                <img src={heroPost.image} alt="" class="object-cover w-full h-full group-hover/hero:scale-105 transition-transform duration-500" />
+                <img src={heroPost.image} alt={heroPost.title} class="object-cover w-full h-full group-hover/hero:scale-105 transition-transform duration-500" />
               ) : (
                 <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
               )}
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-5">
-                <span class="text-white text-lg font-bold leading-snug drop-shadow-lg line-clamp-3">{heroPost.title}</span>
-              </div>
             </div>
             <div class="md:w-1/2 p-6 md:p-8 flex flex-col justify-center">
               <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{heroPost.category}</span>
@@ -179,15 +176,12 @@ const allNonPillar = uniquePosts
             {subPosts.map((post) => (
               <a href={`/blog/${post.slug}/`}
                  class="group/sub bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300">
-                <div class="aspect-[16/10] bg-slate-100 overflow-hidden relative">
+                <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
                   {post.image ? (
-                    <img src={post.image} alt="" class="object-cover w-full h-full group-hover/sub:scale-105 transition-transform duration-500" loading="lazy" />
+                    <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/sub:scale-105 transition-transform duration-500" loading="lazy" />
                   ) : (
                     <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
                   )}
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-3">
-                    <span class="text-white text-sm font-bold leading-snug drop-shadow-lg line-clamp-2">{post.title}</span>
-                  </div>
                 </div>
                 <div class="p-4">
                   <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
@@ -213,15 +207,12 @@ const allNonPillar = uniquePosts
                  data-title={post.title.toLowerCase()}
                  data-excerpt={(post.excerpt || '').toLowerCase()}
                  class="post-card bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group/card">
-                <div class="aspect-[16/10] bg-slate-100 overflow-hidden relative">
+                <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
                   {post.image ? (
-                    <img src={post.image} alt="" class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
+                    <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
                   ) : (
                     <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
                   )}
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-3">
-                    <span class="text-white text-sm font-bold leading-snug drop-shadow-lg line-clamp-2">{post.title}</span>
-                  </div>
                 </div>
                 <div class="p-4">
                   <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
