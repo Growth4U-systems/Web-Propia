@@ -15,6 +15,12 @@ export default async (request: Request, context: any) => {
     return;
   }
 
+  // Skip bots/crawlers — they must see the canonical (Spanish) version for OG/SEO
+  const ua = (request.headers.get('user-agent') || '').toLowerCase();
+  if (/bot|crawl|spider|slurp|facebookexternalhit|linkedinbot|twitterbot|whatsapp|telegram|googlebot|bingbot|yandex|baidu|duckduck|semrush|ahrefs|mj12bot|bytespider|gptbot|chatgpt|perplexity|anthropic/i.test(ua)) {
+    return;
+  }
+
   // Check for language preference cookie (user's explicit choice)
   const cookies = request.headers.get('cookie') || '';
   const langMatch = cookies.match(/g4u_lang=(es|en)/);
