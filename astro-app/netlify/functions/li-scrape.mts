@@ -355,6 +355,71 @@ export default async (req: Request, _context: Context) => {
       }), { status: 200, headers: CORS_HEADERS });
     }
 
+    // ---- ACTION: ENRICH-PROSPECT ----
+    // Auto-fill all prospect fields using Claude when a candidate is approved
+    if (action === 'enrich-prospect') {
+      if (!ANTHROPIC_KEY) {
+        return new Response(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const { name, title, company, country, location, interactionType, sourceCreatorName, postSnippet, reason } = body as any;
+
+      const profileContext = `${name}, ${title}${company ? ` en ${company}` : ''}${location ? ` (${location}${country ? `, ${country}` : ''})` : ''}`;
+      const interactionContext = `Interactuó (${interactionType || 'comment'}) con un post de ${sourceCreatorName || 'un creator de nuestra red'}.${reason ? ` Razón de detección: ${reason}` : ''}${postSnippet ? `\nContenido del post: ${postSnippet.slice(0, 500)}` : ''}`;
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1200,
+          messages: [{
+            role: 'user',
+            content: `Analiza este perfil de LinkedIn y genera datos de enriquecimiento para prospección B2B.
+
+Perfil: ${profileContext}
+Contexto: ${interactionContext}
+
+Growth4U es una consultora de Growth Marketing especializada en startups y scale-ups tech B2B/B2C. Servicios: estrategia de crecimiento, CAC sostenible, attribution, GEO (Generative Engine Optimization), growth marketing para fintechs, trust engine.
+
+Devuelve SOLO un JSON válido (sin markdown, sin backticks) con estos campos:
+{
+  "companySector": "DEBE ser uno de: Fintech, SaaS, E-commerce, Healthtech, Edtech, Proptech, Insurtech, Marketplace, B2B Tech, B2C Tech, Agency, Otro",
+  "companySize": "DEBE ser uno de: 1-10, 11-50, 51-200, 201-500, 500+",
+  "fundingStage": "DEBE ser uno de: Pre-seed, Seed, Serie A, Serie B, Serie C+, Bootstrapped, Profitable",
+  "painPoints": "2-3 pain points probables basados en su perfil, empresa y sector. Sé específico.",
+  "g4uMatch": "DEBE ser uno de: growth-marketing, geo-fintechs, trust-engine, cac-sostenible, meseta-de-crecimiento, sistema-de-growth, david-vs-goliat, kit-de-liberacion, dashboard-attribution, discovery-call",
+  "connectionMessage": "mensaje de conexión LinkedIn MÁXIMO 280 caracteres, personalizado, tono peer, NO vendas",
+  "outreachMessage": "DM de 3-5 frases, ofrece valor primero, cierra con pregunta abierta, NO vendas directamente"
+}
+
+Reglas:
+- Si el perfil parece hispano, mensajes en español. Si es anglosajón, en inglés.
+- Sé concreto, no genérico. Usa datos del perfil y la empresa.
+- Si no puedes determinar algo con certeza, haz tu mejor estimación basada en el contexto.
+- SOLO el JSON, nada más.`,
+          }],
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        return new Response(JSON.stringify({ error: 'Claude API error', details: errText }), { status: 500, headers: CORS_HEADERS });
+      }
+      const data = await res.json();
+      const raw = data?.content?.[0]?.text || '{}';
+      try {
+        const enrichment = JSON.parse(raw.trim());
+        return new Response(JSON.stringify({ ok: true, ...enrichment }), { status: 200, headers: CORS_HEADERS });
+      } catch {
+        return new Response(JSON.stringify({ ok: false, error: 'Failed to parse enrichment JSON', raw }), { status: 500, headers: CORS_HEADERS });
+      }
+    }
+
     // ---- ACTION: CONNECTION-MSG ----
     // Generate a LinkedIn connection message using Claude
     if (action === 'connection-msg') {

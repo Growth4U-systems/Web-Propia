@@ -272,8 +272,26 @@ export default function LinkedInBotPage() {
   async function approveCandidate(id: string) {
     const candidate = candidates.find((c) => c.id === id);
     if (!candidate) return;
-    // Move to prospects
-    await createLIProspect({
+
+    // Start enrichment in parallel with prospect creation
+    const enrichPromise = fetch('/.netlify/functions/li-scrape?action=enrich-prospect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: candidate.name,
+        title: candidate.title,
+        company: candidate.company,
+        country: candidate.country,
+        location: candidate.location,
+        interactionType: candidate.interactionType,
+        sourceCreatorName: candidate.sourceCreatorName,
+        postSnippet: candidate.sourceCommentDraft,
+        reason: candidate.reason,
+      }),
+    }).then(r => r.json()).catch(() => ({}));
+
+    // Create prospect with basic data first
+    const prospectId = await createLIProspect({
       name: candidate.name,
       title: candidate.title,
       company: candidate.company,
@@ -294,9 +312,27 @@ export default function LinkedInBotPage() {
       tags: ['from-candidate'],
       notes: `Detectado via ${candidate.interactionType} en post de ${candidate.sourceCreatorName}. ${candidate.reason}${candidate.sourceCommentDraft ? `\n\nPost fuente: ${candidate.sourceCommentDraft.slice(0, 300)}` : ''}`,
     });
+
     await updateLICandidate(id, { status: 'approved' });
     setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'approved' as const } : c)));
-    // Reload prospects to show the new one
+
+    // Wait for enrichment and update the prospect
+    const enrichment = await enrichPromise;
+    if (enrichment.ok !== false && !enrichment.error) {
+      const updates: Record<string, string> = {};
+      if (enrichment.companySector) updates.companySector = enrichment.companySector;
+      if (enrichment.companySize) updates.companySize = enrichment.companySize;
+      if (enrichment.fundingStage) updates.fundingStage = enrichment.fundingStage;
+      if (enrichment.painPoints) updates.painPoints = enrichment.painPoints;
+      if (enrichment.g4uMatch) updates.g4uMatch = enrichment.g4uMatch;
+      if (enrichment.connectionMessage) updates.connectionMessage = enrichment.connectionMessage;
+      if (enrichment.outreachMessage) updates.outreachMessage = enrichment.outreachMessage;
+      if (Object.keys(updates).length > 0) {
+        await updateLIProspect(prospectId, updates);
+      }
+    }
+
+    // Reload prospects to show the new enriched one
     const freshProspects = await getAllLIProspects();
     setProspects(freshProspects as any);
   }
