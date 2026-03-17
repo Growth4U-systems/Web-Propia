@@ -186,7 +186,7 @@ async function checkConnection(): Promise<{ connected: boolean; org?: string; ha
     const res = await fetch(url, { headers: mcHeaders() });
     if (res.ok) {
       result.connected = true;
-      result.org = "LinkedIn (via Metricool)";
+      result.org = `LinkedIn (via Metricool)`;
     }
   }
 
@@ -230,13 +230,6 @@ export default async (req: Request, _context: Context) => {
     }
   }
 
-  if (!METRICOOL_TOKEN || !METRICOOL_USER_ID || !METRICOOL_BLOG_ID) {
-    return Response.json(
-      { error: "Metricool API not configured for posting." },
-      { status: 500, headers: CORS_HEADERS },
-    );
-  }
-
   if (req.method !== "POST") {
     return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS_HEADERS });
   }
@@ -245,6 +238,13 @@ export default async (req: Request, _context: Context) => {
   try {
     const body = await req.json() as { text: string; imageUrl?: string };
     const { text, imageUrl } = body;
+
+    if (!METRICOOL_TOKEN || !METRICOOL_USER_ID || !METRICOOL_BLOG_ID) {
+      return Response.json(
+        { error: "Metricool API not configured for posting." },
+        { status: 500, headers: CORS_HEADERS },
+      );
+    }
 
     if (!text) {
       return Response.json(
