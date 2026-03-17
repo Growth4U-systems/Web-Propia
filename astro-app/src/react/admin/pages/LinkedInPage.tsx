@@ -18,6 +18,8 @@ import {
   Heart,
   MessageCircle,
   Share2,
+  User,
+  ChevronDown,
 } from 'lucide-react';
 import { getAllPosts, getLIScheduledPosts, createLIScheduledPost, deleteLIScheduledPost, updateLIScheduledPost } from '../../../lib/firebase-client';
 
@@ -40,6 +42,7 @@ interface QueueItem {
   scheduledDate: string;
   scheduledTime: string;
   firestoreId?: string;
+  account: string;
 }
 
 interface SavedPost {
@@ -51,6 +54,7 @@ interface SavedPost {
   scheduledDate: string;
   scheduledTime: string;
   status: string;
+  account: string;
   createdAt: Date | null;
 }
 
@@ -74,14 +78,46 @@ const FUNCTION_URL = '/.netlify/functions/linkedin';
 const CLOUDINARY_CLOUD = 'dsc0jsbkz';
 const CLOUDINARY_PRESET = 'blog_uploads';
 
-// LinkedIn template on Cloudinary (1728x2304) — text area between quote marks and tagline
-const LI_TEMPLATE = {
-  url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-1.jpg',
-  textX: 100,
-  textY: 700,
-  textW: 1528,
-  textH: 900,
-};
+// LinkedIn accounts — each with its own template
+interface LinkedInAccount {
+  id: string;
+  name: string;
+  color: string;
+  template: {
+    url: string;
+    textX: number;
+    textY: number;
+    textW: number;
+    textH: number;
+  };
+}
+
+const ACCOUNTS: LinkedInAccount[] = [
+  {
+    id: 'growth4u',
+    name: 'Growth4U',
+    color: '#6351d5',
+    template: {
+      url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-1.jpg',
+      textX: 100,
+      textY: 700,
+      textW: 1528,
+      textH: 900,
+    },
+  },
+  {
+    id: 'philippe',
+    name: 'Philippe',
+    color: '#0077B5',
+    template: {
+      url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-philippe.jpg',
+      textX: 100,
+      textY: 700,
+      textW: 1528,
+      textH: 900,
+    },
+  },
+];
 
 // --- Canvas image generator ---
 
@@ -113,18 +149,18 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-async function generateLIImage(text: string): Promise<Blob> {
+async function generateLIImage(text: string, template: LinkedInAccount['template']): Promise<Blob> {
   const canvas = document.createElement('canvas');
   canvas.width = 1728;
   canvas.height = 2304;
   const ctx = canvas.getContext('2d')!;
 
   // Draw template
-  const templateImg = await loadImage(LI_TEMPLATE.url);
+  const templateImg = await loadImage(template.url);
   ctx.drawImage(templateImg, 0, 0, 1728, 2304);
 
   // Text area
-  const { textX, textY, textW, textH } = LI_TEMPLATE;
+  const { textX, textY, textW, textH } = template;
   const padding = 40;
   const innerW = textW - padding * 2;
   const innerH = textH - padding * 2;
@@ -222,12 +258,19 @@ export default function LinkedInPage() {
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [metricsError, setMetricsError] = useState('');
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<LinkedInAccount>(ACCOUNTS[0]);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   useEffect(() => {
     loadPosts();
     checkLinkedInConnection();
     loadSavedPosts();
   }, []);
+
+  // Recalculate published slugs when account changes
+  useEffect(() => {
+    updatePublishedSlugs(savedPosts, selectedAccount.id);
+  }, [selectedAccount.id, savedPosts]);
 
   async function loadSavedPosts() {
     try {
@@ -244,12 +287,18 @@ export default function LinkedInPage() {
         }
       }
       setSavedPosts(saved);
-      // Mark slugs as used
-      const slugs = new Set(saved.map((p) => p.blogSlug));
-      setPublishedSlugs(slugs);
+      // Mark slugs as used — filtered by selected account
+      updatePublishedSlugs(saved, selectedAccount.id);
     } catch (err) {
       console.error('Error loading saved LI posts:', err);
     }
+  }
+
+  function updatePublishedSlugs(posts: SavedPost[], accountId: string) {
+    const slugs = new Set(
+      posts.filter((p) => (p.account || 'growth4u') === accountId).map((p) => p.blogSlug)
+    );
+    setPublishedSlugs(slugs);
   }
 
   async function loadMetrics() {
@@ -292,6 +341,7 @@ export default function LinkedInPage() {
     // Add to queue immediately with generating status
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
+    const account = selectedAccount;
     const newItem: QueueItem = {
       post,
       caption: 'Generando caption con IA...',
@@ -299,6 +349,7 @@ export default function LinkedInPage() {
       status: 'generating',
       scheduledDate: tomorrow.toISOString().split('T')[0],
       scheduledTime: '10:00',
+      account: account.id,
     };
 
     setQueue((prev) => [...prev, newItem]);
@@ -308,7 +359,7 @@ export default function LinkedInPage() {
       // Generate caption and image in parallel
       const [caption, blob] = await Promise.all([
         generateCaption(post),
-        generateLIImage(post.title),
+        generateLIImage(post.title, account.template),
       ]);
 
       const url = await uploadToCloudinary(blob, post.slug);
@@ -369,6 +420,7 @@ export default function LinkedInPage() {
         scheduledDate: new Date().toISOString().split('T')[0],
         scheduledTime: new Date().toTimeString().slice(0, 5),
         status: 'sent',
+        account: item.account,
       });
 
       updateItem(index, { status: 'sent', firestoreId });
@@ -424,6 +476,7 @@ export default function LinkedInPage() {
         scheduledDate: item.scheduledDate,
         scheduledTime: item.scheduledTime,
         status: 'scheduled',
+        account: item.account,
       });
 
       updateItem(index, { status: 'scheduled', firestoreId });
@@ -445,6 +498,7 @@ export default function LinkedInPage() {
         scheduledDate: new Date().toISOString().split('T')[0],
         scheduledTime: new Date().toTimeString().slice(0, 5),
         status: 'sent',
+        account: selectedAccount.id,
       });
       setPublishedSlugs((prev) => new Set([...prev, post.slug]));
       loadSavedPosts();
@@ -467,7 +521,9 @@ export default function LinkedInPage() {
     }
   }
 
-  const draftCount = queue.filter((i) => i.status === 'draft').length;
+  const accountSavedPosts = savedPosts.filter((p) => (p.account || 'growth4u') === selectedAccount.id);
+  const accountQueue = queue.filter((q) => q.account === selectedAccount.id);
+  const draftCount = accountQueue.filter((i) => i.status === 'draft').length;
 
   const DELAY_MSG = 'Enviado a Metricool. Puede tardar ~5 min en aparecer en LinkedIn.';
 
@@ -478,7 +534,41 @@ export default function LinkedInPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-[#032149]">LinkedIn — Growth4U</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-[#032149]">LinkedIn</h1>
+            {/* Account selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+              >
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: selectedAccount.color }}>
+                  <User className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm font-medium text-[#032149]">{selectedAccount.name}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+              {showAccountMenu && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-slate-200 shadow-lg z-10 min-w-[160px]">
+                  {ACCOUNTS.map((acc) => (
+                    <button
+                      key={acc.id}
+                      onClick={() => { setSelectedAccount(acc); setShowAccountMenu(false); }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                        acc.id === selectedAccount.id ? 'bg-slate-50 font-medium' : ''
+                      }`}
+                    >
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: acc.color }}>
+                        <User className="w-3 h-3 text-white" />
+                      </div>
+                      <span>{acc.name}</span>
+                      {acc.id === selectedAccount.id && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-auto" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <p className="text-slate-500 mt-1">Genera y publica posts de LinkedIn desde tus blogs</p>
           {linkedinStatus && (
             <div className="mt-2">
@@ -541,7 +631,7 @@ export default function LinkedInPage() {
                 <TrendingUp className="w-3.5 h-3.5" />
                 Total posts
               </div>
-              <p className="text-2xl font-bold text-[#032149]">{savedPosts.length}</p>
+              <p className="text-2xl font-bold text-[#032149]">{accountSavedPosts.length}</p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
@@ -549,7 +639,7 @@ export default function LinkedInPage() {
                 Enviados
               </div>
               <p className="text-2xl font-bold text-green-600">
-                {savedPosts.filter((p) => p.status === 'sent').length}
+                {accountSavedPosts.filter((p) => p.status === 'sent').length}
               </p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -558,7 +648,7 @@ export default function LinkedInPage() {
                 Programados
               </div>
               <p className="text-2xl font-bold text-purple-600">
-                {savedPosts.filter((p) => p.status === 'scheduled').length}
+                {accountSavedPosts.filter((p) => p.status === 'scheduled').length}
               </p>
             </div>
           </div>
@@ -575,10 +665,10 @@ export default function LinkedInPage() {
             </button>
           </div>
 
-          {savedPosts.length === 0 ? (
+          {accountSavedPosts.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
               <BarChart3 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500">No hay posts publicados todavia</p>
+              <p className="text-slate-500">No hay posts publicados todavia para {selectedAccount.name}</p>
             </div>
           ) : (
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -592,7 +682,7 @@ export default function LinkedInPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {savedPosts.map((sp) => (
+                    {accountSavedPosts.map((sp) => (
                       <tr key={sp.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="p-3">
                           <div className="flex items-center gap-3">
@@ -635,13 +725,15 @@ export default function LinkedInPage() {
       {activeTab === 'publish' && <>
 
       {/* Queue — always on top */}
-      {queue.length > 0 && (
+      {accountQueue.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-[#032149] mb-4">
-            Cola de publicacion ({queue.length})
+            Cola de publicacion ({accountQueue.length})
           </h2>
           <div className="space-y-4">
-            {queue.map((item, index) => (
+            {queue.map((item, index) => {
+              if (item.account !== selectedAccount.id) return null;
+              return (
               <div
                 key={`${item.post.slug}-${index}`}
                 className="bg-white rounded-xl border border-slate-200 p-4"
@@ -795,16 +887,17 @@ export default function LinkedInPage() {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       )}
 
       {/* Saved/Sent posts */}
-      {savedPosts.length > 0 && (
+      {accountSavedPosts.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-[#032149] mb-4">
-            Posts enviados ({savedPosts.length})
+            Posts enviados ({accountSavedPosts.length})
           </h2>
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="overflow-x-auto">
@@ -818,7 +911,7 @@ export default function LinkedInPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {savedPosts.map((sp) => (
+                  {accountSavedPosts.map((sp) => (
                     <tr key={sp.id} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="p-3">
                         <div className="flex items-center gap-3">
@@ -929,7 +1022,7 @@ export default function LinkedInPage() {
       </div>
 
       {/* Empty state */}
-      {queue.length === 0 && savedPosts.length === 0 && !loading && (
+      {accountQueue.length === 0 && accountSavedPosts.length === 0 && !loading && (
         <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
           <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-500">Selecciona blog posts para generar contenido de LinkedIn</p>

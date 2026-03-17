@@ -557,6 +557,7 @@ export interface LIScheduledPost {
   scheduledDate: string;
   scheduledTime: string;
   status: 'sent' | 'scheduled' | 'error';
+  account: string;
   error?: string;
   createdAt?: Date;
 }
@@ -576,6 +577,7 @@ export async function getLIScheduledPosts() {
       scheduledDate: data.scheduledDate || '',
       scheduledTime: data.scheduledTime || '',
       status: data.status || 'sent',
+      account: data.account || 'growth4u',
       error: data.error || '',
       createdAt: data.createdAt?.toDate() || null,
     };
@@ -1147,6 +1149,50 @@ export async function updateContentBrief(id: string, updates: Partial<ContentBri
 export async function deleteContentBrief(id: string): Promise<void> {
   const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'content_briefs', id);
   await deleteDoc(ref);
+}
+
+// ============================================
+// NEWSLETTERS
+// ============================================
+
+export interface Newsletter {
+  subject: string;
+  htmlContent: string;
+  recipientCount: number;
+  status: 'draft' | 'sent' | 'failed';
+  sentAt?: any;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export async function getAllNewsletters() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'newsletters');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() as any }));
+}
+
+export async function createNewsletter(newsletter: Omit<Newsletter, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'newsletters');
+  const docRef = await addDoc(ref, { ...newsletter, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateNewsletter(id: string, updates: Partial<Newsletter>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'newsletters', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteNewsletter(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'newsletters', id);
+  await deleteDoc(ref);
+}
+
+export async function getNewsletterSubscribers() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'lead_magnet_leads');
+  const q = query(ref, where('magnetSlug', '==', 'newsletter'), orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() as any }));
 }
 
 export { db, auth, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, limit, where, serverTimestamp };
