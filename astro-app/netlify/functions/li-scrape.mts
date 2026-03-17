@@ -396,8 +396,7 @@ Devuelve SOLO un JSON válido (sin markdown, sin backticks) con estos campos:
   "g4uMatch": "DEBE ser uno de: growth-marketing, geo-fintechs, trust-engine, cac-sostenible, meseta-de-crecimiento, sistema-de-growth, david-vs-goliat, kit-de-liberacion, dashboard-attribution, discovery-call",
   "connectionMessage": "mensaje de conexión LinkedIn MÁXIMO 280 caracteres, personalizado, tono peer, NO vendas",
   "outreachMessage": "DM de 3-5 frases, ofrece valor primero, cierra con pregunta abierta, NO vendas directamente",
-  "intentScore": "número del 1 al 10 que indica la probabilidad de que este prospect sea un buen cliente para Growth4U. Considera: relevancia del sector, seniority del rol, tamaño de empresa, señales de intent del contenido con el que interactuó, y fit con nuestros servicios. 10 = prospect perfecto.",
-  "signals": "array de 2-5 señales de contacto cortas (max 40 chars cada una). Cada señal explica POR QUÉ contactar a este prospect AHORA. Ejemplos: 'Comentó sobre CAC alto', 'Founder en fase seed', 'Sector fintech — core G4U', 'Busca escalar sin paid', 'Empresa en crecimiento'. Sé específico al perfil, NO genérico."
+  "signals": "array de IDs de señales activas para este prospect. SOLO usa IDs de esta lista: commented (comentó en post), reacted (reaccionó a post), multi_interaction (interacciones múltiples), engaged_competitor (interactuó con competidor), icp_match (ICP match perfecto), decision_maker (decision maker), growth_stage (empresa en crecimiento), target_sector (sector target de G4U), recent_activity (activo recientemente), new_role (nuevo rol), hiring (empresa contratando), recent_funding (funding reciente), growth_content (interesado en growth), cac_content (habla de CAC/unit economics), attribution_content (busca attribution/analytics), scaling_content (quiere escalar sin paid). Selecciona entre 2 y 6 señales que apliquen según el perfil y contexto."
 }
 
 Reglas:

@@ -95,6 +95,40 @@ const PROFILE_TYPES: { value: LIProspect['profileType']; label: string; color: s
   { value: 'other', label: 'Otro', color: 'bg-slate-50 text-slate-500 border-slate-200' },
 ];
 
+// Signal catalog — predefined signals that can be toggled per prospect
+const SIGNAL_CATALOG: { id: string; label: string; emoji: string; category: 'interaction' | 'profile' | 'timing' | 'content'; weight: number }[] = [
+  // Interaction signals
+  { id: 'commented', label: 'Comentó en post', emoji: '💬', category: 'interaction', weight: 3 },
+  { id: 'reacted', label: 'Reaccionó a post', emoji: '👍', category: 'interaction', weight: 1 },
+  { id: 'multi_interaction', label: 'Interacciones múltiples', emoji: '🔁', category: 'interaction', weight: 4 },
+  { id: 'engaged_competitor', label: 'Interactuó con competidor', emoji: '👀', category: 'interaction', weight: 5 },
+  // Profile signals
+  { id: 'icp_match', label: 'ICP match perfecto', emoji: '🎯', category: 'profile', weight: 5 },
+  { id: 'decision_maker', label: 'Decision maker', emoji: '👑', category: 'profile', weight: 4 },
+  { id: 'growth_stage', label: 'Empresa en crecimiento', emoji: '📈', category: 'profile', weight: 3 },
+  { id: 'target_sector', label: 'Sector target de G4U', emoji: '🏢', category: 'profile', weight: 3 },
+  // Timing signals
+  { id: 'recent_activity', label: 'Activo recientemente', emoji: '🔥', category: 'timing', weight: 4 },
+  { id: 'new_role', label: 'Nuevo rol / cambio de empresa', emoji: '🆕', category: 'timing', weight: 5 },
+  { id: 'hiring', label: 'Empresa contratando', emoji: '📋', category: 'timing', weight: 3 },
+  { id: 'recent_funding', label: 'Funding reciente', emoji: '💰', category: 'timing', weight: 5 },
+  // Content signals
+  { id: 'growth_content', label: 'Interesado en growth', emoji: '🧠', category: 'content', weight: 3 },
+  { id: 'cac_content', label: 'Habla de CAC / unit economics', emoji: '💸', category: 'content', weight: 4 },
+  { id: 'attribution_content', label: 'Busca attribution / analytics', emoji: '📊', category: 'content', weight: 4 },
+  { id: 'scaling_content', label: 'Quiere escalar sin paid', emoji: '🚀', category: 'content', weight: 4 },
+];
+
+function computeIntentScore(activeSignals: string[]): number {
+  if (!activeSignals.length) return 0;
+  const totalWeight = activeSignals.reduce((sum, id) => {
+    const signal = SIGNAL_CATALOG.find((s) => s.id === id);
+    return sum + (signal?.weight || 0);
+  }, 0);
+  // Normalize to 1-10 scale (max possible ~40 if all signals active)
+  return Math.min(10, Math.max(1, Math.round(totalWeight / 4)));
+}
+
 type CreatorCategory = 'Growth' | 'Founder' | 'VC';
 
 const CREATOR_SEED: { name: string; linkedinUrl: string; category: CreatorCategory }[] = [
@@ -329,8 +363,19 @@ export default function LinkedInBotPage() {
       if (enrichment.g4uMatch) updates.g4uMatch = enrichment.g4uMatch;
       if (enrichment.connectionMessage) updates.connectionMessage = enrichment.connectionMessage;
       if (enrichment.outreachMessage) updates.outreachMessage = enrichment.outreachMessage;
-      if (enrichment.intentScore) updates.intentScore = Number(enrichment.intentScore) || 0;
-      if (enrichment.signals?.length) updates.signals = enrichment.signals;
+      if (enrichment.signals?.length) {
+        // Filter to only valid signal IDs from our catalog
+        const validSignals = enrichment.signals.filter((id: string) =>
+          ['commented','reacted','multi_interaction','engaged_competitor','icp_match','decision_maker','growth_stage','target_sector','recent_activity','new_role','hiring','recent_funding','growth_content','cac_content','attribution_content','scaling_content'].includes(id)
+        );
+        if (validSignals.length) {
+          updates.signals = validSignals;
+          // Compute intent score from signal weights
+          const WEIGHTS: Record<string, number> = { commented:3, reacted:1, multi_interaction:4, engaged_competitor:5, icp_match:5, decision_maker:4, growth_stage:3, target_sector:3, recent_activity:4, new_role:5, hiring:3, recent_funding:5, growth_content:3, cac_content:4, attribution_content:4, scaling_content:4 };
+          const total = validSignals.reduce((sum: number, id: string) => sum + (WEIGHTS[id] || 0), 0);
+          updates.intentScore = Math.min(10, Math.max(1, Math.round(total / 4)));
+        }
+      }
       if (Object.keys(updates).length > 0) {
         await updateLIProspect(prospectId, updates);
       }
@@ -1284,7 +1329,11 @@ function ProspectsTab({
   ];
 
   const sortedProspects = [...prospects].sort((a, b) => {
-    if (sortBy === 'intent') return (b.intentScore || 0) - (a.intentScore || 0);
+    if (sortBy === 'intent') {
+      const aScore = (a.signals || []).length > 0 ? computeIntentScore(a.signals.filter((id) => SIGNAL_CATALOG.some((s) => s.id === id))) : (a.intentScore || 0);
+      const bScore = (b.signals || []).length > 0 ? computeIntentScore(b.signals.filter((id) => SIGNAL_CATALOG.some((s) => s.id === id))) : (b.intentScore || 0);
+      return bScore - aScore;
+    }
     return 0; // already sorted by createdAt desc from Firebase
   });
 
@@ -1354,6 +1403,8 @@ function ProspectsTab({
             const stage = FUNNEL_STAGES.find((s) => s.value === p.funnelStage) || FUNNEL_STAGES[0];
             const profileType = PROFILE_TYPES.find((pt) => pt.value === p.profileType);
             const isExpanded = expandedId === p.id;
+            const activeSignals = (p.signals || []).filter((id) => SIGNAL_CATALOG.some((s) => s.id === id));
+            const score = activeSignals.length > 0 ? computeIntentScore(activeSignals) : p.intentScore;
             return (
               <div key={p.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 {/* Main row */}
@@ -1389,29 +1440,33 @@ function ProspectsTab({
                     <p className="text-sm text-slate-500 truncate">{p.title}{p.company ? ` · ${p.company}` : ''}</p>
                     {p.source && <p className="text-xs text-slate-400 mt-0.5">Fuente: {p.source}</p>}
                     {/* Signal badges */}
-                    {p.signals && p.signals.length > 0 && (
+                    {activeSignals.length > 0 && (
                       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        {p.signals.map((signal, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                            <Zap className="w-2.5 h-2.5" />{signal}
-                          </span>
-                        ))}
+                        {activeSignals.map((id) => {
+                          const sig = SIGNAL_CATALOG.find((s) => s.id === id);
+                          if (!sig) return null;
+                          return (
+                            <span key={id} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                              <span>{sig.emoji}</span>{sig.label}
+                            </span>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
 
                   {/* Intent Score */}
-                  {p.intentScore > 0 && (
+                  {score > 0 && (
                     <div className={`flex flex-col items-center shrink-0 ${
-                      p.intentScore >= 8 ? 'text-green-600' : p.intentScore >= 5 ? 'text-amber-500' : 'text-slate-400'
-                    }`} title={`Intent Score: ${p.intentScore}/10`}>
+                      score >= 8 ? 'text-green-600' : score >= 5 ? 'text-amber-500' : 'text-slate-400'
+                    }`} title={`Intent Score: ${score}/10 — ${activeSignals.length} señales activas`}>
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 ${
-                        p.intentScore >= 8 ? 'border-green-400 bg-green-50' : p.intentScore >= 5 ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50'
+                        score >= 8 ? 'border-green-400 bg-green-50' : score >= 5 ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50'
                       }`}>
-                        {p.intentScore}
+                        {score}
                       </div>
                       <span className="text-[9px] font-medium mt-0.5">
-                        {p.intentScore >= 8 ? 'HOT' : p.intentScore >= 5 ? 'WARM' : 'COLD'}
+                        {score >= 8 ? 'HOT' : score >= 5 ? 'WARM' : 'COLD'}
                       </span>
                     </div>
                   )}
@@ -1438,6 +1493,51 @@ function ProspectsTab({
                 {/* Expanded detail panel */}
                 {isExpanded && (
                   <div className="border-t border-slate-100 bg-slate-50/50 p-5 space-y-4">
+                    {/* Signals */}
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5" /> Señales de contacto
+                        {activeSignals.length > 0 && (
+                          <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            score >= 8 ? 'bg-green-100 text-green-700' : score >= 5 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            Score: {score}/10
+                          </span>
+                        )}
+                      </h4>
+                      {(['interaction', 'profile', 'timing', 'content'] as const).map((cat) => {
+                        const catSignals = SIGNAL_CATALOG.filter((s) => s.category === cat);
+                        const catLabels = { interaction: 'Interacción', profile: 'Perfil', timing: 'Timing', content: 'Contenido' };
+                        return (
+                          <div key={cat} className="mb-2">
+                            <span className="text-[10px] text-slate-400 uppercase font-medium">{catLabels[cat]}</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {catSignals.map((sig) => {
+                                const isActive = (p.signals || []).includes(sig.id);
+                                return (
+                                  <button
+                                    key={sig.id}
+                                    onClick={() => {
+                                      const current = p.signals || [];
+                                      const updated = isActive ? current.filter((id) => id !== sig.id) : [...current, sig.id];
+                                      onUpdateField(p.id, { signals: updated, intentScore: computeIntentScore(updated.filter((id) => SIGNAL_CATALOG.some((s) => s.id === id))) });
+                                    }}
+                                    className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                                      isActive
+                                        ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-sm'
+                                        : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-500'
+                                    }`}
+                                  >
+                                    <span>{sig.emoji}</span>{sig.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
                     {/* Company Intelligence */}
                     <div>
                       <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
