@@ -309,6 +309,8 @@ export default function LinkedInBotPage() {
       g4uMatch: '',
       outreachMessage: '',
       connectionMessage: '',
+      intentScore: 0,
+      signals: [],
       tags: ['from-candidate'],
       notes: `Detectado via ${candidate.interactionType} en post de ${candidate.sourceCreatorName}. ${candidate.reason}${candidate.sourceCommentDraft ? `\n\nPost fuente: ${candidate.sourceCommentDraft.slice(0, 300)}` : ''}`,
     });
@@ -319,7 +321,7 @@ export default function LinkedInBotPage() {
     // Wait for enrichment and update the prospect
     const enrichment = await enrichPromise;
     if (enrichment.ok !== false && !enrichment.error) {
-      const updates: Record<string, string> = {};
+      const updates: Record<string, any> = {};
       if (enrichment.companySector) updates.companySector = enrichment.companySector;
       if (enrichment.companySize) updates.companySize = enrichment.companySize;
       if (enrichment.fundingStage) updates.fundingStage = enrichment.fundingStage;
@@ -327,6 +329,8 @@ export default function LinkedInBotPage() {
       if (enrichment.g4uMatch) updates.g4uMatch = enrichment.g4uMatch;
       if (enrichment.connectionMessage) updates.connectionMessage = enrichment.connectionMessage;
       if (enrichment.outreachMessage) updates.outreachMessage = enrichment.outreachMessage;
+      if (enrichment.intentScore) updates.intentScore = Number(enrichment.intentScore) || 0;
+      if (enrichment.signals?.length) updates.signals = enrichment.signals;
       if (Object.keys(updates).length > 0) {
         await updateLIProspect(prospectId, updates);
       }
@@ -405,6 +409,8 @@ export default function LinkedInBotPage() {
         g4uMatch: '',
         outreachMessage: '',
         connectionMessage: '',
+        intentScore: 0,
+        signals: [],
         tags: ['founder-creator'],
         notes: '',
       });
@@ -1271,10 +1277,16 @@ function ProspectsTab({
 }) {
   const [seeding, setSeeding] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'recent' | 'intent'>('intent');
   const filters: { value: ProspectFilter; label: string }[] = [
     { value: 'all', label: 'Todos' },
     ...FUNNEL_STAGES.map((s) => ({ value: s.value as ProspectFilter, label: s.label })),
   ];
+
+  const sortedProspects = [...prospects].sort((a, b) => {
+    if (sortBy === 'intent') return (b.intentScore || 0) - (a.intentScore || 0);
+    return 0; // already sorted by createdAt desc from Firebase
+  });
 
   return (
     <div className="space-y-4">
@@ -1294,7 +1306,23 @@ function ProspectsTab({
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <div className="flex bg-slate-100 rounded-lg p-0.5 mr-1">
+            <button
+              onClick={() => setSortBy('intent')}
+              className={`px-2 py-1 text-xs rounded-md transition-colors ${sortBy === 'intent' ? 'bg-white text-[#032149] shadow-sm font-medium' : 'text-slate-400'}`}
+              title="Ordenar por intent score"
+            >
+              <Zap className="w-3 h-3 inline mr-0.5" />Intent
+            </button>
+            <button
+              onClick={() => setSortBy('recent')}
+              className={`px-2 py-1 text-xs rounded-md transition-colors ${sortBy === 'recent' ? 'bg-white text-[#032149] shadow-sm font-medium' : 'text-slate-400'}`}
+              title="Ordenar por fecha"
+            >
+              Reciente
+            </button>
+          </div>
           <button
             onClick={async () => { setSeeding(true); await onSeedFounders(); setSeeding(false); }}
             disabled={seeding}
@@ -1322,7 +1350,7 @@ function ProspectsTab({
         </div>
       ) : (
         <div className="grid gap-3">
-          {prospects.map((p) => {
+          {sortedProspects.map((p) => {
             const stage = FUNNEL_STAGES.find((s) => s.value === p.funnelStage) || FUNNEL_STAGES[0];
             const profileType = PROFILE_TYPES.find((pt) => pt.value === p.profileType);
             const isExpanded = expandedId === p.id;
@@ -1360,7 +1388,33 @@ function ProspectsTab({
                     </div>
                     <p className="text-sm text-slate-500 truncate">{p.title}{p.company ? ` · ${p.company}` : ''}</p>
                     {p.source && <p className="text-xs text-slate-400 mt-0.5">Fuente: {p.source}</p>}
+                    {/* Signal badges */}
+                    {p.signals && p.signals.length > 0 && (
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        {p.signals.map((signal, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                            <Zap className="w-2.5 h-2.5" />{signal}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Intent Score */}
+                  {p.intentScore > 0 && (
+                    <div className={`flex flex-col items-center shrink-0 ${
+                      p.intentScore >= 8 ? 'text-green-600' : p.intentScore >= 5 ? 'text-amber-500' : 'text-slate-400'
+                    }`} title={`Intent Score: ${p.intentScore}/10`}>
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 ${
+                        p.intentScore >= 8 ? 'border-green-400 bg-green-50' : p.intentScore >= 5 ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-slate-50'
+                      }`}>
+                        {p.intentScore}
+                      </div>
+                      <span className="text-[9px] font-medium mt-0.5">
+                        {p.intentScore >= 8 ? 'HOT' : p.intentScore >= 5 ? 'WARM' : 'COLD'}
+                      </span>
+                    </div>
+                  )}
 
                   <select
                     value={p.funnelStage}
@@ -1593,6 +1647,7 @@ function AddProspectForm({ onAdd, onCancel }: {
           onClick={() => form.name && onAdd({
             ...form, funnelStage: 'detected', tags: [],
             fundingStage: form.fundingStage, painPoints: '', g4uMatch: '', outreachMessage: '', connectionMessage: '',
+            intentScore: 0, signals: [],
           })}
           disabled={!form.name}
           className="px-4 py-2 text-sm bg-[#6351d5] text-white rounded-lg hover:bg-[#5040b0] disabled:opacity-40"

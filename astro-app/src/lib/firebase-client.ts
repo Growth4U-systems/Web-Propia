@@ -495,6 +495,47 @@ export async function deleteIGScheduledPost(id: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// Instagram Bot Status (synced from instagram-bot via REST API)
+export interface IGBotDailyStats {
+  date: string;
+  follows: number;
+  unfollows: number;
+  likes: number;
+  comments: number;
+}
+
+export interface IGBotStats {
+  poolSize: number;
+  activeFollows: number;
+  totalFollowed: number;
+  totalUnfollowed: number;
+  totalLikes: number;
+  blacklistCount: number;
+  todayStats: IGBotDailyStats;
+  dailyStats: IGBotDailyStats[];
+  targetAccounts: string[];
+  limits: {
+    maxFollowsPerDay: number;
+    maxLikesPerDay: number;
+    maxCommentsPerDay: number;
+    maxUnfollowsPerDay: number;
+    unfollowAfterDays: number;
+  };
+  lastRunAt: string;
+}
+
+export async function getIGBotStats(): Promise<IGBotStats | null> {
+  try {
+    const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'ig_bot_status', 'current');
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return snap.data() as IGBotStats;
+  } catch (error) {
+    console.error('Error fetching IG bot stats:', error);
+    return null;
+  }
+}
+
 // LinkedIn Scheduled Posts
 export interface LIScheduledPost {
   imageUrl: string;
@@ -625,6 +666,9 @@ export interface LIProspect {
   g4uMatch: string;
   outreachMessage: string;
   connectionMessage: string;
+  // Signals
+  intentScore: number;
+  signals: string[];
   tags: string[];
   notes: string;
   createdAt?: Date;
@@ -656,6 +700,8 @@ export async function getAllLIProspects() {
       g4uMatch: data.g4uMatch || '',
       outreachMessage: data.outreachMessage || '',
       connectionMessage: data.connectionMessage || '',
+      intentScore: data.intentScore || 0,
+      signals: data.signals || [],
       tags: data.tags || [],
       notes: data.notes || '',
       createdAt: data.createdAt?.toDate() || null,
