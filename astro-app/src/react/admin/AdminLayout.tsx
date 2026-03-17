@@ -15,6 +15,9 @@ import {
   Camera,
   LinkedinIcon,
   Bot,
+  Radar,
+  Handshake,
+  NotebookPen,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { signInWithGoogle, signOutUser, onAuthChange, getAllLIComments, getAllLIProspects } from '../../lib/firebase-client';
@@ -69,6 +72,9 @@ export default function AdminLayout() {
     { name: 'LinkedIn', href: '/admin/linkedin/', icon: LinkedinIcon },
     { name: 'LinkedIn Bot', href: '/admin/linkedin-bot/', icon: Bot, badge: liBotBadge },
     { name: 'SEO & GEO', href: '/admin/seo/', icon: Search },
+    { name: 'SEO/GEO Audit', href: '/admin/seo-geo-audit/', icon: Radar },
+    { name: 'Partners', href: '/admin/partners/', icon: Handshake },
+    { name: 'Keyword Briefs', href: '/admin/keyword-briefs/', icon: NotebookPen },
     { name: 'Feedback', href: '/admin/feedback/', icon: MessageSquare },
     { name: 'Leads', href: '/admin/leads/', icon: Users },
   ];

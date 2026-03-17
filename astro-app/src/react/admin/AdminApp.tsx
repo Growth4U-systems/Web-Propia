@@ -14,6 +14,9 @@ import InstagramPage from './pages/InstagramPage';
 import LinkedInPage from './pages/LinkedInPage';
 import LinkedInBotPage from './pages/LinkedInBotPage';
 import InstagramBotPage from './pages/InstagramBotPage';
+import SeoGeoAuditPage from './pages/SeoGeoAuditPage';
+import PartnersPage from './pages/PartnersPage';
+import KeywordBriefPage from './pages/KeywordBriefPage';
 
 export default function AdminApp() {
   return (
@@ -30,6 +33,9 @@ export default function AdminApp() {
           <Route path="/admin/linkedin-bot/" element={<LinkedInBotPage />} />
           <Route path="/admin/seo/" element={<SeoPage />} />
           <Route path="/admin/geo/" element={<GeoPage />} />
+          <Route path="/admin/seo-geo-audit/" element={<SeoGeoAuditPage />} />
+          <Route path="/admin/partners/" element={<PartnersPage />} />
+          <Route path="/admin/keyword-briefs/" element={<KeywordBriefPage />} />
           <Route path="/admin/validation/" element={<ValidationPage />} />
           <Route path="/admin/checklist/" element={<ChecklistPage />} />
           <Route path="/admin/feedback/" element={<FeedbackAdminPage />} />

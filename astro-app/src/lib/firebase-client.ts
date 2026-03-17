@@ -921,4 +921,232 @@ export async function sendLIBotSlackSummary(data: {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// SEO+GEO Audits
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface GEOPromptResult {
+  platform: string;
+  prompt: string;
+  mentioned: boolean;
+  sentiment: 'positive' | 'neutral' | 'negative';
+  citedUrls: string[];
+  responseSnippet: string;
+  testedAt: string;
+}
+
+export interface SERPCheck {
+  keyword: string;
+  position: number | null;
+  url: string;
+  title: string;
+  checkedAt: string;
+}
+
+export interface SEOGEOAudit {
+  name: string;
+  domain: string;
+  status: 'draft' | 'running' | 'completed';
+  targetKeywords: string[];
+  serpResults: SERPCheck[];
+  webVitals: Record<string, any> | null;
+  geoPrompts: GEOPromptResult[];
+  seoScore: number;
+  geoScore: number;
+  gaps: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllSEOGEOAudits() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'seo_geo_audits');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      name: data.name || '',
+      domain: data.domain || '',
+      status: data.status || 'draft',
+      targetKeywords: data.targetKeywords || [],
+      serpResults: data.serpResults || [],
+      webVitals: data.webVitals || null,
+      geoPrompts: data.geoPrompts || [],
+      seoScore: data.seoScore || 0,
+      geoScore: data.geoScore || 0,
+      gaps: data.gaps || [],
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createSEOGEOAudit(audit: Omit<SEOGEOAudit, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'seo_geo_audits');
+  const docRef = await addDoc(ref, { ...audit, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateSEOGEOAudit(id: string, updates: Partial<SEOGEOAudit>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'seo_geo_audits', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteSEOGEOAudit(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'seo_geo_audits', id);
+  await deleteDoc(ref);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Partners
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface OutreachEvent {
+  date: string;
+  type: 'email' | 'dm' | 'call' | 'meeting' | 'other';
+  notes: string;
+}
+
+export type PartnerType = 'influencer' | 'media' | 'referral' | 'agency' | 'community';
+export type PartnerStatus = 'discovered' | 'contacted' | 'negotiating' | 'active' | 'inactive';
+
+export interface Partner {
+  name: string;
+  type: PartnerType;
+  platform: string;
+  contactName: string;
+  contactEmail: string;
+  contactUrl: string;
+  status: PartnerStatus;
+  relevanceScore: number;
+  niche: string;
+  audienceSize: string;
+  notes: string;
+  outreachHistory: OutreachEvent[];
+  tags: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllPartners() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'partners');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      name: data.name || '',
+      type: (data.type || 'referral') as PartnerType,
+      platform: data.platform || '',
+      contactName: data.contactName || '',
+      contactEmail: data.contactEmail || '',
+      contactUrl: data.contactUrl || '',
+      status: (data.status || 'discovered') as PartnerStatus,
+      relevanceScore: data.relevanceScore || 0,
+      niche: data.niche || '',
+      audienceSize: data.audienceSize || '',
+      notes: data.notes || '',
+      outreachHistory: data.outreachHistory || [],
+      tags: data.tags || [],
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createPartner(partner: Omit<Partner, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'partners');
+  const docRef = await addDoc(ref, { ...partner, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updatePartner(id: string, updates: Partial<Partner>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'partners', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deletePartner(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'partners', id);
+  await deleteDoc(ref);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Content Briefs (Keyword Research + Brief Generator)
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface KeywordSuggestion {
+  keyword: string;
+  intent: 'informational' | 'commercial' | 'transactional' | 'navigational';
+  difficulty: 'low' | 'medium' | 'high';
+  relevance: number;
+  selected: boolean;
+}
+
+export type BriefStatus = 'draft' | 'researched' | 'brief_ready' | 'writing' | 'published';
+
+export interface ContentBrief {
+  topic: string;
+  status: BriefStatus;
+  keywords: KeywordSuggestion[];
+  primaryKeyword: string;
+  secondaryKeywords: string[];
+  suggestedTitle: string;
+  metaDescription: string;
+  outline: string[];
+  targetWordCount: number;
+  targetAudience: string;
+  contentAngle: string;
+  competitorUrls: string[];
+  internalLinks: string[];
+  linkedBlogPostId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllContentBriefs() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'content_briefs');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      topic: data.topic || '',
+      status: (data.status || 'draft') as BriefStatus,
+      keywords: data.keywords || [],
+      primaryKeyword: data.primaryKeyword || '',
+      secondaryKeywords: data.secondaryKeywords || [],
+      suggestedTitle: data.suggestedTitle || '',
+      metaDescription: data.metaDescription || '',
+      outline: data.outline || [],
+      targetWordCount: data.targetWordCount || 1000,
+      targetAudience: data.targetAudience || '',
+      contentAngle: data.contentAngle || '',
+      competitorUrls: data.competitorUrls || [],
+      internalLinks: data.internalLinks || [],
+      linkedBlogPostId: data.linkedBlogPostId || '',
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createContentBrief(brief: Omit<ContentBrief, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'content_briefs');
+  const docRef = await addDoc(ref, { ...brief, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateContentBrief(id: string, updates: Partial<ContentBrief>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'content_briefs', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteContentBrief(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'content_briefs', id);
+  await deleteDoc(ref);
+}
+
 export { db, auth, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, limit, where, serverTimestamp };
