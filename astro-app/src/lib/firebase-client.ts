@@ -504,15 +504,27 @@ export interface IGBotDailyStats {
   comments: number;
 }
 
+export interface IGBotActivity {
+  type: 'follow' | 'unfollow' | 'like' | 'comment';
+  username: string;
+  detail: string;
+  timestamp: string;
+}
+
 export interface IGBotStats {
   poolSize: number;
   activeFollows: number;
   totalFollowed: number;
   totalUnfollowed: number;
   totalLikes: number;
+  totalComments: number;
   blacklistCount: number;
   todayStats: IGBotDailyStats;
   dailyStats: IGBotDailyStats[];
+  recentActivity: IGBotActivity[];
+  sessionStartedAt: string;
+  sessionEndedAt: string;
+  sessionDurationMin: number;
   targetAccounts: string[];
   limits: {
     maxFollowsPerDay: number;

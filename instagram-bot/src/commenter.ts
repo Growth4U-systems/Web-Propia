@@ -1,6 +1,6 @@
 import type { Page } from "playwright";
 import { LIMITS, sleep, randomDelay } from "./config.js";
-import { loadState, saveState, getTodayStats, pickUsersForLiking } from "./state.js";
+import { loadState, saveState, getTodayStats, pickUsersForLiking, recordComment } from "./state.js";
 
 // Comments — all Spanish since we target Spain audience
 const COMMENTS = [
@@ -55,7 +55,7 @@ function pickComment(): string {
   return COMMENTS[Math.floor(Math.random() * COMMENTS.length)];
 }
 
-async function commentOnPost(page: Page, postUrl: string): Promise<boolean> {
+async function commentOnPost(page: Page, postUrl: string, comment?: string): Promise<boolean> {
   await page.goto(postUrl, { waitUntil: "domcontentloaded" });
   await sleep(randomDelay(3000, 5000));
 
@@ -84,8 +84,8 @@ async function commentOnPost(page: Page, postUrl: string): Promise<boolean> {
   await commentBox.click();
   await sleep(randomDelay(500, 1000));
 
-  const comment = pickComment();
-  await page.keyboard.type(comment, { delay: randomDelay(30, 80) });
+  const text = comment || pickComment();
+  await page.keyboard.type(text, { delay: randomDelay(30, 80) });
   await sleep(randomDelay(1000, 2000));
 
   // Click "Post" / "Publicar"
@@ -106,7 +106,7 @@ async function commentOnPost(page: Page, postUrl: string): Promise<boolean> {
   }
 
   await sleep(randomDelay(2000, 4000));
-  console.log(`    Commented: "${comment}"`);
+  console.log(`    Commented: "${text}"`);
   return true;
 }
 
@@ -164,13 +164,13 @@ export async function runCommentSession(page: Page): Promise<void> {
 
     const postUrl = `https://www.instagram.com${firstPost}`;
     try {
-      const success = await commentOnPost(page, postUrl);
+      const comment = pickComment();
+      const success = await commentOnPost(page, postUrl, comment);
 
       if (success) {
         totalCommented++;
         const freshState = loadState();
-        const stats = getTodayStats(freshState);
-        stats.comments = (stats.comments || 0) + 1;
+        recordComment(freshState, username, postUrl, comment);
         saveState(freshState);
       }
     } catch (err) {

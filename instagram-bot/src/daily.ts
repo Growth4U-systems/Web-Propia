@@ -6,7 +6,7 @@ import { runFollowSession, runUnfollowSession } from "./follower.js";
 import { runCommentSession } from "./commenter.js";
 import { loadState, getTodayStats } from "./state.js";
 import { TARGET_ACCOUNTS, LIMITS, sleep, randomDelay } from "./config.js";
-import { syncToFirebase } from "./sync-firebase.js";
+import { syncToFirebase, setSessionStart } from "./sync-firebase.js";
 
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION:", err);
@@ -17,6 +17,7 @@ process.on("unhandledRejection", (err) => {
 
 async function main() {
   const startTime = Date.now();
+  setSessionStart();
   console.log(`\n========================================`);
   console.log(`Instagram Bot — ${new Date().toLocaleString("es-ES")}`);
   console.log(`Target: 10K followers in 30 days`);

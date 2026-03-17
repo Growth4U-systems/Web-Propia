@@ -15,6 +15,13 @@ export interface LikeRecord {
   likedAt: string;
 }
 
+export interface CommentRecord {
+  username: string;
+  postUrl: string;
+  comment: string;
+  commentedAt: string;
+}
+
 export interface DailyStats {
   date: string; // YYYY-MM-DD
   likes: number;
@@ -27,6 +34,7 @@ interface State {
   scrapedUsers: string[];          // Usernames pool to engage with
   followedUsers: FollowRecord[];   // Follow tracking
   likedPosts: LikeRecord[];       // Like history
+  commentedPosts: CommentRecord[]; // Comment history
   dailyStats: DailyStats[];       // Daily counters
   blacklist: string[];             // Never interact with these
 }
@@ -38,6 +46,7 @@ function defaultState(): State {
     scrapedUsers: [],
     followedUsers: [],
     likedPosts: [],
+    commentedPosts: [],
     dailyStats: [],
     blacklist: [],
   };
@@ -92,6 +101,12 @@ export function recordUnfollow(state: State, username: string): void {
 export function recordLike(state: State, username: string, postUrl: string): void {
   state.likedPosts.push({ username, postUrl, likedAt: new Date().toISOString() });
   getTodayStats(state).likes++;
+}
+
+export function recordComment(state: State, username: string, postUrl: string, comment: string): void {
+  if (!state.commentedPosts) state.commentedPosts = [];
+  state.commentedPosts.push({ username, postUrl, comment, commentedAt: new Date().toISOString() });
+  getTodayStats(state).comments = (getTodayStats(state).comments || 0) + 1;
 }
 
 export function isAlreadyLiked(state: State, postUrl: string): boolean {
