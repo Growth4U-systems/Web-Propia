@@ -17,37 +17,42 @@ import { generateRecommendations, generateIssues } from './engines';
 
 function computeSEOHealth(audit: SEOAuditResult | null): number {
   if (!audit) return 0;
-  let score = 100;
-  if (!audit.metaTitle) score -= 15;
-  if (!audit.metaDescription) score -= 10;
-  if (audit.h1Count !== 1) score -= 10;
-  if (!audit.hasCanonical) score -= 10;
-  if (!audit.hasSitemap) score -= 15;
-  if (!audit.hasRobotsTxt) score -= 5;
-  if (!audit.isHttps) score -= 15;
-  if (audit.imagesWithoutAlt > 0) score -= Math.min(audit.imagesWithoutAlt * 2, 10);
-  if (!audit.ogTitle || !audit.ogImage) score -= 5;
-  if (audit.wordCount < 300) score -= 5;
-  return Math.max(0, score);
+  try {
+    let score = 100;
+    if (!audit.metaTitle) score -= 15;
+    if (!audit.metaDescription) score -= 10;
+    if (audit.h1Count !== 1) score -= 10;
+    if (!audit.hasCanonical) score -= 10;
+    if (!audit.hasSitemap) score -= 15;
+    if (!audit.hasRobotsTxt) score -= 5;
+    if (!audit.isHttps) score -= 15;
+    if ((audit.imagesWithoutAlt ?? 0) > 0) score -= Math.min(audit.imagesWithoutAlt * 2, 10);
+    if (!audit.ogTitle || !audit.ogImage) score -= 5;
+    if ((audit.wordCount ?? 0) < 300) score -= 5;
+    return Math.max(0, score);
+  } catch { return 0; }
 }
 
 function computeGEOReadiness(audit: SEOAuditResult | null, ownMedia: OwnMediaResult | null): number {
-  let score = 0;
-  if (audit) {
-    if (audit.structuredDataTypes.length > 0) score += 25;
-    if (audit.structuredDataTypes.includes('Organization')) score += 10;
-    if (audit.structuredDataTypes.includes('Article')) score += 10;
-    if (audit.structuredDataTypes.includes('FAQPage')) score += 10;
-    if (audit.wordCount > 800) score += 10;
-    if (audit.h2Count >= 3) score += 5;
-    if (audit.hreflangTags.length > 0) score += 5;
-  }
-  if (ownMedia) {
-    if (ownMedia.blog.hasBlog) score += 10;
-    if (ownMedia.blog.postCount > 10) score += 5;
-    if (ownMedia.schemaTypes.length > 3) score += 10;
-  }
-  return Math.min(100, score);
+  try {
+    let score = 0;
+    if (audit) {
+      const sd = audit.structuredDataTypes ?? [];
+      if (sd.length > 0) score += 25;
+      if (sd.includes('Organization')) score += 10;
+      if (sd.includes('Article')) score += 10;
+      if (sd.includes('FAQPage')) score += 10;
+      if ((audit.wordCount ?? 0) > 800) score += 10;
+      if ((audit.h2Count ?? 0) >= 3) score += 5;
+      if ((audit.hreflangTags ?? []).length > 0) score += 5;
+    }
+    if (ownMedia) {
+      if (ownMedia.blog?.hasBlog) score += 10;
+      if ((ownMedia.blog?.postCount ?? 0) > 10) score += 5;
+      if ((ownMedia.schemaTypes ?? []).length > 3) score += 10;
+    }
+    return Math.min(100, score);
+  } catch { return 0; }
 }
 
 export default function DashboardTab() {
@@ -97,8 +102,12 @@ export default function DashboardTab() {
   const geoReadiness = useMemo(() => computeGEOReadiness(audit, ownMedia), [audit, ownMedia]);
   const ownMediaScore = ownMedia?.scores?.overallScore ?? 0;
 
-  const issues = useMemo(() => generateIssues(audit, webVitals), [audit, webVitals]);
-  const recommendations = useMemo(() => generateRecommendations(issues, ownMedia), [issues, ownMedia]);
+  const issues = useMemo(() => {
+    try { return generateIssues(audit, webVitals); } catch { return []; }
+  }, [audit, webVitals]);
+  const recommendations = useMemo(() => {
+    try { return generateRecommendations(issues ?? [], ownMedia); } catch { return []; }
+  }, [issues, ownMedia]);
 
   const latestGSC = gscMetrics.length > 0 ? gscMetrics[0] : null;
   const hasAnyData = audit || webVitals || ownMedia || dataForSEO || gscMetrics.length > 0;
@@ -185,12 +194,12 @@ export default function DashboardTab() {
             <h3 className="font-bold text-[#032149]">GEO Insight</h3>
           </div>
           <p className="text-slate-600 text-sm">
-            {audit.structuredDataTypes.length > 0
+            {(audit.structuredDataTypes ?? []).length > 0
               ? `Tu web tiene ${audit.structuredDataTypes.length} tipos de datos estructurados (${audit.structuredDataTypes.join(', ')}). `
               : 'Tu web no tiene datos estructurados. Es critico agregar JSON-LD para que los motores de IA citen tu contenido. '}
-            {audit.wordCount > 800
+            {(audit.wordCount ?? 0) > 800
               ? 'El contenido tiene suficiente profundidad para ser citado por LLMs.'
-              : `Con solo ${audit.wordCount} palabras, el contenido es demasiado corto para ser citado frecuentemente por LLMs.`}
+              : `Con solo ${audit.wordCount ?? 0} palabras, el contenido es demasiado corto para ser citado frecuentemente por LLMs.`}
           </p>
         </div>
       )}
