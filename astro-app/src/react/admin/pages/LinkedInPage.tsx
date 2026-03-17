@@ -110,7 +110,7 @@ const ACCOUNTS: LinkedInAccount[] = [
     name: 'Philippe',
     color: '#0077B5',
     template: {
-      url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-philippe.jpg',
+      url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-1.jpg',
       textX: 100,
       textY: 700,
       textW: 1528,
