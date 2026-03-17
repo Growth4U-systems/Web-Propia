@@ -65,6 +65,7 @@ export default function AdminLayout() {
     { name: 'Casos de Éxito', href: '/admin/casos-de-exito/', icon: Trophy },
     { name: 'Lead Magnets', href: '/admin/lead-magnets/', icon: Download },
     { name: 'Instagram', href: '/admin/instagram/', icon: Camera },
+    { name: 'IG Bot', href: '/admin/instagram-bot/', icon: Bot },
     { name: 'LinkedIn', href: '/admin/linkedin/', icon: LinkedinIcon },
     { name: 'LinkedIn Bot', href: '/admin/linkedin-bot/', icon: Bot, badge: liBotBadge },
     { name: 'SEO & GEO', href: '/admin/seo/', icon: Search },
