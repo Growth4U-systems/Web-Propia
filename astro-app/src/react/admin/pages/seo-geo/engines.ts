@@ -578,7 +578,7 @@ export function generateIssues(
     }
 
     // Structured data / Schema
-    if (audit.structuredDataTypes.length === 0) {
+    if ((audit.structuredDataTypes ?? []).length === 0) {
       issues.push({
         type: 'geo',
         severity: 'high',
@@ -598,7 +598,7 @@ export function generateIssues(
       // Check for missing important schema types
       const importantSchemas = ['Organization', 'WebSite', 'BreadcrumbList'];
       const missingSchemas = importantSchemas.filter(
-        s => !audit.structuredDataTypes.some(t => t.toLowerCase().includes(s.toLowerCase()))
+        s => !(audit.structuredDataTypes ?? []).some(t => t.toLowerCase().includes(s.toLowerCase()))
       );
       if (missingSchemas.length > 0) {
         issues.push({
@@ -612,7 +612,7 @@ export function generateIssues(
       }
 
       // Check for FAQ schema (important for GEO)
-      if (!audit.structuredDataTypes.some(t => t.toLowerCase().includes('faq'))) {
+      if (!(audit.structuredDataTypes ?? []).some(t => t.toLowerCase().includes('faq'))) {
         issues.push({
           type: 'geo',
           severity: 'medium',
@@ -672,7 +672,7 @@ export function generateIssues(
     }
 
     // Hreflang tags
-    if (audit.hreflangTags.length === 0 && audit.url.includes('/en/')) {
+    if ((audit.hreflangTags ?? []).length === 0 && audit.url.includes('/en/')) {
       issues.push({
         type: 'technical_seo',
         severity: 'medium',
@@ -1041,7 +1041,7 @@ export function generateRecommendations(
     }
 
     // Schema types check
-    if (!ownMedia.schemaTypes.some(s => s.toLowerCase().includes('faq'))) {
+    if (!(ownMedia.schemaTypes ?? []).some(s => s.toLowerCase().includes('faq'))) {
       const hasFaqIssue = recs.some(r => r.title.toLowerCase().includes('faqpage'));
       if (!hasFaqIssue) {
         recs.push({
@@ -1064,7 +1064,7 @@ export function generateRecommendations(
     }
 
     // E-E-A-T / Author schema
-    if (!ownMedia.schemaTypes.some(s => s.toLowerCase().includes('person'))) {
+    if (!(ownMedia.schemaTypes ?? []).some(s => s.toLowerCase().includes('person'))) {
       recs.push({
         category: 'GEO',
         severity: 'high',

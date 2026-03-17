@@ -137,25 +137,27 @@ function buildChecklist(audit: SEOAuditResult): AuditCheckItem[] {
     expectedValue: 'Presente',
     category: 'Technical',
   });
+  const hreflang = audit.hreflangTags ?? [];
   checks.push({
     label: 'Hreflang Tags',
-    status: audit.hreflangTags.length > 0 ? 'pass' : 'warning',
-    currentValue: audit.hreflangTags.length > 0 ? audit.hreflangTags.join(', ') : 'Ninguno',
+    status: hreflang.length > 0 ? 'pass' : 'warning',
+    currentValue: hreflang.length > 0 ? hreflang.join(', ') : 'Ninguno',
     expectedValue: 'es, en (si multiidioma)',
     category: 'Technical',
   });
 
   // Schema & Structured Data
+  const sd = audit.structuredDataTypes ?? [];
   checks.push({
     label: 'JSON-LD Presente',
-    status: audit.structuredDataTypes.length > 0 ? 'pass' : 'fail',
-    currentValue: audit.structuredDataTypes.length > 0 ? `${audit.structuredDataTypes.length} tipo(s)` : 'Ninguno',
+    status: sd.length > 0 ? 'pass' : 'fail',
+    currentValue: sd.length > 0 ? `${sd.length} tipo(s)` : 'Ninguno',
     expectedValue: '3+ tipos',
     category: 'Schema & Structured Data',
   });
   const criticalSchemas = ['Organization', 'Article', 'FAQPage'];
   for (const schema of criticalSchemas) {
-    const has = audit.structuredDataTypes.includes(schema);
+    const has = sd.includes(schema);
     checks.push({
       label: `Schema ${schema}`,
       status: has ? 'pass' : 'fail',
