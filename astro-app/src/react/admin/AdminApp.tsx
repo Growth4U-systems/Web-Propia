@@ -3,8 +3,7 @@ import AdminLayout from './AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import BlogAdminPage from './pages/BlogAdminPage';
 import CasosAdminPage from './pages/CasosAdminPage';
-import SeoPage from './pages/SeoPage';
-import GeoPage from './pages/GeoPage';
+import VisibilidadPage from './pages/VisibilidadPage';
 import ValidationPage from './pages/ValidationPage';
 import ChecklistPage from './pages/ChecklistPage';
 import FeedbackAdminPage from './pages/FeedbackAdminPage';
@@ -14,9 +13,9 @@ import InstagramPage from './pages/InstagramPage';
 import LinkedInPage from './pages/LinkedInPage';
 import LinkedInBotPage from './pages/LinkedInBotPage';
 import InstagramBotPage from './pages/InstagramBotPage';
-import SeoGeoAuditPage from './pages/SeoGeoAuditPage';
+import NewsletterPage from './pages/NewsletterPage';
 import PartnersPage from './pages/PartnersPage';
-import KeywordBriefPage from './pages/KeywordBriefPage';
+
 
 export default function AdminApp() {
   return (
@@ -31,11 +30,9 @@ export default function AdminApp() {
           <Route path="/admin/instagram-bot/" element={<InstagramBotPage />} />
           <Route path="/admin/linkedin/" element={<LinkedInPage />} />
           <Route path="/admin/linkedin-bot/" element={<LinkedInBotPage />} />
-          <Route path="/admin/seo/" element={<SeoPage />} />
-          <Route path="/admin/geo/" element={<GeoPage />} />
-          <Route path="/admin/seo-geo-audit/" element={<SeoGeoAuditPage />} />
+          <Route path="/admin/visibilidad/" element={<VisibilidadPage />} />
           <Route path="/admin/partners/" element={<PartnersPage />} />
-          <Route path="/admin/keyword-briefs/" element={<KeywordBriefPage />} />
+
           <Route path="/admin/validation/" element={<ValidationPage />} />
           <Route path="/admin/checklist/" element={<ChecklistPage />} />
           <Route path="/admin/feedback/" element={<FeedbackAdminPage />} />
