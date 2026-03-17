@@ -585,6 +585,12 @@
 
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Admin SPA fallback — all /admin/* routes serve /admin/index.html
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
+  status = 200
+
 # Headers for caching
 [[headers]]
   for = "/_astro/*"
