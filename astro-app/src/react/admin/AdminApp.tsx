@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import BlogAdminPage from './pages/BlogAdminPage';
@@ -29,8 +29,11 @@ export default function AdminApp() {
           <Route path="/admin/linkedin/" element={<LinkedInPage />} />
           <Route path="/admin/linkedin-bot/" element={<LinkedInBotPage />} />
           <Route path="/admin/visibilidad/" element={<VisibilidadPage />} />
+          <Route path="/admin/seo/" element={<Navigate to="/admin/visibilidad/" replace />} />
+          <Route path="/admin/geo/" element={<Navigate to="/admin/visibilidad/" replace />} />
+          <Route path="/admin/seo-geo-audit/" element={<Navigate to="/admin/visibilidad/" replace />} />
+          <Route path="/admin/keyword-briefs/" element={<Navigate to="/admin/visibilidad/" replace />} />
           <Route path="/admin/partners/" element={<PartnersPage />} />
-
           <Route path="/admin/validation/" element={<ValidationPage />} />
           <Route path="/admin/checklist/" element={<ChecklistPage />} />
           <Route path="/admin/feedback/" element={<FeedbackAdminPage />} />
