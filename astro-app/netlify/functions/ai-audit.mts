@@ -107,14 +107,15 @@ Basa tu análisis en:
             responseSnippet: parsed.responseSnippet || "",
             testedAt: new Date().toISOString(),
           });
-        } catch {
+        } catch (platformErr: unknown) {
+          const errMsg = platformErr instanceof Error ? platformErr.message : String(platformErr);
           platformResults.push({
             platform,
             prompt,
             mentioned: false,
             sentiment: "neutral" as const,
             citedUrls: [],
-            responseSnippet: `Error testing ${platform}`,
+            responseSnippet: `Error testing ${platform}: ${errMsg.slice(0, 200)}`,
             testedAt: new Date().toISOString(),
           });
         }
