@@ -13,9 +13,7 @@ import InstagramPage from './pages/InstagramPage';
 import LinkedInPage from './pages/LinkedInPage';
 import LinkedInBotPage from './pages/LinkedInBotPage';
 import InstagramBotPage from './pages/InstagramBotPage';
-import NewsletterPage from './pages/NewsletterPage';
 import PartnersPage from './pages/PartnersPage';
-
 
 export default function AdminApp() {
   return (
