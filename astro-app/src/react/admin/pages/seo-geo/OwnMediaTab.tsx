@@ -43,6 +43,25 @@ const frequencyLabels: Record<string, string> = {
   none: 'Sin blog',
 };
 
+function normalizeOwnMedia(data: any): OwnMediaResult {
+  return {
+    ...data,
+    scores: data.scores ?? { overallScore: 0, contentScore: 0, socialScore: 0, technicalScore: 0 },
+    blog: {
+      hasBlog: false, postCount: 0, lastPostDate: null, avgWordCount: 0,
+      postingFrequency: 'none', categories: [], samplePosts: [],
+      ...(data.blog ?? {}),
+    },
+    social: data.social ?? {},
+    techStack: {
+      cms: null, framework: null, hosting: null, cdn: null,
+      analytics: [], tagManager: null,
+      ...(data.techStack ?? {}),
+    },
+    schemaTypes: data.schemaTypes ?? [],
+  };
+}
+
 export default function OwnMediaTab() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -51,7 +70,7 @@ export default function OwnMediaTab() {
 
   useEffect(() => {
     getDoc(doc(db, DATA_PATH, 'site_data', 'latest_own_media'))
-      .then(snap => { if (snap.exists()) setOwnMedia(snap.data() as OwnMediaResult); })
+      .then(snap => { if (snap.exists()) setOwnMedia(normalizeOwnMedia(snap.data())); })
       .catch(() => {})
       .finally(() => setInitialLoading(false));
   }, []);
@@ -66,7 +85,7 @@ export default function OwnMediaTab() {
         body: JSON.stringify({ url: 'https://growth4u.io' }),
       });
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-      const data = await res.json();
+      const data = normalizeOwnMedia(await res.json());
       setOwnMedia(data);
       await setDoc(doc(db, DATA_PATH, 'site_data', 'latest_own_media'), data).catch(() => {});
     } catch (err: any) {
@@ -190,7 +209,7 @@ export default function OwnMediaTab() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {socialPlatforms.map(({ key, label, icon: Icon, color }) => {
-                const url = ownMedia.social[key];
+                const url = (ownMedia.social ?? {} as any)[key];
                 const found = !!url;
                 return (
                   <div key={key} className={`flex items-center gap-3 p-4 rounded-xl border ${found ? 'border-green-200 bg-green-50' : 'border-slate-200 bg-slate-50 opacity-50'}`}>
@@ -276,7 +295,7 @@ export default function OwnMediaTab() {
           {/* Recommendations */}
           {(() => {
             const gaps: string[] = [];
-            const missingSocial = socialPlatforms.filter(p => !ownMedia.social[p.key]);
+            const missingSocial = socialPlatforms.filter(p => !(ownMedia.social ?? {} as any)[p.key]);
             if (missingSocial.length > 0) gaps.push(`Crea perfiles en: ${missingSocial.map(p => p.label).join(', ')}`);
             const missingSchemas = criticalSchemas.filter(s => !ownMedia.schemaTypes.includes(s));
             if (missingSchemas.length > 0) gaps.push(`Agrega schemas JSON-LD: ${missingSchemas.join(', ')}`);
