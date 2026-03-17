@@ -44,19 +44,46 @@ const frequencyLabels: Record<string, string> = {
 };
 
 function normalizeOwnMedia(data: any): OwnMediaResult {
+  // Map API response field names to component field names
+  const rawScores = data.scores ?? {};
+  const rawBlog = data.blog ?? {};
+  const rawSocial = data.social ?? data.socials ?? {};
+  const rawTech = data.techStack ?? {};
+
+  // Blog: API returns `posts`, component expects `samplePosts`; API has no `hasBlog`
+  const posts = rawBlog.samplePosts ?? rawBlog.posts ?? [];
+  const postCount = rawBlog.postCount ?? 0;
+  const allCategories = rawBlog.categories ?? [...new Set((posts as any[]).flatMap((p: any) => p.categories ?? []))];
+
+  // TechStack: API returns arrays, component expects single strings
+  const firstOrNull = (v: any) => (Array.isArray(v) ? v[0] ?? null : v ?? null);
+  const toArray = (v: any) => (Array.isArray(v) ? v : v ? [v] : []);
+
   return {
-    ...data,
-    scores: data.scores ?? { overallScore: 0, contentScore: 0, socialScore: 0, technicalScore: 0 },
-    blog: {
-      hasBlog: false, postCount: 0, lastPostDate: null, avgWordCount: 0,
-      postingFrequency: 'none', categories: [], samplePosts: [],
-      ...(data.blog ?? {}),
+    scores: {
+      overallScore: rawScores.overallScore ?? rawScores.overall ?? 0,
+      contentScore: rawScores.contentScore ?? rawScores.content ?? 0,
+      socialScore: rawScores.socialScore ?? rawScores.social ?? 0,
+      technicalScore: rawScores.technicalScore ?? rawScores.technical ?? 0,
     },
-    social: data.social ?? {},
+    blog: {
+      hasBlog: rawBlog.hasBlog ?? postCount > 0,
+      blogUrl: rawBlog.blogUrl ?? null,
+      postCount,
+      lastPostDate: rawBlog.lastPostDate ?? null,
+      avgWordCount: rawBlog.avgWordCount ?? 0,
+      postingFrequency: rawBlog.postingFrequency ?? 'none',
+      categories: allCategories,
+      samplePosts: posts,
+    },
+    social: rawSocial,
     techStack: {
-      cms: null, framework: null, hosting: null, cdn: null,
-      analytics: [], tagManager: null,
-      ...(data.techStack ?? {}),
+      cms: firstOrNull(rawTech.cms),
+      framework: firstOrNull(rawTech.framework),
+      hosting: firstOrNull(rawTech.hosting),
+      cdn: firstOrNull(rawTech.cdn),
+      analytics: toArray(rawTech.analytics),
+      tagManager: firstOrNull(rawTech.tagManager),
     },
     schemaTypes: data.schemaTypes ?? [],
   };
