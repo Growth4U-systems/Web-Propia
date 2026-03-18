@@ -139,6 +139,66 @@ export interface DataForSEOMetrics {
   source: string;
 }
 
+// ===== Guest Posting =====
+export type GuestPostStatus = 'prospecting' | 'outreach' | 'negotiating' | 'writing' | 'published' | 'rejected';
+
+export interface GuestPostProspect {
+  id: string;
+  domain: string;
+  contactName: string;
+  contactEmail: string;
+  domainAuthority: number;
+  status: GuestPostStatus;
+  topic: string;
+  anchorText: string;
+  targetUrl: string;
+  publishedUrl: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const guestPostStatusLabels: Record<GuestPostStatus, string> = {
+  prospecting: 'Prospecto',
+  outreach: 'Contactado',
+  negotiating: 'Negociando',
+  writing: 'Escribiendo',
+  published: 'Publicado',
+  rejected: 'Rechazado',
+};
+
+export const guestPostStatusColors: Record<GuestPostStatus, string> = {
+  prospecting: 'bg-slate-100 text-slate-600',
+  outreach: 'bg-blue-100 text-blue-700',
+  negotiating: 'bg-amber-100 text-amber-700',
+  writing: 'bg-purple-100 text-purple-700',
+  published: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-600',
+};
+
+// ===== Backlink Action Plan =====
+export interface BacklinkAction {
+  id: string;
+  title: string;
+  description: string;
+  category: 'guest_posting' | 'broken_links' | 'content' | 'outreach' | 'technical' | 'directories';
+  priority: 'high' | 'medium' | 'low';
+  status: 'open' | 'in_progress' | 'resolved' | 'dismissed';
+  steps: string[];
+  expectedImpact: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const actionCategoryLabels: Record<string, string> = {
+  guest_posting: 'Guest Posting',
+  broken_links: 'Broken Link Building',
+  content: 'Contenido Linkable',
+  outreach: 'Outreach',
+  technical: 'Tecnico',
+  directories: 'Directorios / Listados',
+};
+
 // ===== GSC Manual =====
 export interface GSCMetric {
   id: string;
