@@ -114,7 +114,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
       return {
         id: d._id,
         title: d.title || '',
-        slug: createSlug(d.title || ''),
+        slug: d.slug || createSlug(d.title || ''),
         category: d.category || 'Estrategia',
         excerpt: d.excerpt || '',
         content: d.content || '',
@@ -124,7 +124,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
         createdAt: d.createdAt || null,
         updatedAt: d.updatedAt || null,
       };
-    });
+    }).filter((post: BlogPost) => post.slug && post.title);
   } catch (error) {
     console.error('Error fetching posts:', error);
     return [];
