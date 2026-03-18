@@ -1,9 +1,18 @@
 import type { Context } from "@netlify/functions";
 
 const METRICOOL_TOKEN = process.env.METRICOOL_USER_TOKEN;
-const METRICOOL_USER_ID = process.env.METRICOOL_USER_ID;
-const METRICOOL_BLOG_ID = process.env.METRICOOL_BLOG_ID;
+const METRICOOL_USER_ID = process.env.METRICOOL_USER_ID || "3791983";
 const METRICOOL_BASE = "https://app.metricool.com/api";
+
+const MC_BLOG_IDS: Record<string, string> = {
+  philippe: "5911504",
+  growth4u: "5942085",
+  martin: "4866014",
+};
+
+function getBlogId(account?: string): string {
+  return MC_BLOG_IDS[account || "philippe"] || MC_BLOG_IDS.philippe;
+}
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -15,10 +24,11 @@ interface ScheduleRequest {
   text: string;
   imageUrl: string;
   publicationDate: { dateTime: string; timezone: string };
+  account?: string;
 }
 
-async function normalizeImage(imageUrl: string): Promise<string> {
-  const url = `${METRICOOL_BASE}/actions/normalize/image/url?url=${encodeURIComponent(imageUrl)}&blogId=${METRICOOL_BLOG_ID}&userId=${METRICOOL_USER_ID}`;
+async function normalizeImage(imageUrl: string, blogId: string): Promise<string> {
+  const url = `${METRICOOL_BASE}/actions/normalize/image/url?url=${encodeURIComponent(imageUrl)}&blogId=${blogId}&userId=${METRICOOL_USER_ID}`;
   const res = await fetch(url, {
     headers: { "X-Mc-Auth": METRICOOL_TOKEN! },
   });
@@ -39,8 +49,9 @@ async function schedulePost(
   text: string,
   mediaId: string,
   publicationDate: { dateTime: string; timezone: string },
+  blogId: string,
 ): Promise<Record<string, unknown>> {
-  const url = `${METRICOOL_BASE}/v2/scheduler/posts?blogId=${METRICOOL_BLOG_ID}&userId=${METRICOOL_USER_ID}`;
+  const url = `${METRICOOL_BASE}/v2/scheduler/posts?blogId=${blogId}&userId=${METRICOOL_USER_ID}`;
 
   const body = {
     text,
@@ -92,8 +103,8 @@ async function schedulePost(
   }
 }
 
-async function getScheduledPosts(): Promise<Record<string, unknown>> {
-  const url = `${METRICOOL_BASE}/v2/scheduler/posts?blogId=${METRICOOL_BLOG_ID}&userId=${METRICOOL_USER_ID}&status=PENDING`;
+async function getScheduledPosts(blogId: string): Promise<Record<string, unknown>> {
+  const url = `${METRICOOL_BASE}/v2/scheduler/posts?blogId=${blogId}&userId=${METRICOOL_USER_ID}&status=PENDING`;
   const res = await fetch(url, {
     headers: { "X-Mc-Auth": METRICOOL_TOKEN! },
   });
@@ -114,7 +125,7 @@ export default async (req: Request, _context: Context) => {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
-  if (!METRICOOL_TOKEN || !METRICOOL_USER_ID || !METRICOOL_BLOG_ID) {
+  if (!METRICOOL_TOKEN || !METRICOOL_USER_ID) {
     return Response.json(
       { error: "Metricool API not configured" },
       { status: 500, headers: CORS_HEADERS },
@@ -124,7 +135,9 @@ export default async (req: Request, _context: Context) => {
   // GET = list scheduled posts
   if (req.method === "GET") {
     try {
-      const data = await getScheduledPosts();
+      const url = new URL(req.url);
+      const blogId = getBlogId(url.searchParams.get("account") || undefined);
+      const data = await getScheduledPosts(blogId);
       return Response.json(data, { headers: CORS_HEADERS });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -138,7 +151,8 @@ export default async (req: Request, _context: Context) => {
 
   try {
     const body = (await req.json()) as ScheduleRequest;
-    const { text, imageUrl, publicationDate } = body;
+    const { text, imageUrl, publicationDate, account } = body;
+    const blogId = getBlogId(account);
 
     if (!text || !imageUrl || !publicationDate) {
       return Response.json(
@@ -148,10 +162,10 @@ export default async (req: Request, _context: Context) => {
     }
 
     // Step 1: normalize image to get mediaId
-    const mediaId = await normalizeImage(imageUrl);
+    const mediaId = await normalizeImage(imageUrl, blogId);
 
     // Step 2: schedule the post
-    const result = await schedulePost(text, mediaId, publicationDate);
+    const result = await schedulePost(text, mediaId, publicationDate, blogId);
 
     return Response.json(
       { success: true, data: result },

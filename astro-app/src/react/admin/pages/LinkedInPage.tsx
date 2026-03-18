@@ -117,6 +117,18 @@ const ACCOUNTS: LinkedInAccount[] = [
       textH: 900,
     },
   },
+  {
+    id: 'martin',
+    name: 'Martin',
+    color: '#0faec1',
+    template: {
+      url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-1.jpg',
+      textX: 100,
+      textY: 700,
+      textW: 1528,
+      textH: 900,
+    },
+  },
 ];
 
 // --- Canvas image generator ---
@@ -405,6 +417,7 @@ export default function LinkedInPage() {
         body: JSON.stringify({
           text: item.caption,
           imageUrl: item.liImageUrl,
+          account: item.account,
         }),
       });
 
@@ -457,6 +470,7 @@ export default function LinkedInPage() {
         body: JSON.stringify({
           text: item.caption,
           imageUrl: item.liImageUrl,
+          account: item.account,
           publicationDate: {
             dateTime,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

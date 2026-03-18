@@ -1,9 +1,19 @@
 import type { Context } from "@netlify/functions";
 
 const METRICOOL_TOKEN = process.env.METRICOOL_USER_TOKEN;
-const METRICOOL_USER_ID = process.env.METRICOOL_USER_ID;
-const METRICOOL_BLOG_ID = process.env.METRICOOL_BLOG_ID;
+const METRICOOL_USER_ID = process.env.METRICOOL_USER_ID || "3791983";
 const METRICOOL_BASE = "https://app.metricool.com/api";
+
+// Same userId, different blogId per LinkedIn profile
+const MC_BLOG_IDS: Record<string, string> = {
+  philippe: "5911504",
+  growth4u: "5942085",
+  martin: "4866014",
+};
+
+function getBlogId(account?: string): string {
+  return MC_BLOG_IDS[account || "philippe"] || MC_BLOG_IDS.philippe;
+}
 
 const LI_ACCESS_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN;
 // Set this to a person URN or organization URN — auto-detected if not set
@@ -181,8 +191,8 @@ async function checkConnection(): Promise<{ connected: boolean; org?: string; ha
   }
 
   // Fallback: check Metricool
-  if (METRICOOL_TOKEN && METRICOOL_USER_ID && METRICOOL_BLOG_ID) {
-    const url = `${METRICOOL_BASE}/admin/simpleProfiles?blogId=${METRICOOL_BLOG_ID}&userId=${METRICOOL_USER_ID}`;
+  if (METRICOOL_TOKEN && METRICOOL_USER_ID) {
+    const url = `${METRICOOL_BASE}/admin/simpleProfiles?blogId=${getBlogId()}&userId=${METRICOOL_USER_ID}`;
     const res = await fetch(url, { headers: mcHeaders() });
     if (res.ok) {
       result.connected = true;
@@ -236,10 +246,11 @@ export default async (req: Request, _context: Context) => {
 
   // POST = schedule a LinkedIn post via Metricool (publish "now" = schedule 2 min from now)
   try {
-    const body = await req.json() as { text: string; imageUrl?: string };
-    const { text, imageUrl } = body;
+    const body = await req.json() as { text: string; imageUrl?: string; account?: string };
+    const { text, imageUrl, account } = body;
+    const blogId = getBlogId(account);
 
-    if (!METRICOOL_TOKEN || !METRICOOL_USER_ID || !METRICOOL_BLOG_ID) {
+    if (!METRICOOL_TOKEN || !METRICOOL_USER_ID) {
       return Response.json(
         { error: "Metricool API not configured for posting." },
         { status: 500, headers: CORS_HEADERS },
@@ -256,7 +267,7 @@ export default async (req: Request, _context: Context) => {
     // Normalize image if provided
     let mediaIds: string[] = [];
     if (imageUrl) {
-      const normalizeUrl = `${METRICOOL_BASE}/actions/normalize/image/url?url=${encodeURIComponent(imageUrl)}&blogId=${METRICOOL_BLOG_ID}&userId=${METRICOOL_USER_ID}`;
+      const normalizeUrl = `${METRICOOL_BASE}/actions/normalize/image/url?url=${encodeURIComponent(imageUrl)}&blogId=${blogId}&userId=${METRICOOL_USER_ID}`;
       const normRes = await fetch(normalizeUrl, { headers: mcHeaders() });
       const normText = await normRes.text();
       if (!normRes.ok) {
@@ -277,7 +288,7 @@ export default async (req: Request, _context: Context) => {
     const dateTime = publishDate.toISOString().replace(/\.\d{3}Z$/, "");
     const timezone = "UTC";
 
-    const scheduleUrl = `${METRICOOL_BASE}/v2/scheduler/posts?blogId=${METRICOOL_BLOG_ID}&userId=${METRICOOL_USER_ID}`;
+    const scheduleUrl = `${METRICOOL_BASE}/v2/scheduler/posts?blogId=${blogId}&userId=${METRICOOL_USER_ID}`;
     const scheduleBody = {
       text,
       providers: [{ network: "LINKEDIN" }],
