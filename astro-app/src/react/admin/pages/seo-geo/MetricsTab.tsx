@@ -439,7 +439,8 @@ export default function MetricsTab() {
           <div className="mt-3 text-xs text-slate-500 space-y-2 bg-slate-50 rounded-lg p-4">
             <p><strong>Variables de entorno en Netlify:</strong></p>
             <ul className="space-y-1 ml-4 list-disc">
-              <li><code>GOOGLE_SERVICE_ACCOUNT_JSON</code> — JSON completo de la Service Account</li>
+              <li><code>GOOGLE_SA_CLIENT_EMAIL</code> — Email de la Service Account</li>
+              <li><code>GOOGLE_SA_PRIVATE_KEY</code> — Private key (incluyendo BEGIN/END)</li>
               <li><code>GSC_SITE_URL</code> — URL verificada en GSC (ej: https://growth4u.io)</li>
               <li><code>GA4_PROPERTY_ID</code> — Property ID numérico de GA4</li>
             </ul>

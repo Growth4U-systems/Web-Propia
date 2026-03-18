@@ -219,15 +219,21 @@ export default async (req: Request, _context: Context) => {
   }
 
   try {
-    const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    const clientEmail = process.env.GOOGLE_SA_CLIENT_EMAIL;
+    const privateKey = process.env.GOOGLE_SA_PRIVATE_KEY?.replace(/\\n/g, "\n");
     const siteUrl = process.env.GSC_SITE_URL;
     const propertyId = process.env.GA4_PROPERTY_ID;
 
-    if (!saJson) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON env var");
+    if (!clientEmail) throw new Error("Missing GOOGLE_SA_CLIENT_EMAIL env var");
+    if (!privateKey) throw new Error("Missing GOOGLE_SA_PRIVATE_KEY env var");
     if (!siteUrl) throw new Error("Missing GSC_SITE_URL env var");
     if (!propertyId) throw new Error("Missing GA4_PROPERTY_ID env var");
 
-    const serviceAccount = JSON.parse(saJson);
+    const serviceAccount = {
+      client_email: clientEmail,
+      private_key: privateKey,
+      token_uri: "https://oauth2.googleapis.com/token",
+    };
 
     const body = (await req.json()) as { days?: number };
     const days = body.days || 7;
