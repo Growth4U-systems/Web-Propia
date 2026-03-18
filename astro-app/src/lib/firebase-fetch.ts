@@ -96,28 +96,26 @@ function parseDocument(doc: any): Record<string, any> {
   return result;
 }
 
-// Fetch all blog posts — uses local JSON cache as primary source
-// The cache is populated by notion_to_blog.py; Firestore REST API is unauthenticated fallback
+// Fetch all blog posts — tries Firestore REST API first, falls back to local JSON cache
 export async function getAllPosts(): Promise<BlogPost[]> {
-  // Use the local JSON cache if populated (Firestore REST API requires auth)
-  if (Array.isArray(postsCache) && postsCache.length > 0) {
-    return (postsCache as BlogPost[]).filter((p) => p.slug && p.title);
-  }
+  const cachedPosts = Array.isArray(postsCache) && postsCache.length > 0
+    ? (postsCache as BlogPost[]).filter((p) => p.slug && p.title)
+    : [];
 
-  // Fallback: fetch from Firestore REST API (may return empty if security rules block)
+  // Try Firestore REST API first (gets fresh data including admin-created posts)
   try {
     const url = `${FIRESTORE_BASE}/${COLLECTION_BASE}/blog_posts?pageSize=300`;
     const response = await fetch(url);
 
     if (!response.ok) {
-      console.error('Firestore API error:', response.status, await response.text());
-      return [];
+      console.warn('Firestore API error, falling back to cache:', response.status);
+      return cachedPosts;
     }
 
     const data = await response.json();
     const documents = data.documents || [];
 
-    return documents.map((doc: any) => {
+    const firestorePosts = documents.map((doc: any) => {
       const d = parseDocument(doc);
       return {
         id: d._id,
@@ -133,9 +131,18 @@ export async function getAllPosts(): Promise<BlogPost[]> {
         updatedAt: d.updatedAt || null,
       };
     }).filter((post: BlogPost) => post.slug && post.title);
+
+    // If Firestore returned posts, use them; otherwise fall back to cache
+    if (firestorePosts.length > 0) {
+      console.log(`Fetched ${firestorePosts.length} posts from Firestore`);
+      return firestorePosts;
+    }
+
+    console.warn('Firestore returned 0 posts, falling back to cache');
+    return cachedPosts;
   } catch (error) {
-    console.error('Error fetching posts:', error);
-    return [];
+    console.warn('Error fetching posts from Firestore, falling back to cache:', error);
+    return cachedPosts;
   }
 }
 
