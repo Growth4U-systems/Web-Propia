@@ -6,7 +6,6 @@ import {
   Zap,
   Globe,
   Link2,
-  Code2,
   BarChart3,
   Loader2,
 } from 'lucide-react';
@@ -17,11 +16,10 @@ const VitalsTab = lazy(() => import('./seo-geo/VitalsTab'));
 const GeoTab = lazy(() => import('./seo-geo/GeoTab'));
 const OwnMediaTab = lazy(() => import('./seo-geo/OwnMediaTab'));
 const BacklinksTab = lazy(() => import('./seo-geo/BacklinksTab'));
-const SchemaTab = lazy(() => import('./seo-geo/SchemaTab'));
 const MetricsTab = lazy(() => import('./seo-geo/MetricsTab'));
 const DashboardTab = lazy(() => import('./seo-geo/DashboardTab'));
 
-type Tab = 'dashboard' | 'audit' | 'vitals' | 'geo' | 'own-media' | 'backlinks' | 'schema' | 'metrics';
+type Tab = 'dashboard' | 'audit' | 'vitals' | 'geo' | 'own-media' | 'backlinks' | 'metrics';
 
 const tabs: { key: Tab; label: string; icon: React.ComponentType<{ className?: string }>; description: string }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: BarChart3, description: 'Resumen y recomendaciones' },
@@ -30,7 +28,6 @@ const tabs: { key: Tab; label: string; icon: React.ComponentType<{ className?: s
   { key: 'geo', label: 'GEO', icon: Bot, description: 'Visibilidad en IAs' },
   { key: 'own-media', label: 'Own Media', icon: Globe, description: 'Blog, social, tech' },
   { key: 'backlinks', label: 'Backlinks', icon: Link2, description: 'Autoridad de dominio' },
-  { key: 'schema', label: 'Schema', icon: Code2, description: 'JSON-LD generator' },
   { key: 'metrics', label: 'Métricas', icon: Search, description: 'GSC + GA manual' },
 ];
 
@@ -87,7 +84,6 @@ export default function VisibilidadPage() {
           {activeTab === 'geo' && <GeoTab />}
           {activeTab === 'own-media' && <OwnMediaTab />}
           {activeTab === 'backlinks' && <BacklinksTab />}
-          {activeTab === 'schema' && <SchemaTab />}
           {activeTab === 'metrics' && <MetricsTab />}
         </div>
       </Suspense>
