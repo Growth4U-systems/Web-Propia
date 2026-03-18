@@ -84,8 +84,29 @@ export default function DashboardTab() {
     try {
       await Promise.all([
         // Web Vitals (cached)
-        getDoc(doc(db, DATA_PATH, 'site_data', 'web_vitals')).then(snap => {
-          if (snap.exists()) setWebVitals(snap.data() as WebVitals);
+        getDoc(doc(db, DATA_PATH, 'site_data', 'web_vitals_v2')).then(snap => {
+          if (snap.exists()) {
+            const d = snap.data();
+            const raw = d.mobile ?? d;
+            // Normalize nested { scores, metrics } format to flat WebVitals
+            if (raw.scores) {
+              setWebVitals({
+                performance: raw.scores.performance ?? 0,
+                accessibility: raw.scores.accessibility ?? 0,
+                bestPractices: raw.scores.bestPractices ?? 0,
+                seo: raw.scores.seo ?? 0,
+                lcp: raw.metrics?.lcp ?? 0,
+                tbt: raw.metrics?.tbt ?? 0,
+                cls: raw.metrics?.cls ?? 0,
+                fcp: raw.metrics?.fcp ?? 0,
+                si: raw.metrics?.si ?? 0,
+                ttfb: raw.metrics?.ttfb ?? 0,
+                updatedAt: d.updatedAt,
+              } as WebVitals);
+            } else {
+              setWebVitals(raw as WebVitals);
+            }
+          }
         }).catch(() => {}),
         // DataForSEO (cached)
         getDoc(doc(db, DATA_PATH, 'dataforseo_metrics', 'latest')).then(snap => {
