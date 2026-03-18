@@ -49,4 +49,5 @@ export function generateOgImage(title: string): string {
 
 // Social
 export const LINKEDIN_URL = 'https://www.linkedin.com/company/growth4u/';
+export const INSTAGRAM_URL = 'https://www.instagram.com/growth4u_systems/';
 export const TRUSTPILOT_URL = 'https://www.trustpilot.com/evaluate/growth4u.io';

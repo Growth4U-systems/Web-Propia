@@ -101,6 +101,8 @@ const featuredMagnet = LEAD_MAGNETS[lmIndex];
   ogImage={post.image}
   ogType="article"
   jsonLd={[articleSchema, breadcrumbSchema]}
+  articleDate={post.createdAt || undefined}
+  articleModified={post.updatedAt || post.createdAt || undefined}
 >
   <!-- Blog Post Nav -->
   <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-100">
@@ -142,7 +144,7 @@ const featuredMagnet = LEAD_MAGNETS[lmIndex];
         {post.readTime}
       </span>
       <span>&bull;</span>
-      <span>{formattedDate}</span>
+      <time datetime={post.createdAt || ''}>{formattedDate}</time>
     </div>
     {post.image && (
       <div class="rounded-3xl shadow-xl mb-12 overflow-hidden aspect-[1200/630]">
