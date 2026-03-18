@@ -4,8 +4,6 @@ import {
   Globe,
   BookOpen,
   Share2,
-  Server,
-  Code2,
   CheckCircle2,
   XCircle,
   ExternalLink,
@@ -32,8 +30,6 @@ const socialPlatforms = [
   { key: 'facebook', label: 'Facebook', icon: Facebook, color: 'bg-blue-600' },
   { key: 'tiktok', label: 'TikTok', icon: Globe, color: 'bg-slate-800' },
 ];
-
-const criticalSchemas = ['Organization', 'Article', 'FAQPage', 'Person', 'HowTo'];
 
 const frequencyLabels: Record<string, string> = {
   weekly: 'Semanal',
@@ -260,72 +256,11 @@ export default function OwnMediaTab() {
             </div>
           </div>
 
-          {/* Tech Stack Section */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Server className="w-5 h-5 text-[#6351d5]" />
-              <h3 className="text-lg font-bold text-[#032149]">Tech Stack</h3>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[
-                { label: 'CMS', value: ownMedia.techStack.cms },
-                { label: 'Framework', value: ownMedia.techStack.framework },
-                { label: 'Hosting', value: ownMedia.techStack.hosting },
-                { label: 'CDN', value: ownMedia.techStack.cdn },
-                { label: 'Analytics', value: ownMedia.techStack.analytics.join(', ') || null },
-                { label: 'Tag Manager', value: ownMedia.techStack.tagManager },
-              ].map((item) => (
-                <div key={item.label} className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-400 mb-1">{item.label}</p>
-                  <p className={`text-sm font-medium ${item.value ? 'text-[#032149]' : 'text-slate-300'}`}>
-                    {item.value || 'No detectado'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Schema Section */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Code2 className="w-5 h-5 text-[#6351d5]" />
-              <h3 className="text-lg font-bold text-[#032149]">Schema / JSON-LD</h3>
-            </div>
-
-            <div className="mb-4">
-              <p className="text-sm text-slate-500 mb-2">Tipos criticos para GEO:</p>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {criticalSchemas.map((schema) => {
-                  const found = ownMedia.schemaTypes.includes(schema);
-                  return (
-                    <div key={schema} className={`flex items-center gap-2 p-3 rounded-lg border ${found ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-                      {found ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
-                      <span className={`text-sm font-medium ${found ? 'text-green-700' : 'text-red-700'}`}>{schema}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {ownMedia.schemaTypes.length > 0 && (
-              <div>
-                <p className="text-sm text-slate-500 mb-2">Todos los tipos detectados:</p>
-                <div className="flex flex-wrap gap-2">
-                  {ownMedia.schemaTypes.map((type, i) => (
-                    <span key={i} className="text-xs bg-[#6351d5]/10 text-[#6351d5] px-2 py-1 rounded">{type}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Recommendations */}
           {(() => {
             const gaps: string[] = [];
             const missingSocial = socialPlatforms.filter(p => !(ownMedia.social ?? {} as any)[p.key]);
             if (missingSocial.length > 0) gaps.push(`Crea perfiles en: ${missingSocial.map(p => p.label).join(', ')}`);
-            const missingSchemas = criticalSchemas.filter(s => !ownMedia.schemaTypes.includes(s));
-            if (missingSchemas.length > 0) gaps.push(`Agrega schemas JSON-LD: ${missingSchemas.join(', ')}`);
             if (!ownMedia.blog.hasBlog) gaps.push('Crea un blog con contenido regular optimizado para GEO');
             else if (ownMedia.blog.postingFrequency === 'inactive' || ownMedia.blog.postingFrequency === 'sporadic') gaps.push('Aumenta la frecuencia de publicacion del blog');
             if (ownMedia.blog.avgWordCount < 800) gaps.push('Aumenta la longitud promedio de los posts a 800+ palabras');
