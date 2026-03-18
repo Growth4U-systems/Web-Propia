@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Plus, Trash2, Save, Eye, MousePointer, Target, Percent,
   Users, Clock, BarChart3, ExternalLink, TrendingUp, TrendingDown,
-  Info, ChevronDown, ChevronUp,
+  Info, ChevronDown, ChevronUp, RefreshCw, Loader2, CheckCircle2, AlertCircle,
 } from 'lucide-react';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { db } from '../../../../lib/firebase-client';
@@ -90,6 +90,11 @@ export default function MetricsTab() {
   // GA form
   const [newGa, setNewGa] = useState({ date: new Date().toISOString().split('T')[0], sessions: '', users: '', pageviews: '', bounceRate: '', avgSessionDuration: '', organicPercent: '', notes: '' });
 
+  // Sync API state
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [syncDays, setSyncDays] = useState(7);
+
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
@@ -160,6 +165,56 @@ export default function MetricsTab() {
     loadAnalytics();
   };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/.netlify/functions/sync-google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days: syncDays }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Error desconocido');
+
+      const { gsc, ga, period } = data;
+      const dateLabel = `${period.start} → ${period.end}`;
+
+      // Save GSC data to Firebase
+      await addDoc(collection(db, DATA_PATH, 'seo_metrics'), {
+        date: period.end,
+        impressions: gsc.impressions,
+        clicks: gsc.clicks,
+        ctr: gsc.ctr,
+        position: gsc.position,
+        source: 'API — Google Search Console',
+        notes: `Sync automático (${syncDays}d: ${dateLabel})`,
+        createdAt: new Date().toISOString(),
+      });
+
+      // Save GA data to Firebase
+      await addDoc(collection(db, DATA_PATH, 'analytics_metrics'), {
+        date: period.end,
+        sessions: ga.sessions,
+        users: ga.users,
+        pageviews: ga.pageviews,
+        bounceRate: ga.bounceRate,
+        avgSessionDuration: ga.avgSessionDuration,
+        organicPercent: ga.organicPercent,
+        notes: `Sync automático (${syncDays}d: ${dateLabel})`,
+        createdAt: new Date().toISOString(),
+      });
+
+      await loadAll();
+      setSyncResult({ ok: true, message: `Datos sincronizados (${dateLabel})` });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Error desconocido';
+      setSyncResult({ ok: false, message: msg });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const getChange = (a: number, b: number) => b ? ((a - b) / b * 100).toFixed(1) : null;
 
   const lg = gscMetrics[0];
@@ -176,17 +231,12 @@ export default function MetricsTab() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-[#032149]">Google Search Console</h2>
-            <p className="text-slate-500 text-sm">Datos manuales de visibilidad en Google</p>
+            <p className="text-slate-500 text-sm">Visibilidad en Google</p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setShowGscForm(true)} className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg text-sm">
-              <Plus className="w-4 h-4" /> Añadir datos GSC
-            </button>
-            <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg text-sm">
-              <ExternalLink className="w-4 h-4" /> Abrir GSC
-            </a>
-          </div>
+          <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg text-sm">
+            <ExternalLink className="w-4 h-4" /> Abrir GSC
+          </a>
         </div>
 
         {lg ? (
@@ -257,15 +307,10 @@ export default function MetricsTab() {
             <h2 className="text-xl font-bold text-[#032149]">Google Analytics</h2>
             <p className="text-slate-500 text-sm">Tráfico y comportamiento de usuarios</p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setShowAnalyticsForm(true)} className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg text-sm">
-              <Plus className="w-4 h-4" /> Añadir datos GA
-            </button>
-            <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg text-sm">
-              <ExternalLink className="w-4 h-4" /> Abrir GA
-            </a>
-          </div>
+          <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg text-sm">
+            <ExternalLink className="w-4 h-4" /> Abrir GA
+          </a>
         </div>
 
         {la ? (
@@ -340,30 +385,105 @@ export default function MetricsTab() {
         )}
       </section>
 
-      {/* ============ HOW TO ============ */}
+      {/* ============ SYNC API ============ */}
       <section className="bg-white border border-slate-200 rounded-xl p-6">
-        <h3 className="text-lg font-bold text-[#032149] mb-4">¿Cómo obtener estos datos?</h3>
-        <div className="grid md:grid-cols-2 gap-6 text-sm">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h4 className="font-medium text-[#032149] mb-2">Google Search Console</h4>
-            <ol className="text-slate-500 space-y-1">
-              <li>1. Abre Search Console</li>
-              <li>2. Ve a Rendimiento → Resultados</li>
-              <li>3. Selecciona últimos 7 días</li>
-              <li>4. Copia totales aquí</li>
-            </ol>
-          </div>
-          <div>
-            <h4 className="font-medium text-[#032149] mb-2">Google Analytics</h4>
-            <ol className="text-slate-500 space-y-1">
-              <li>1. Abre GA4</li>
-              <li>2. Informes → Vista general</li>
-              <li>3. Selecciona últimos 28 días</li>
-              <li>4. Copia sesiones, usuarios, etc.</li>
-            </ol>
+            <h3 className="text-lg font-bold text-[#032149]">Sincronizar via API</h3>
+            <p className="text-slate-500 text-sm">Obtén datos automáticamente de GSC y GA4 con Service Account</p>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-slate-600">Período:</label>
+            <select
+              value={syncDays}
+              onChange={e => setSyncDays(parseInt(e.target.value))}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-[#032149]"
+              disabled={syncing}
+            >
+              <option value={7}>Últimos 7 días</option>
+              <option value={14}>Últimos 14 días</option>
+              <option value={28}>Últimos 28 días</option>
+              <option value={30}>Últimos 30 días</option>
+              <option value={90}>Últimos 90 días</option>
+            </select>
+          </div>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 px-5 py-2 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-[#6351d5]/50 text-white rounded-lg text-sm transition-colors"
+          >
+            {syncing ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Sincronizando...</>
+            ) : (
+              <><RefreshCw className="w-4 h-4" /> Sincronizar GSC + GA4</>
+            )}
+          </button>
+        </div>
+
+        {syncResult && (
+          <div className={`mt-4 flex items-center gap-2 px-4 py-3 rounded-lg text-sm ${
+            syncResult.ok
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
+            {syncResult.ok ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+            {syncResult.message}
+          </div>
+        )}
+
+        <details className="mt-4">
+          <summary className="cursor-pointer text-slate-400 hover:text-slate-600 text-xs">Configuración requerida</summary>
+          <div className="mt-3 text-xs text-slate-500 space-y-2 bg-slate-50 rounded-lg p-4">
+            <p><strong>Variables de entorno en Netlify:</strong></p>
+            <ul className="space-y-1 ml-4 list-disc">
+              <li><code>GOOGLE_SERVICE_ACCOUNT_JSON</code> — JSON completo de la Service Account</li>
+              <li><code>GSC_SITE_URL</code> — URL verificada en GSC (ej: https://growth4u.io)</li>
+              <li><code>GA4_PROPERTY_ID</code> — Property ID numérico de GA4</li>
+            </ul>
+            <p className="pt-2"><strong>Pasos:</strong></p>
+            <ol className="space-y-1 ml-4 list-decimal">
+              <li>Crea un proyecto en Google Cloud Console</li>
+              <li>Habilita APIs: Search Console API + Google Analytics Data API</li>
+              <li>Crea Service Account → descarga JSON key</li>
+              <li>En GSC: añade el email de la SA como usuario (lectura)</li>
+              <li>En GA4: añade el email de la SA como visor</li>
+              <li>Pega el JSON en Netlify → Environment Variables</li>
+            </ol>
+          </div>
+        </details>
       </section>
+
+      {/* ============ MANUAL FALLBACK ============ */}
+      <details>
+        <summary className="cursor-pointer text-slate-400 hover:text-slate-600 text-sm">Añadir datos manualmente</summary>
+        <div className="mt-3 bg-white border border-slate-200 rounded-xl p-6">
+          <div className="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <h4 className="font-medium text-[#032149] mb-2">Google Search Console</h4>
+              <ol className="text-slate-500 space-y-1">
+                <li>1. Abre Search Console</li>
+                <li>2. Ve a Rendimiento → Resultados</li>
+                <li>3. Selecciona últimos 7 días</li>
+                <li>4. Copia totales aquí</li>
+              </ol>
+              <button onClick={() => setShowGscForm(true)} className="mt-3 text-sm text-[#6351d5] hover:underline">+ Añadir manualmente</button>
+            </div>
+            <div>
+              <h4 className="font-medium text-[#032149] mb-2">Google Analytics</h4>
+              <ol className="text-slate-500 space-y-1">
+                <li>1. Abre GA4</li>
+                <li>2. Informes → Vista general</li>
+                <li>3. Selecciona últimos 28 días</li>
+                <li>4. Copia sesiones, usuarios, etc.</li>
+              </ol>
+              <button onClick={() => setShowAnalyticsForm(true)} className="mt-3 text-sm text-[#6351d5] hover:underline">+ Añadir manualmente</button>
+            </div>
+          </div>
+        </div>
+      </details>
 
       {/* ============ GSC MODAL ============ */}
       {showGscForm && (
