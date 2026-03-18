@@ -436,8 +436,27 @@ export default function BlogAdminPage() {
       ctx.fillStyle = overlay;
       ctx.fillRect(0, 0, 1200, 630);
 
-      // No text on image — title is rendered as HTML overlay on the blog page
-      // This makes covers language-independent
+      // Logo area (top-left)
+      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.textAlign = 'left';
+      ctx.fillText('Growth4U', 60, 60);
+
+      // Title text
+      ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      wrapText(ctx, formData.title, 600, 315, 1000, 60);
+
+      // Category pill (bottom-left)
+      if (formData.category) {
+        ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(formData.category.toUpperCase(), 60, 590);
+      }
 
       // Export as blob and upload to Cloudinary
       canvas.toBlob(async (blob) => {
