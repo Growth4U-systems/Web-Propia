@@ -336,12 +336,12 @@ export default function BacklinksTab() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/.netlify/functions/sync-dataforseo', { method: 'GET' });
+      const res = await fetch('/.netlify/functions/sync-backlinks', { method: 'GET' });
       const data = await res.json();
       if (!res.ok) throw new Error(`Error ${res.status}: ${data?.error || res.statusText}`);
       setDataForSEO(data);
     } catch (err: any) {
-      setError(err.message || 'Error al sincronizar DataForSEO.');
+      setError(err.message || 'Error al sincronizar metricas de backlinks.');
     } finally {
       setLoading(false);
     }
@@ -548,14 +548,14 @@ export default function BacklinksTab() {
           {/* DataForSEO Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <SectionHeader title="Backlinks & Domain Authority" subtitle="Datos automaticos via DataForSEO + metricas manuales" />
+              <SectionHeader title="Backlinks & Domain Authority" subtitle="Datos via Moz + OpenPageRank (gratis) + metricas manuales" />
               <button
                 onClick={syncDataForSEO}
                 disabled={loading}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[#6351d5] hover:bg-[#5242b8] disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Sincronizando...' : 'Sincronizar DataForSEO'}
+                {loading ? 'Sincronizando...' : 'Sincronizar Metricas'}
               </button>
             </div>
 
@@ -566,13 +566,13 @@ export default function BacklinksTab() {
                   <p className="text-red-700 text-sm font-medium">Error al sincronizar</p>
                   <p className="text-red-600 text-xs mt-1">{error}</p>
                   <p className="text-red-500 text-xs mt-2">
-                    Asegurate de que <code className="bg-red-100 px-1 rounded">DATAFORSEO_LOGIN</code> y{' '}
-                    <code className="bg-red-100 px-1 rounded">DATAFORSEO_PASSWORD</code> estan configuradas en Netlify.
+                    Configura <code className="bg-red-100 px-1 rounded">OPENPAGERANK_API_KEY</code> (gratis en domcop.com/openpagerank) y/o{' '}
+                    <code className="bg-red-100 px-1 rounded">MOZ_API_TOKEN</code> (gratis en moz.com/products/api) en Netlify.
                   </p>
                 </div>
               </div>
             )}
-            {loading && <LoadingSpinner text="Sincronizando datos de backlinks..." />}
+            {loading && <LoadingSpinner text="Sincronizando Moz + OpenPageRank..." />}
 
             {dataForSEO && !loading && (
               <>
