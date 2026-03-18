@@ -95,7 +95,16 @@ export default function MetricsTab() {
   const [syncResult, setSyncResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [syncDays, setSyncDays] = useState(7);
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+    loadAll().then(() => {
+      // Auto-sync if no data or last sync > 24h ago
+      const lastSync = localStorage.getItem('metrics_last_sync');
+      const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      if (!lastSync || parseInt(lastSync) < dayAgo) {
+        handleSync();
+      }
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAll = async () => {
     setLoading(true);
@@ -206,6 +215,7 @@ export default function MetricsTab() {
       });
 
       await loadAll();
+      localStorage.setItem('metrics_last_sync', String(Date.now()));
       setSyncResult({ ok: true, message: `Datos sincronizados (${dateLabel})` });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error desconocido';
