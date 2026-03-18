@@ -54,6 +54,9 @@ export default async (req: Request, _context: Context) => {
 
     const data = (await res.json()) as {
       tasks?: {
+        id?: string;
+        status_code?: number;
+        status_message?: string;
         result?: {
           rank?: number;
           backlinks?: number;
@@ -73,8 +76,11 @@ export default async (req: Request, _context: Context) => {
     const result = task?.result?.[0];
 
     if (!result) {
+      const taskStatus = task
+        ? `Task status ${task.status_code}: ${task.status_message}`
+        : "No tasks returned";
       return Response.json(
-        { error: "No results from DataForSEO" },
+        { error: `No results from DataForSEO. ${taskStatus}` },
         { status: 502, headers: CORS_HEADERS },
       );
     }
