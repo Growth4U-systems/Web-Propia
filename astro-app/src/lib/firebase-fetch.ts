@@ -6,6 +6,7 @@
  */
 
 import { FIREBASE_PROJECT_ID, FIREBASE_APP_ID } from './constants';
+import postsCache from '../data/posts.json';
 
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 const COLLECTION_BASE = `artifacts/${FIREBASE_APP_ID}/public/data`;
@@ -95,8 +96,15 @@ function parseDocument(doc: any): Record<string, any> {
   return result;
 }
 
-// Fetch all blog posts — always fetches from Firestore so new posts appear after deploy
+// Fetch all blog posts — uses local JSON cache as primary source
+// The cache is populated by notion_to_blog.py; Firestore REST API is unauthenticated fallback
 export async function getAllPosts(): Promise<BlogPost[]> {
+  // Use the local JSON cache if populated (Firestore REST API requires auth)
+  if (Array.isArray(postsCache) && postsCache.length > 0) {
+    return (postsCache as BlogPost[]).filter((p) => p.slug && p.title);
+  }
+
+  // Fallback: fetch from Firestore REST API (may return empty if security rules block)
   try {
     const url = `${FIRESTORE_BASE}/${COLLECTION_BASE}/blog_posts?pageSize=300`;
     const response = await fetch(url);
