@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   BarChart3,
   Globe,
@@ -10,10 +10,22 @@ import {
 } from 'lucide-react';
 import { collection, getDocs, doc, getDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../../../../lib/firebase-client';
-import type { SEOAuditResult, WebVitals, OwnMediaResult, DataForSEOMetrics, GSCMetric } from './types';
+import type { SEOAuditResult, WebVitals, OwnMediaResult, DataForSEOMetrics, GSCMetric, Recommendation } from './types';
 import { DATA_PATH } from './types';
 import { ScoreGauge, MetricCard, RecommendationCard, SectionHeader } from './shared';
 import { generateRecommendations, generateIssues } from './engines';
+
+const REC_STATUS_KEY = 'vis_rec_statuses';
+
+function loadRecStatuses(): Record<string, Recommendation['status']> {
+  try {
+    return JSON.parse(localStorage.getItem(REC_STATUS_KEY) || '{}');
+  } catch { return {}; }
+}
+
+function saveRecStatuses(statuses: Record<string, Recommendation['status']>) {
+  localStorage.setItem(REC_STATUS_KEY, JSON.stringify(statuses));
+}
 
 function computeSEOHealth(audit: SEOAuditResult | null): number {
   if (!audit) return 0;
@@ -102,12 +114,34 @@ export default function DashboardTab() {
   const geoReadiness = useMemo(() => computeGEOReadiness(audit, ownMedia), [audit, ownMedia]);
   const ownMediaScore = ownMedia?.scores?.overallScore ?? 0;
 
+  const [recStatuses, setRecStatuses] = useState<Record<string, Recommendation['status']>>(loadRecStatuses);
+
   const issues = useMemo(() => {
     try { return generateIssues(audit, webVitals); } catch { return []; }
   }, [audit, webVitals]);
-  const recommendations = useMemo(() => {
+  const allRecommendations = useMemo(() => {
     try { return generateRecommendations(issues ?? [], ownMedia); } catch { return []; }
   }, [issues, ownMedia]);
+
+  // Apply persisted statuses and filter out resolved/dismissed
+  const recommendations = useMemo(() => {
+    return allRecommendations
+      .map(rec => {
+        const saved = recStatuses[rec.title];
+        return saved ? { ...rec, status: saved } : rec;
+      })
+      .filter(rec => rec.status !== 'resolved' && rec.status !== 'dismissed');
+  }, [allRecommendations, recStatuses]);
+
+  const handleStatusChange = useCallback((title: string, status: Recommendation['status']) => {
+    setRecStatuses(prev => {
+      const next = { ...prev, [title]: status };
+      // Remove 'open' entries to keep storage clean
+      if (status === 'open') delete next[title];
+      saveRecStatuses(next);
+      return next;
+    });
+  }, []);
 
   const latestGSC = gscMetrics.length > 0 ? gscMetrics[0] : null;
   const hasAnyData = audit || webVitals || ownMedia || dataForSEO || gscMetrics.length > 0;
@@ -176,11 +210,15 @@ export default function DashboardTab() {
         <div>
           <SectionHeader
             title="Top Recomendaciones"
-            subtitle={`${recommendations.length} recomendaciones detectadas — mostrando las 5 mas importantes`}
+            subtitle={`${recommendations.length} recomendaciones activas de ${allRecommendations.length} detectadas — mostrando las 5 mas importantes`}
           />
           <div className="space-y-3">
             {recommendations.slice(0, 5).map((rec, i) => (
-              <RecommendationCard key={i} rec={rec} />
+              <RecommendationCard
+                key={rec.title}
+                rec={rec}
+                onStatusChange={(status) => handleStatusChange(rec.title, status)}
+              />
             ))}
           </div>
         </div>

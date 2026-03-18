@@ -811,77 +811,78 @@ export function generateRecommendations(
     });
   }
 
-  // ─── 2. GEO-specific recommendations (always applicable) ───
-  recs.push({
-    category: 'GEO',
-    severity: 'high',
-    title: 'Anadir citas autoritativas al contenido',
-    description: 'Los motores de IA como ChatGPT y Perplexity priorizan contenido que cita fuentes fiables. Incluir estadisticas con fuente, referencias a estudios y datos verificables aumenta significativamente la probabilidad de ser citado.',
-    fixOverview: 'Anade datos con fuente en cada articulo del blog y pagina de servicio.',
-    fixSteps: [
-      'Incluye al menos 2-3 estadisticas con fuente por articulo',
-      'Cita informes de Gartner, McKinsey, HubSpot, etc.',
-      'Usa formato: "Segun [fuente], [dato]" para que la IA pueda extraerlo',
-      'Anade links a las fuentes originales',
-      'Incluye datos propios de casos de exito como fuente primaria',
-    ],
-    expectedImpactPct: 35,
-    source: 'geo_analysis',
-    status: 'open',
-  });
+  // ─── 2. GEO-specific recommendations (conditional) ───
+  const sd = ownMedia?.schemaTypes ?? [];
+  const hasFAQSchema = sd.some(s => s.toLowerCase().includes('faq'));
+  const hasArticleSchema = sd.some(s => s.toLowerCase().includes('article'));
+  const hasPersonSchema = sd.some(s => s.toLowerCase().includes('person'));
+  const blogPostCount = ownMedia?.blog?.postCount ?? 0;
+  const avgWordCount = ownMedia?.blog?.avgWordCount ?? 0;
 
-  recs.push({
-    category: 'GEO',
-    severity: 'medium',
-    title: 'Incluir citas de expertos',
-    description: 'Los motores de IA valoran las citas directas de expertos del sector. Incluir quotes con atribucion mejora la credibilidad del contenido.',
-    fixOverview: 'Anade citas textuales de expertos en articulos clave.',
-    fixSteps: [
-      'Incluye quotes del CEO o equipo en cada servicio',
-      'Anade testimonios textuales de clientes con nombre y cargo',
-      'Cita a expertos reconocidos del sector growth/marketing',
-      'Usa formato blockquote con atribucion clara',
-    ],
-    expectedImpactPct: 15,
-    source: 'geo_analysis',
-    status: 'open',
-  });
+  // Only suggest citations if blog exists but posts are short (likely lacking depth/sources)
+  if (blogPostCount > 0 && avgWordCount < 1200) {
+    recs.push({
+      category: 'GEO',
+      severity: 'high',
+      title: 'Anadir citas autoritativas al contenido',
+      description: `Con un promedio de ${avgWordCount} palabras/articulo, hay espacio para anadir fuentes. Los motores de IA como ChatGPT y Perplexity priorizan contenido que cita fuentes fiables.`,
+      fixOverview: 'Anade datos con fuente en cada articulo del blog y pagina de servicio.',
+      fixSteps: [
+        'Incluye al menos 2-3 estadisticas con fuente por articulo',
+        'Cita informes de Gartner, McKinsey, HubSpot, etc.',
+        'Usa formato: "Segun [fuente], [dato]" para que la IA pueda extraerlo',
+        'Anade links a las fuentes originales',
+        'Incluye datos propios de casos de exito como fuente primaria',
+      ],
+      expectedImpactPct: 35,
+      source: 'geo_analysis',
+      status: 'open',
+    });
+  }
 
-  recs.push({
-    category: 'GEO',
-    severity: 'medium',
-    title: 'Usar tono autoritativo y definitivo',
-    description: 'Los motores de IA prefieren respuestas directas y definitivas. Evita lenguaje hedging ("quizas", "podria ser") y usa afirmaciones claras con evidencia.',
-    fixOverview: 'Revisa el tono del contenido principal y hazlo mas autoritativo.',
-    fixSteps: [
-      'Empieza cada articulo con una "respuesta directa" en 2-3 frases',
-      'Usa afirmaciones claras respaldadas por datos',
-      'Evita lenguaje ambiguo: "quizas", "puede que", "creemos"',
-      'Posicionate como experto: "nuestra experiencia con +50 empresas muestra que..."',
-      'Incluye conclusiones claras y accionables',
-    ],
-    expectedImpactPct: 10,
-    source: 'geo_analysis',
-    status: 'open',
-  });
+  // Only suggest expert quotes if no Person schema (proxy for author/expert attribution)
+  if (!hasPersonSchema) {
+    recs.push({
+      category: 'GEO',
+      severity: 'medium',
+      title: 'Incluir citas de expertos',
+      description: 'No se detecto schema Person/Author. Los motores de IA valoran las citas directas de expertos del sector con atribucion verificable.',
+      fixOverview: 'Anade citas textuales de expertos en articulos clave e implementa schema Person.',
+      fixSteps: [
+        'Incluye quotes del CEO o equipo en cada servicio',
+        'Anade testimonios textuales de clientes con nombre y cargo',
+        'Cita a expertos reconocidos del sector growth/marketing',
+        'Usa formato blockquote con atribucion clara',
+        'Implementa schema Person para los autores',
+      ],
+      expectedImpactPct: 15,
+      source: 'geo_analysis',
+      status: 'open',
+    });
+  }
 
-  recs.push({
-    category: 'GEO',
-    severity: 'high',
-    title: 'Optimizar contenido para extraccion por IA',
-    description: 'Estructura el contenido para que los LLMs puedan extraer respuestas facilmente: definiciones claras, listas numeradas, tablas comparativas y secciones FAQ.',
-    fixOverview: 'Reestructura las paginas principales con formato extractable.',
-    fixSteps: [
-      'Incluye definiciones claras al inicio de cada tema ("Growth marketing es...")',
-      'Usa listas numeradas para procesos y pasos',
-      'Anade tablas comparativas en articulos de comparacion',
-      'Implementa FAQ sections con preguntas reales',
-      'Usa H2/H3 como preguntas que la IA pueda responder',
-    ],
-    expectedImpactPct: 30,
-    source: 'geo_analysis',
-    status: 'open',
-  });
+  // Only suggest AI-extractable content if no FAQ schema and few headings
+  if (!hasFAQSchema || !hasArticleSchema) {
+    const missing = [!hasFAQSchema && 'FAQPage', !hasArticleSchema && 'Article'].filter(Boolean).join(', ');
+    recs.push({
+      category: 'GEO',
+      severity: 'high',
+      title: 'Optimizar contenido para extraccion por IA',
+      description: `Faltan schemas clave (${missing}). Estructura el contenido para que los LLMs puedan extraer respuestas: definiciones claras, FAQ sections y datos estructurados.`,
+      fixOverview: 'Reestructura las paginas principales con formato extractable.',
+      fixSteps: [
+        'Incluye definiciones claras al inicio de cada tema ("Growth marketing es...")',
+        'Usa listas numeradas para procesos y pasos',
+        'Anade tablas comparativas en articulos de comparacion',
+        'Implementa FAQ sections con preguntas reales',
+        'Usa H2/H3 como preguntas que la IA pueda responder',
+        `Implementa schemas faltantes: ${missing}`,
+      ],
+      expectedImpactPct: 30,
+      source: 'geo_analysis',
+      status: 'open',
+    });
+  }
 
   // ─── 3. Own Media recommendations ───
   if (ownMedia) {
