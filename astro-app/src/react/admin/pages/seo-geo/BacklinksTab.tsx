@@ -61,8 +61,8 @@ export default function BacklinksTab() {
       const res = await fetch('/.netlify/functions/sync-dataforseo', {
         method: 'GET',
       });
-      if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
       const data = await res.json();
+      if (!res.ok) throw new Error(`Error ${res.status}: ${data?.error || res.statusText}`);
       setDataForSEO(data);
     } catch (err: any) {
       setError(err.message || 'Error al sincronizar DataForSEO. Verifica que DATAFORSEO_LOGIN y DATAFORSEO_PASSWORD esten configurados.');
