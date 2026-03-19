@@ -38,18 +38,6 @@ const caseIconSvgs = [
   '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="m8 12 4-4 4 4"/></svg>',
 ];
 
-function getYouTubeEmbedUrl(url: string): string {
-  if (!url) return '';
-  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
-  if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
-  const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-  if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`;
-  if (url.includes('/embed/')) return url;
-  return url;
-}
-
-const videoCase = cases.find(c => c.videoUrl);
-const videoEmbedUrl = videoCase?.videoUrl ? getYouTubeEmbedUrl(videoCase.videoUrl) : '';
 ---
 
 <section id="casos" class="py-20 bg-slate-50">
@@ -124,21 +112,5 @@ const videoEmbedUrl = videoCase?.videoUrl ? getYouTubeEmbedUrl(videoCase.videoUr
       })}
     </div>
 
-    {videoEmbedUrl && videoCase && (
-      <div class="mt-10">
-        <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden max-w-3xl mx-auto">
-          <div class="aspect-video">
-            <iframe
-              src={videoEmbedUrl}
-              title={`${videoCase.company} — Caso de Éxito`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
-              class="w-full h-full"
-              loading="lazy"
-            ></iframe>
-          </div>
-        </div>
-      </div>
-    )}
   </div>
 </section>
