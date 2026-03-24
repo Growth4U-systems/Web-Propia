@@ -258,25 +258,21 @@ async function uploadToCloudinary(blob: Blob, slug: string): Promise<string> {
 // --- Caption generator (AI-powered using linkedin-post-skill) ---
 
 async function generateCaption(post: BlogPost): Promise<string> {
-  try {
-    const res = await fetch(`${API_BASE}/.netlify/functions/generate-caption`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        platform: 'linkedin',
-        title: post.title,
-        excerpt: post.excerpt,
-        slug: post.slug,
-        category: post.category,
-      }),
-    });
-    const data = await res.json();
-    if (data.caption) return data.caption;
-  } catch (err) {
-    console.error('AI caption generation failed, using fallback:', err);
-  }
-  // Fallback to basic template
-  return `${post.title}\n\nLee el articulo completo:\ngrowth4u.io/blog/${post.slug}/\n\n#GrowthMarketing #Growth4U #B2B`;
+  const res = await fetch(`${API_BASE}/.netlify/functions/generate-caption`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      platform: 'linkedin',
+      title: post.title,
+      excerpt: post.excerpt,
+      slug: post.slug,
+      category: post.category,
+    }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  if (!data.caption) throw new Error('No caption returned from AI');
+  return data.caption;
 }
 
 // --- Content formats ---
