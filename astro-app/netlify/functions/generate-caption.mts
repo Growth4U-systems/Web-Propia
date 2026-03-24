@@ -111,7 +111,7 @@ const INSTAGRAM_SKILL = `Eres un copywriter experto en Instagram para Growth4U, 
 - Fundador bottleneck -> growth4u.io/recursos/kit-de-liberacion/
 - Sin attribution -> growth4u.io/recursos/dashboard-de-attribution/`;
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
 export default async (req: Request, _context: Context) => {
   if (req.method === "OPTIONS") {
@@ -125,10 +125,10 @@ export default async (req: Request, _context: Context) => {
     );
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return Response.json(
-      { error: "GEMINI_API_KEY not configured" },
+      { error: "ANTHROPIC_API_KEY not configured" },
       { status: 500, headers: CORS_HEADERS },
     );
   }
@@ -170,27 +170,30 @@ IMPORTANTE: SIEMPRE incluir el link al articulo (growth4u.io/blog/${slug}/) en e
 
 Escribe SOLO el caption, listo para copiar y publicar. Sin explicaciones ni metadatos.`;
 
-    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    const res = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ parts: [{ text: userPrompt }] }],
-        generationConfig: {
-          temperature: 0.9,
-          maxOutputTokens: 1024,
-        },
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
+        temperature: 0.9,
       }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      const errMsg = data?.error?.message || `Gemini API error ${res.status}`;
+      const errMsg = data?.error?.message || `Anthropic API error ${res.status}`;
       throw new Error(errMsg);
     }
 
-    let caption = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    let caption = data?.content?.[0]?.text || "";
 
     if (!caption) {
       throw new Error("No caption generated");
