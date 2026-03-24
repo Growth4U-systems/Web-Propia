@@ -111,7 +111,7 @@ const INSTAGRAM_SKILL = `Eres un copywriter experto en Instagram para Growth4U, 
 - Fundador bottleneck -> growth4u.io/recursos/kit-de-liberacion/
 - Sin attribution -> growth4u.io/recursos/dashboard-de-attribution/`;
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 export default async (req: Request, _context: Context) => {
   if (req.method === "OPTIONS") {
