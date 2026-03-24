@@ -1,5 +1,4 @@
 import type { Context } from "@netlify/functions";
-import Anthropic from "@anthropic-ai/sdk";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -112,6 +111,8 @@ const INSTAGRAM_SKILL = `Eres un copywriter experto en Instagram para Growth4U, 
 - Fundador bottleneck -> growth4u.io/recursos/kit-de-liberacion/
 - Sin attribution -> growth4u.io/recursos/dashboard-de-attribution/`;
 
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+
 export default async (req: Request, _context: Context) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -124,10 +125,10 @@ export default async (req: Request, _context: Context) => {
     );
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return Response.json(
-      { error: "ANTHROPIC_API_KEY not configured" },
+      { error: "GEMINI_API_KEY not configured" },
       { status: 500, headers: CORS_HEADERS },
     );
   }
@@ -169,17 +170,31 @@ IMPORTANTE: SIEMPRE incluir el link al articulo (growth4u.io/blog/${slug}/) en e
 
 Escribe SOLO el caption, listo para copiar y publicar. Sin explicaciones ni metadatos.`;
 
-    const client = new Anthropic({ apiKey });
-
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ parts: [{ text: userPrompt }] }],
+        generationConfig: {
+          temperature: 0.9,
+          maxOutputTokens: 1024,
+        },
+      }),
     });
 
-    let caption =
-      message.content[0].type === "text" ? message.content[0].text : "";
+    const data = await res.json();
+
+    if (!res.ok) {
+      const errMsg = data?.error?.message || `Gemini API error ${res.status}`;
+      throw new Error(errMsg);
+    }
+
+    let caption = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    if (!caption) {
+      throw new Error("No caption generated");
+    }
 
     // Strip markdown formatting that LinkedIn doesn't render
     if (platform === "linkedin") {
