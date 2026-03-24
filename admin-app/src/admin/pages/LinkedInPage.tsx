@@ -44,7 +44,8 @@ import {
   type LIContentFormat,
   type LIContentStatus,
   type LICarouselSlide,
-} from '../../../lib/firebase-client';
+} from '../../lib/firebase-client';
+import { API_BASE } from '../../lib/api';
 
 interface BlogPost {
   id: string;
@@ -97,7 +98,7 @@ interface LIMetrics {
   posts: LIMetricsPost[];
 }
 
-const FUNCTION_URL = '/.netlify/functions/linkedin';
+const FUNCTION_URL = `${API_BASE}/.netlify/functions/linkedin`;
 const CLOUDINARY_CLOUD = 'dsc0jsbkz';
 const CLOUDINARY_PRESET = 'blog_uploads';
 
@@ -258,7 +259,7 @@ async function uploadToCloudinary(blob: Blob, slug: string): Promise<string> {
 
 async function generateCaption(post: BlogPost): Promise<string> {
   try {
-    const res = await fetch('/.netlify/functions/generate-caption', {
+    const res = await fetch(`${API_BASE}/.netlify/functions/generate-caption`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -928,7 +929,7 @@ export default function LinkedInPage() {
 
     try {
       const dateTime = `${item.scheduledDate}T${item.scheduledTime}:00`;
-      const res = await fetch('/.netlify/functions/metricool', {
+      const res = await fetch(`${API_BASE}/.netlify/functions/metricool`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

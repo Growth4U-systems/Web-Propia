@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Prose styles for blog content */
+.prose { max-width: 65ch; }
+.prose h2 { @apply text-2xl font-bold mt-8 mb-4 text-[#032149]; }
+.prose h3 { @apply text-xl font-bold mt-6 mb-3 text-[#032149]; }
+.prose p { @apply mb-4 leading-relaxed text-slate-700; }
+.prose ul { @apply list-disc pl-5 mb-6 space-y-2 text-slate-700; }
+.prose ol { @apply list-decimal pl-5 mb-6 space-y-2 text-slate-700; }
+.prose strong { @apply text-[#032149] font-bold; }
+.prose a { @apply text-[#6351d5] underline hover:text-[#3f45fe] font-bold; }
+.prose blockquote { @apply border-l-4 border-[#6351d5] pl-4 italic my-4 text-slate-600 bg-slate-50 py-2 pr-2 rounded-r; }
+.prose table { @apply w-full border-collapse border border-slate-200 rounded-lg text-sm mb-6; display: block; overflow-x: auto; }
+.prose thead { @apply bg-[#032149] text-white; }
+.prose th { @apply px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap; }
+.prose tbody tr { @apply border-t border-slate-200; }
+.prose tbody tr:nth-child(even) { @apply bg-slate-50; }
+.prose td { @apply px-4 py-3 text-sm text-slate-600; }

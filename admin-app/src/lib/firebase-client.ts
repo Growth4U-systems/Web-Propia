@@ -44,9 +44,55 @@ const db = getFirestore(app);
 
 const APP_ID = 'growth4u-public-app';
 
-// Re-export types from firebase-fetch for consistency
-export type { BlogPost, CaseStudy } from './firebase-fetch';
-export { createSlug } from './firebase-fetch';
+// Types (inlined from firebase-fetch for standalone admin)
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  excerpt: string;
+  content: string;
+  image: string;
+  readTime: string;
+  author: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface CaseStudy {
+  id: string;
+  slug: string;
+  company: string;
+  logo: string;
+  stat: string;
+  statLabel: string;
+  highlight: string;
+  summary: string;
+  challenge: string;
+  solution: string;
+  results: string[];
+  testimonial: string;
+  testimonialAuthor: string;
+  testimonialRole: string;
+  image: string;
+  videoUrl: string;
+  content: string;
+  mediaUrl: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export function createSlug(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+}
 
 // Re-export FeedbackData interface
 export interface FeedbackData {
@@ -969,7 +1015,7 @@ export async function sendLIBotSlackSummary(data: {
     {
       type: 'context',
       elements: [
-        { type: 'mrkdwn', text: `Creators activos: ${data.activeCreators} · <https://growth4u.io/admin/linkedin-bot/|Ver dashboard>` },
+        { type: 'mrkdwn', text: `Creators activos: ${data.activeCreators} · <https://admin.growth4u.io/linkedin-bot/|Ver dashboard>` },
       ],
     },
     { type: 'divider' },
