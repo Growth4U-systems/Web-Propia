@@ -287,6 +287,217 @@ const CONTENT_STATUS_OPTIONS: { value: LIContentStatus; label: string; color: st
   { value: 'published', label: 'Publicado', color: 'bg-green-50 text-green-600 border-green-200' },
 ];
 
+// --- Carousel visual templates ---
+
+interface CarouselTemplate {
+  id: string;
+  name: string;
+  preview: string; // emoji/description for selector
+  bg: string;
+  cardBg: string;
+  titleColor: string;
+  bodyColor: string;
+  badgeBg: string;
+  badgeColor: string;
+  accentColor: string;
+}
+
+const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
+  {
+    id: 'warm',
+    name: 'Tech Warm',
+    preview: '🧡',
+    bg: '#D4845A',
+    cardBg: '#F5F0EB',
+    titleColor: '#1A1A1A',
+    bodyColor: '#4A4A4A',
+    badgeBg: '#D4845A',
+    badgeColor: '#FFFFFF',
+    accentColor: '#D4845A',
+  },
+  {
+    id: 'growth4u',
+    name: 'Growth4U',
+    preview: '💜',
+    bg: '#6351d5',
+    cardBg: '#FFFFFF',
+    titleColor: '#032149',
+    bodyColor: '#374151',
+    badgeBg: '#6351d5',
+    badgeColor: '#FFFFFF',
+    accentColor: '#6351d5',
+  },
+  {
+    id: 'dark',
+    name: 'Dark Navy',
+    preview: '🌑',
+    bg: '#032149',
+    cardBg: '#0A3A6B',
+    titleColor: '#FFFFFF',
+    bodyColor: '#CBD5E1',
+    badgeBg: '#0faec1',
+    badgeColor: '#FFFFFF',
+    accentColor: '#45b6f7',
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    preview: '⬜',
+    bg: '#F8FAFC',
+    cardBg: '#FFFFFF',
+    titleColor: '#0F172A',
+    bodyColor: '#475569',
+    badgeBg: '#0F172A',
+    badgeColor: '#FFFFFF',
+    accentColor: '#0F172A',
+  },
+];
+
+// --- Canvas slide renderer ---
+
+function renderSlideToCanvas(
+  canvas: HTMLCanvasElement,
+  slide: { badge?: string; title: string; body: string },
+  template: CarouselTemplate,
+  slideIndex: number,
+  totalSlides: number,
+  iscover: boolean,
+) {
+  const W = 1080;
+  const H = 1350;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+
+  // Background
+  ctx.fillStyle = template.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle hex pattern
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = template.cardBg;
+  ctx.lineWidth = 1;
+  for (let row = 0; row < 20; row++) {
+    for (let col = 0; col < 12; col++) {
+      const x = col * 100 + (row % 2 ? 50 : 0);
+      const y = row * 86;
+      drawHexagon(ctx, x, y, 45);
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // Card
+  const cardMargin = 60;
+  const cardY = 80;
+  const cardW = W - cardMargin * 2;
+  const cardH = H - cardY - 80;
+  roundRect(ctx, cardMargin, cardY, cardW, cardH, 24, template.cardBg);
+
+  const pad = 70;
+  const contentX = cardMargin + pad;
+  const contentW = cardW - pad * 2;
+
+  if (iscover) {
+    // Cover slide — big centered title
+    ctx.fillStyle = template.titleColor;
+    ctx.textAlign = 'center';
+    ctx.font = `bold 64px "Inter", "Helvetica Neue", Arial, sans-serif`;
+    const titleLines = wrapText(ctx, slide.title.toUpperCase(), contentW);
+    const startY = cardY + cardH / 2 - (titleLines.length * 78) / 2;
+    for (let i = 0; i < titleLines.length; i++) {
+      ctx.fillText(titleLines[i], W / 2, startY + i * 78);
+    }
+    // Subtitle
+    if (slide.body) {
+      ctx.font = `400 28px "Inter", "Helvetica Neue", Arial, sans-serif`;
+      ctx.fillStyle = template.bodyColor;
+      const subLines = wrapText(ctx, slide.body, contentW - 40);
+      const subY = startY + titleLines.length * 78 + 30;
+      for (let i = 0; i < subLines.length; i++) {
+        ctx.fillText(subLines[i], W / 2, subY + i * 40);
+      }
+    }
+  } else {
+    // Content slide
+    let y = cardY + pad;
+    ctx.textAlign = 'left';
+
+    // Badge
+    if (slide.badge) {
+      ctx.font = `600 22px "Inter", "Helvetica Neue", Arial, sans-serif`;
+      const badgeW = ctx.measureText(slide.badge).width + 32;
+      roundRect(ctx, contentX, y, badgeW, 42, 8, template.badgeBg);
+      ctx.fillStyle = template.badgeColor;
+      ctx.fillText(slide.badge, contentX + 16, y + 29);
+      y += 66;
+    }
+
+    // Title
+    ctx.fillStyle = template.titleColor;
+    ctx.font = `bold 44px "Inter", "Helvetica Neue", Arial, sans-serif`;
+    const titleLines = wrapText(ctx, slide.title, contentW);
+    for (let i = 0; i < titleLines.length; i++) {
+      ctx.fillText(titleLines[i], contentX, y + i * 56);
+    }
+    y += titleLines.length * 56 + 24;
+
+    // Body
+    ctx.fillStyle = template.bodyColor;
+    ctx.font = `400 28px "Inter", "Helvetica Neue", Arial, sans-serif`;
+    const bodyLines = wrapText(ctx, slide.body, contentW);
+    for (let i = 0; i < bodyLines.length; i++) {
+      ctx.fillText(bodyLines[i], contentX, y + i * 42);
+    }
+  }
+
+  // Slide indicator
+  ctx.textAlign = 'center';
+  ctx.fillStyle = template.accentColor;
+  ctx.font = `600 20px "Inter", "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText(`${slideIndex + 1} / ${totalSlides}`, W / 2, H - 30);
+}
+
+function drawHexagon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 6;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, fill: string) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
+
+// --- AI content generator ---
+
+async function generateContent(format: 'text' | 'carousel', prompt: string, numSlides?: number) {
+  const res = await fetch('/.netlify/functions/generate-content', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ format, prompt, numSlides }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data.content;
+}
+
 function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
   const [posts, setPosts] = useState<(LIContentPost & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -295,14 +506,104 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
   const [saving, setSaving] = useState(false);
   const [filterFormat, setFilterFormat] = useState<LIContentFormat | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<LIContentStatus | 'all'>('all');
+  // AI generation state
+  const [showGenerator, setShowGenerator] = useState(false);
+  const [genFormat, setGenFormat] = useState<LIContentFormat>('carousel');
+  const [genPrompt, setGenPrompt] = useState('');
+  const [genTemplate, setGenTemplate] = useState<CarouselTemplate>(CAROUSEL_TEMPLATES[0]);
+  const [genSlideCount, setGenSlideCount] = useState(6);
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
+  // Slide preview
+  const [previewSlides, setPreviewSlides] = useState<{ badge?: string; title: string; body: string }[]>([]);
+  const [previewIdx, setPreviewIdx] = useState(0);
+  const slideCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => { loadContent(); }, []);
+
+  // Render slide preview when data changes
+  useEffect(() => {
+    if (previewSlides.length > 0 && slideCanvasRef.current) {
+      renderSlideToCanvas(
+        slideCanvasRef.current,
+        previewSlides[previewIdx],
+        genTemplate,
+        previewIdx,
+        previewSlides.length,
+        previewIdx === 0,
+      );
+    }
+  }, [previewSlides, previewIdx, genTemplate]);
 
   async function loadContent() {
     setLoading(true);
     const data = await getAllLIContentPosts();
     setPosts(data);
     setLoading(false);
+  }
+
+  async function handleGenerate() {
+    if (!genPrompt.trim()) return;
+    setGenerating(true);
+    setGenError('');
+    setPreviewSlides([]);
+    try {
+      const content = await generateContent(genFormat, genPrompt, genFormat === 'carousel' ? genSlideCount : undefined);
+      if (genFormat === 'carousel' && content.slides) {
+        setPreviewSlides(content.slides);
+        setPreviewIdx(0);
+        // Pre-fill editing form
+        setEditing({
+          id: '',
+          format: 'carousel',
+          title: content.title || '',
+          body: content.caption || '',
+          slides: content.slides.map((s: any) => ({ title: s.title || '', body: s.body || '', badge: s.badge })),
+          author: selectedAccount.id,
+          status: 'draft',
+          hook: content.hook || '',
+          cta: content.cta || '',
+          tags: [],
+        });
+        setIsNew(true);
+      } else {
+        // Text post
+        setEditing({
+          id: '',
+          format: 'text',
+          title: content.title || '',
+          body: content.body || '',
+          slides: [],
+          author: selectedAccount.id,
+          status: 'draft',
+          hook: content.hook || '',
+          cta: content.cta || '',
+          tags: [],
+        });
+        setIsNew(true);
+      }
+      setShowGenerator(false);
+    } catch (err: unknown) {
+      setGenError(err instanceof Error ? err.message : 'Error generating content');
+    }
+    setGenerating(false);
+  }
+
+  async function handleExportSlides() {
+    if (!editing || editing.format !== 'carousel' || editing.slides.length === 0) return;
+    const canvas = document.createElement('canvas');
+    const images: string[] = [];
+    for (let i = 0; i < editing.slides.length; i++) {
+      renderSlideToCanvas(canvas, editing.slides[i] as any, genTemplate, i, editing.slides.length, i === 0);
+      images.push(canvas.toDataURL('image/png'));
+    }
+    // Download each slide
+    for (let i = 0; i < images.length; i++) {
+      const link = document.createElement('a');
+      link.download = `slide-${i + 1}.png`;
+      link.href = images[i];
+      link.click();
+    }
   }
 
   const filtered = posts.filter((p) => {
@@ -383,6 +684,14 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
       </div>
     );
   }
+
+  // Auto-trigger preview when editing carousel
+  useEffect(() => {
+    if (editing?.format === 'carousel' && editing.slides.length > 0) {
+      setPreviewSlides(editing.slides as any);
+      if (previewIdx >= editing.slides.length) setPreviewIdx(0);
+    }
+  }, [editing?.slides?.length]);
 
   // Editor view
   if (editing) {
@@ -559,6 +868,71 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
             />
           </div>
 
+          {/* Carousel template selector + preview */}
+          {editing.format === 'carousel' && editing.slides.length > 0 && (
+            <div className="border-t border-slate-200 pt-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-slate-500">Template visual</label>
+                <button
+                  onClick={handleExportSlides}
+                  className="flex items-center gap-1.5 text-xs font-medium text-[#0077B5] hover:text-[#005f8d]"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" /> Descargar slides como PNG
+                </button>
+              </div>
+              <div className="flex gap-3">
+                {CAROUSEL_TEMPLATES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setGenTemplate(t)}
+                    className={`flex flex-col items-center gap-1.5 px-4 py-3 rounded-lg border-2 transition-all ${
+                      genTemplate.id === t.id ? 'border-[#0077B5] bg-[#0077B5]/5' : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div
+                      className="w-10 h-14 rounded"
+                      style={{ background: t.bg, position: 'relative', overflow: 'hidden' }}
+                    >
+                      <div
+                        className="absolute bottom-1 left-1 right-1 top-3 rounded-sm"
+                        style={{ background: t.cardBg }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-slate-600">{t.name}</span>
+                  </button>
+                ))}
+              </div>
+              {/* Slide preview */}
+              <div className="flex items-start gap-6">
+                <div className="shrink-0">
+                  <canvas
+                    ref={slideCanvasRef}
+                    className="rounded-lg shadow-lg"
+                    style={{ width: 240, height: 300 }}
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <p className="text-sm font-medium text-[#032149]">Preview slide {previewIdx + 1} de {editing.slides.length}</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {editing.slides.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setPreviewSlides(editing.slides as any); setPreviewIdx(i); }}
+                        className={`w-8 h-8 rounded text-xs font-medium transition-colors ${
+                          previewIdx === i
+                            ? 'bg-[#0077B5] text-white'
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Published URL */}
           {editing.status === 'published' && (
             <div>
@@ -616,6 +990,13 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
           </select>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowGenerator(!showGenerator)}
+            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-[#6351d5] to-[#0077B5] text-white hover:opacity-90 transition-opacity font-medium"
+          >
+            <Sparkles className="w-4 h-4" />
+            Generar con IA
+          </button>
           {FORMAT_OPTIONS.map((f) => (
             <button
               key={f.value}
@@ -628,6 +1009,110 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
           ))}
         </div>
       </div>
+
+      {/* AI Generator panel */}
+      {showGenerator && (
+        <div className="bg-gradient-to-br from-[#6351d5]/5 to-[#0077B5]/5 rounded-xl border border-[#6351d5]/20 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[#032149] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#6351d5]" />
+              Generar contenido con IA
+            </h3>
+            <button onClick={() => setShowGenerator(false)} className="text-slate-400 hover:text-slate-600">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Format selector */}
+          <div className="flex gap-3">
+            {FORMAT_OPTIONS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setGenFormat(f.value)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
+                  genFormat === f.value
+                    ? 'border-[#6351d5] bg-[#6351d5]/10 text-[#6351d5]'
+                    : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                }`}
+              >
+                <f.icon className="w-4 h-4" />
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Template selector (only for carousel) */}
+          {genFormat === 'carousel' && (
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-500">Template visual</label>
+              <div className="flex gap-3">
+                {CAROUSEL_TEMPLATES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setGenTemplate(t)}
+                    className={`flex flex-col items-center gap-1.5 px-4 py-3 rounded-lg border-2 transition-all ${
+                      genTemplate.id === t.id ? 'border-[#6351d5] bg-[#6351d5]/5' : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div
+                      className="w-10 h-14 rounded"
+                      style={{ background: t.bg, position: 'relative', overflow: 'hidden' }}
+                    >
+                      <div
+                        className="absolute bottom-1 left-1 right-1 top-3 rounded-sm"
+                        style={{ background: t.cardBg }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-slate-600">{t.name}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-500">Slides:</label>
+                <select
+                  value={genSlideCount}
+                  onChange={(e) => setGenSlideCount(Number(e.target.value))}
+                  className="border border-slate-200 rounded-lg px-2 py-1 text-sm outline-none"
+                >
+                  {[4, 5, 6, 7, 8, 9, 10].map((n) => (
+                    <option key={n} value={n}>{n} slides</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Prompt input */}
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1 block">
+              Tema o prompt
+            </label>
+            <textarea
+              value={genPrompt}
+              onChange={(e) => setGenPrompt(e.target.value)}
+              rows={3}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]"
+              placeholder="Ej: 5 errores que cometen las fintechs al medir el CAC, con datos reales y ejemplos de Growth4U..."
+            />
+          </div>
+
+          {genError && (
+            <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {genError}
+            </div>
+          )}
+
+          <button
+            onClick={handleGenerate}
+            disabled={generating || !genPrompt.trim()}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#6351d5] text-white text-sm font-medium rounded-lg hover:bg-[#5242b8] disabled:opacity-50 transition-colors"
+          >
+            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {generating ? 'Generando...' : 'Generar contenido'}
+          </button>
+        </div>
+      )}
 
       {/* Posts list */}
       {filtered.length === 0 ? (
