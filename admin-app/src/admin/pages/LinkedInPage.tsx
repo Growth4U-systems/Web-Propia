@@ -524,15 +524,19 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
 
   // Render slide preview when data changes
   useEffect(() => {
-    if (previewSlides.length > 0 && slideCanvasRef.current) {
-      renderSlideToCanvas(
-        slideCanvasRef.current,
-        previewSlides[previewIdx],
-        genTemplate,
-        previewIdx,
-        previewSlides.length,
-        previewIdx === 0,
-      );
+    if (previewSlides.length > 0 && slideCanvasRef.current && previewSlides[previewIdx]) {
+      try {
+        renderSlideToCanvas(
+          slideCanvasRef.current,
+          previewSlides[previewIdx],
+          genTemplate,
+          previewIdx,
+          previewSlides.length,
+          previewIdx === 0,
+        );
+      } catch (e) {
+        console.error('Slide render error:', e);
+      }
     }
   }, [previewSlides, previewIdx, genTemplate]);
 
@@ -686,13 +690,17 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
     );
   }
 
-  // Auto-trigger preview when editing carousel
+  // Auto-trigger preview when starting to edit a carousel
+  const editingId = editing?.id ?? null;
+  const editingFormat = editing?.format ?? null;
   useEffect(() => {
-    if (editing?.format === 'carousel' && editing.slides.length > 0) {
+    if (editingFormat === 'carousel' && editing && editing.slides.length > 0) {
       setPreviewSlides(editing.slides as any);
-      if (previewIdx >= editing.slides.length) setPreviewIdx(0);
+      setPreviewIdx(0);
     }
-  }, [editing?.slides?.length]);
+    // Only run when we start editing a different post
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingId, editingFormat]);
 
   // Editor view
   if (editing) {
