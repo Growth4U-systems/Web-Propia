@@ -55,16 +55,38 @@ const clientNames = ['BNEXT', 'Bit2Me', 'GoCardless', 'Criptan', 'Lydia', 'Capit
   </div>
 </section>
 
-<!-- Client logos band -->
-<section class="relative pt-16 pb-14 mt-12 bg-white">
+<!-- Client logos band — infinite marquee -->
+<section class="relative pt-16 pb-14 mt-12 bg-white overflow-hidden">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
     <p class="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-10">{t.hero.trust}</p>
-    <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-4">
-      {clientNames.map((name) => (
-        <span class="text-sm md:text-base font-semibold text-slate-400 tracking-wide uppercase">
+  </div>
+  <div class="logo-marquee">
+    <div class="logo-track">
+      {[...clientNames, ...clientNames].map((name) => (
+        <span class="text-sm md:text-base font-semibold text-slate-400 tracking-wide uppercase whitespace-nowrap px-8">
           {name}
         </span>
       ))}
     </div>
   </div>
 </section>
+
+<style>
+  .logo-marquee {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  }
+  .logo-track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    animation: marquee 20s linear infinite;
+  }
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+</style>
