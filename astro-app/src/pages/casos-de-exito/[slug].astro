@@ -76,18 +76,19 @@ const breadcrumbSchema = {
   jsonLd={[articleSchema, breadcrumbSchema]}
 >
   <!-- Fixed Nav -->
-  <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-100">
-    <div class="max-w-4xl mx-auto px-4 h-20 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-0 cursor-pointer">
-        <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U" width="133" height="20" class="h-6 w-auto" />
-      </a>
-      <a href="/casos-de-exito/" class="text-sm font-bold text-[#6351d5] flex items-center gap-2 hover:underline">
-        <!-- ArrowLeft SVG -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-        Todos los casos
-      </a>
-    </div>
-  </nav>
+  <header class="fixed top-0 inset-x-0 z-50 nav-header">
+    <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <a href="/" class="flex items-center gap-0 cursor-pointer">
+          <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U" width="133" height="20" class="h-5 md:h-6 w-auto brightness-0 invert" />
+        </a>
+        <a href="/casos-de-exito/" class="text-sm font-bold text-white/80 hover:text-white flex items-center gap-2 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+          Todos los casos
+        </a>
+      </div>
+    </nav>
+  </header>
 
   <article class="pt-32 pb-20 max-w-4xl mx-auto px-4">
     <!-- Header -->

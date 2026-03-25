@@ -28,8 +28,7 @@ const colors = ['#6351d5', '#3f45fe', '#6351d5', '#3f45fe'];
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       {t.results.cards.map((card: any, i: number) => (
         <div
-          class="bg-gradient-to-br from-white to-slate-50/50 p-6 rounded-2xl border-t-4 flex items-start gap-5 hover:shadow-md transition-all duration-300 ease-out border border-slate-100 hover:border-slate-200/60"
-          style={`border-top-color: ${colors[i]};`}
+          class="bg-white p-6 rounded-2xl flex items-start gap-5 hover:shadow-md transition-all duration-300 ease-out border border-slate-200/60"
         >
           <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100">
             <span class="w-7 h-7 flex items-center justify-center" style={`color: ${colors[i]};`} set:html={icons[i]} />

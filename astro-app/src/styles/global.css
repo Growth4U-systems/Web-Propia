@@ -72,24 +72,43 @@ body {
   @apply outline-none ring-2 ring-[#6351d5]/50 ring-offset-2;
 }
 
-.nav-island {
-  background: rgba(255, 255, 255, 0.92);
+.nav-header {
+  background: rgba(45, 70, 160, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1.5px solid rgba(148, 163, 184, 0.9);
-  box-shadow:
-    0 4px 10px -1px rgba(0, 0, 0, 0.08),
-    0 14px 35px -5px rgba(0, 0, 0, 0.12),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
-  border-radius: 9999px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.nav-island:hover {
+/* Hero badge with gradient border */
+.hero-badge {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+.hero-badge::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 9999px;
+  padding: 1.5px;
+  background: linear-gradient(135deg, #6351d5, #45b6f7, #0faec1);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Card glow on hover */
+.card-glow {
+  transition: all 0.3s ease;
+}
+.card-glow:hover {
   box-shadow:
-    0 4px 12px -1px rgba(0, 0, 0, 0.10),
-    0 18px 40px -5px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(0, 0, 0, 0.05);
+    0 0 20px rgba(99, 81, 213, 0.15),
+    0 0 40px rgba(69, 182, 247, 0.1),
+    0 8px 32px rgba(0, 0, 0, 0.08);
+  border-color: rgba(99, 81, 213, 0.3);
 }
 
 .animation-delay-2000 {

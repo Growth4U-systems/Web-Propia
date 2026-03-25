@@ -96,34 +96,28 @@ const popularPosts = uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug)).slice(0, 
   description={cat.description}
 >
   <!-- Header -->
-  <header class="blog-header fixed top-0 inset-x-0 z-50">
-    <div class="blog-header-gradient">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6">
-        <div class="flex items-center justify-between h-16">
-          <a href="/" class="flex items-center cursor-pointer group flex-shrink-0">
-            <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="160" height="24" class="h-6 md:h-7 w-auto object-contain brightness-0 invert transition-transform group-hover:scale-105" />
-          </a>
-          <div class="flex items-center gap-4">
-            <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
-               class="hidden sm:inline-flex border-2 border-white text-white hover:bg-white hover:text-[#6351d5] font-bold py-2 px-6 rounded-full text-sm transition-all duration-300">
-              Agenda tu demo
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <nav class="blog-header-gradient-sub">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6">
-        <div class="flex items-center gap-1.5 h-11 overflow-x-auto" style="scrollbar-width:none;-ms-overflow-style:none;">
+  <header class="fixed top-0 inset-x-0 z-50 nav-header">
+    <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="/" class="flex items-center cursor-pointer group flex-shrink-0">
+          <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="160" height="24" class="h-5 md:h-6 w-auto object-contain brightness-0 invert transition-opacity group-hover:opacity-80" />
+        </a>
+        <div class="hidden md:flex items-center gap-1.5 overflow-x-auto" style="scrollbar-width:none;-ms-overflow-style:none;">
           {NAV_SECTIONS.map((s) => (
             <a href={`/blog/categoria/${s.key}/`}
                class:list={[
-                 'whitespace-nowrap px-3 md:px-4 py-1.5 text-xs md:text-sm font-medium rounded-full transition-all duration-200',
-                 s.key === key ? 'bg-white/20 text-white font-bold' : 'text-white/80 hover:text-white hover:bg-white/15',
+                 'whitespace-nowrap px-3 py-1.5 text-xs md:text-sm font-medium rounded-full transition-all duration-200',
+                 s.key === key ? 'bg-white/15 text-white font-bold' : 'text-white/70 hover:text-white hover:bg-white/10',
                ]}>
               {s.label}
             </a>
           ))}
+        </div>
+        <div class="flex items-center gap-4">
+          <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
+             class="hidden sm:inline-flex bg-white text-[#032149] font-bold py-2 px-5 rounded-full text-sm transition-all duration-200 hover:bg-white/90">
+            Agenda tu demo
+          </a>
         </div>
       </div>
     </nav>

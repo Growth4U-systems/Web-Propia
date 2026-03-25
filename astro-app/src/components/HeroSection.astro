@@ -6,10 +6,10 @@ interface Props {
 
 const { t, bookingLink } = Astro.props;
 
-const logos = ['bnext', 'bit2me', 'GoCardless', 'Lydia', 'Criptan', 'capitalontap', 'multimarkts', 'NEXTCHANCE', 'bnext', 'bit2me', 'GoCardless', 'Lydia'];
+const clientNames = ['BNEXT', 'Bit2Me', 'GoCardless', 'Criptan', 'Lydia', 'Capital on Tap', 'Multimarkts', 'Multiplo'];
 ---
 
-<section class="relative pt-44 pb-20 lg:pt-60 lg:pb-32 overflow-hidden bg-white">
+<section class="relative pt-28 pb-16 lg:pt-36 lg:pb-20 overflow-hidden bg-white">
   <!-- Animated blobs (CSS only) -->
   <div class="absolute top-0 left-1/2 w-full -translate-x-1/2 h-full z-0 pointer-events-none">
     <div class="absolute top-20 left-10 w-96 h-96 bg-[#45b6f7]/20 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
@@ -17,8 +17,8 @@ const logos = ['bnext', 'bit2me', 'GoCardless', 'Lydia', 'Criptan', 'capitalonta
   </div>
 
   <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-    <!-- Tag badge -->
-    <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-slate-50/80 border border-slate-200/60 mb-8 shadow-sm">
+    <!-- Tag badge with gradient border -->
+    <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full hero-badge mb-8">
       <span class="flex h-2 w-2 rounded-full bg-[#0faec1] animate-pulse"></span>
       <span class="text-sm text-[#1a3690] font-semibold tracking-wide">{t.hero.tag}</span>
     </div>
@@ -52,20 +52,19 @@ const logos = ['bnext', 'bit2me', 'GoCardless', 'Lydia', 'Criptan', 'capitalonta
       </a>
     </div>
 
-    <!-- Logo carousel -->
-    <div class="mt-24 border-t border-slate-100 pt-12 overflow-hidden relative w-full max-w-6xl mx-auto">
-      <p class="text-slate-500 text-xs font-semibold uppercase tracking-widest mb-8">{t.hero.trust}</p>
-      <div class="relative w-full overflow-hidden">
-        <div class="flex animate-scroll whitespace-nowrap gap-16 items-center">
-          {logos.map((logo) => (
-            <span class="text-2xl font-bold font-sans text-slate-300 hover:text-[#6351d5] transition-colors duration-300 cursor-default">
-              {logo}
-            </span>
-          ))}
-        </div>
-      </div>
-      <div class="absolute top-0 left-0 h-full w-32 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
-      <div class="absolute top-0 right-0 h-full w-32 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
+  </div>
+</section>
+
+<!-- Client logos band -->
+<section class="relative pt-16 pb-14 mt-12 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <p class="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-10">{t.hero.trust}</p>
+    <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-4">
+      {clientNames.map((name) => (
+        <span class="text-sm md:text-base font-semibold text-slate-400 tracking-wide uppercase">
+          {name}
+        </span>
+      ))}
     </div>
   </div>
 </section>

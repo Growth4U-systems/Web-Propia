@@ -20,28 +20,26 @@ try {
   title="Casos de Éxito | Growth4U"
   description="Resultados auditados de Growth Marketing para Empresas Tech B2B y B2C. Descubre cómo ayudamos a nuestros clientes a escalar."
 >
-  <!-- Floating Nav -->
-  <div class="fixed top-6 inset-x-0 z-50 flex justify-center px-4">
-    <nav class="nav-island w-full max-w-6xl">
-      <div class="px-6 sm:px-8">
-        <div class="flex items-center justify-between h-16">
-          <a href="/" class="flex items-center gap-0 cursor-pointer group flex-shrink-0">
-            <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="133" height="20" class="h-5 md:h-6 w-auto object-contain transition-transform group-hover:scale-105" />
+  <!-- Nav -->
+  <header class="fixed top-0 inset-x-0 z-50 nav-header">
+    <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="/" class="flex items-center gap-0 cursor-pointer group flex-shrink-0">
+          <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="133" height="20" class="h-5 md:h-6 w-auto object-contain transition-opacity group-hover:opacity-80 brightness-0 invert" />
+        </a>
+        <div class="hidden md:flex items-center gap-1">
+          <a href="/" class="text-white/80 hover:text-white transition-colors px-3 py-2 text-sm font-medium">Home</a>
+          <a href="/blog/" class="text-white/80 hover:text-white transition-colors px-3 py-2 text-sm font-medium">Blog</a>
+          <span class="text-white px-3 py-2 text-sm font-bold">Casos de Éxito</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer" class="bg-white text-[#032149] font-bold py-2 px-5 rounded-full text-sm transition-all duration-200 hover:bg-white/90">
+            {t.nav.cta}
           </a>
-          <div class="hidden md:flex items-center gap-6">
-            <a href="/" class="hover:text-[#6351d5] transition-colors px-2 py-2 rounded-md text-sm font-medium text-[#032149]">Home</a>
-            <a href="/blog/" class="hover:text-[#6351d5] transition-colors px-2 py-2 rounded-md text-sm font-medium text-[#032149]">Blog</a>
-            <span class="text-[#6351d5] px-2 py-2 rounded-md text-sm font-bold">Casos de Éxito</span>
-          </div>
-          <div class="flex items-center gap-4">
-            <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer" class="bg-[#6351d5] hover:bg-[#3f45fe] text-white font-bold py-2 px-5 rounded-full text-sm transition-all duration-300 shadow-lg">
-              {t.nav.cta}
-            </a>
-          </div>
         </div>
       </div>
     </nav>
-  </div>
+  </header>
 
   <!-- Hero Section -->
   <section class="pt-40 pb-20 px-4">
