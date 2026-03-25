@@ -924,7 +924,7 @@ export async function deleteLICandidate(id: string): Promise<void> {
 }
 
 // Slack Notifications — via Netlify Function proxy (avoids CORS)
-const SLACK_PROXY_URL = '/.netlify/functions/slack';
+const SLACK_PROXY_URL = '/api/slack';
 
 export async function sendSlackNotification(text: string, blocks?: any[]): Promise<boolean> {
   try {

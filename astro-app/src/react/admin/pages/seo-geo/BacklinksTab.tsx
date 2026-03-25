@@ -336,7 +336,7 @@ export default function BacklinksTab() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/.netlify/functions/sync-backlinks', { method: 'GET' });
+      const res = await fetch('/api/sync-backlinks', { method: 'GET' });
       const data = await res.json();
       if (!res.ok) throw new Error(`Error ${res.status}: ${data?.error || res.statusText}`);
       setDataForSEO(data);

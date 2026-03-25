@@ -97,7 +97,7 @@ interface LIMetrics {
   posts: LIMetricsPost[];
 }
 
-const FUNCTION_URL = '/.netlify/functions/linkedin';
+const FUNCTION_URL = '/api/linkedin';
 const CLOUDINARY_CLOUD = 'dsc0jsbkz';
 const CLOUDINARY_PRESET = 'blog_uploads';
 
@@ -257,7 +257,7 @@ async function uploadToCloudinary(blob: Blob, slug: string): Promise<string> {
 // --- Caption generator (AI-powered using linkedin-post-skill) ---
 
 async function generateCaption(post: BlogPost): Promise<string> {
-  const res = await fetch('/.netlify/functions/generate-caption', {
+  const res = await fetch('/api/generate-caption', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -488,7 +488,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 // --- AI content generator ---
 
 async function generateContent(format: 'text' | 'carousel', prompt: string, numSlides?: number) {
-  const res = await fetch('/.netlify/functions/generate-content', {
+  const res = await fetch('/api/generate-content', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ format, prompt, numSlides }),
@@ -1417,7 +1417,7 @@ export default function LinkedInPage() {
 
     try {
       const dateTime = `${item.scheduledDate}T${item.scheduledTime}:00`;
-      const res = await fetch('/.netlify/functions/metricool', {
+      const res = await fetch('/api/metricool', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

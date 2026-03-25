@@ -296,7 +296,7 @@ export default function SeoGeoAuditPage() {
 
     try {
       const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      const res = await fetch('/.netlify/functions/ai-audit', {
+      const res = await fetch('/api/ai-audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

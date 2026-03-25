@@ -1,0 +1,533 @@
+export const config = { runtime: 'edge' };
+
+const APIFY_TOKEN = process.env.APIFY_API_TOKEN || '';
+const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
+const FIREBASE_PROJECT = 'landing-growth4u';
+const FIREBASE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/artifacts/growth4u-public-app/public/data`;
+const ACTOR_ID = 'harvestapi~linkedin-profile-posts';
+
+const CREATORS: { name: string; url: string; category: string }[] = [
+  { name: 'Jose Cortizo', url: 'https://www.linkedin.com/in/jccortizo/', category: 'Growth' },
+  { name: 'Juanma Varo', url: 'https://www.linkedin.com/in/growth-marketing-juanma-varo/', category: 'Growth' },
+  { name: 'Barbara Galiza', url: 'https://www.linkedin.com/in/barbara-galiza/', category: 'Growth' },
+  { name: 'Andrea López', url: 'https://www.linkedin.com/in/andrealopezpalau/', category: 'Growth' },
+  { name: 'Andrew Capland', url: 'https://www.linkedin.com/in/acapland/', category: 'Growth' },
+  { name: 'Elena Verna', url: 'https://www.linkedin.com/in/elenaverna/', category: 'Growth' },
+  { name: 'Adam Fishman', url: 'https://www.linkedin.com/in/adamjfishman/', category: 'Growth' },
+  { name: 'Maja Boje', url: 'https://www.linkedin.com/in/majaboje/', category: 'Growth' },
+  { name: 'Aakash Gupta', url: 'https://www.linkedin.com/in/aagupta/', category: 'Growth' },
+  { name: 'Lenny Rachitsky', url: 'https://www.linkedin.com/in/lennyrachitsky/', category: 'Growth' },
+  { name: 'Matt Lerner', url: 'https://www.linkedin.com/in/matthewlerner/', category: 'Growth' },
+  { name: 'Crystal Widjaja', url: 'https://www.linkedin.com/in/crystalwidjaja/', category: 'Growth' },
+  { name: 'Jorge Cano', url: 'https://www.linkedin.com/in/jcanoce/', category: 'Growth' },
+  { name: 'Juan Bello', url: 'https://www.linkedin.com/in/juan-bello', category: 'Growth' },
+  { name: 'Javi Platón', url: 'https://www.linkedin.com/in/javier-platon', category: 'Growth' },
+  { name: 'Pau Gallinat', url: 'https://www.linkedin.com/in/pau-gallinat/', category: 'Growth' },
+  { name: 'Alex Dantart', url: 'https://www.linkedin.com/in/dantart/', category: 'Founder' },
+  { name: 'Miquel Martí', url: 'https://www.linkedin.com/in/miquel-marti-41210212/', category: 'Founder' },
+  { name: 'Emilio Frójan', url: 'https://www.linkedin.com/in/emiliofrojan/', category: 'Founder' },
+  { name: 'Jesús Alonso Gallo', url: 'https://www.linkedin.com/in/jesusalonsogallo/', category: 'Founder' },
+  { name: 'Carlos Ortiz', url: 'https://www.linkedin.com/in/carlos-ortiz-startup-advisor/', category: 'Founder' },
+  { name: 'Greg Isenberg', url: 'https://www.linkedin.com/in/gisenberg/', category: 'Founder' },
+  { name: 'Brian Balfour', url: 'https://www.linkedin.com/in/bbalfour/', category: 'Founder' },
+  { name: 'Barbara Mallet', url: 'https://www.linkedin.com/in/barbaramalet/', category: 'Founder' },
+  { name: 'Juan Cruz', url: 'https://www.linkedin.com/in/juancruzaliaga/', category: 'Founder' },
+  { name: 'Javier Romero', url: 'https://www.linkedin.com/in/javierromeroserrano/', category: 'Founder' },
+  { name: 'Juan Pablo Montoya', url: 'https://www.linkedin.com/in/juanpablomontoyam/', category: 'Founder' },
+  { name: 'Luis Monje', url: 'https://www.linkedin.com/in/luismonje/', category: 'Founder' },
+  { name: 'Luis Díaz del Dedo', url: 'https://www.linkedin.com/in/luisdiazdeldedo/', category: 'Founder' },
+  { name: 'Jordi Romero', url: 'https://www.linkedin.com/in/jordiromero/', category: 'Founder' },
+  { name: 'Bernat Farrero', url: 'https://www.linkedin.com/in/bernatfarrero/', category: 'Founder' },
+  { name: 'Carlos Blanco', url: 'https://www.linkedin.com/in/carlosblanco/', category: 'Founder' },
+  { name: 'Oscar Pierre', url: 'https://www.linkedin.com/in/oscarpierremi/', category: 'Founder' },
+  { name: 'Euge Oller', url: 'https://www.linkedin.com/in/eugeniooller/', category: 'Founder' },
+  { name: 'Jesús Hijas', url: 'https://www.linkedin.com/in/jesushijas/', category: 'Founder' },
+  { name: 'Jorge Branger', url: 'https://www.linkedin.com/in/jorgebranger/', category: 'Founder' },
+  { name: 'Daniel Olmedo', url: 'https://www.linkedin.com/in/daniel-olmedo-nieto-b929758a/', category: 'Founder' },
+  { name: 'Mathieu Carenzo', url: 'https://www.linkedin.com/in/mathieucarenzo/', category: 'Founder' },
+  { name: 'Samuel Gil', url: 'https://www.linkedin.com/in/samuelgil/', category: 'VC' },
+  { name: 'Guillermo Flor', url: 'https://www.linkedin.com/in/guillermoflor/', category: 'VC' },
+  { name: 'Iñaki Arrola', url: 'https://www.linkedin.com/in/inakiarrola/', category: 'VC' },
+  { name: 'Miguel Arias', url: 'https://www.linkedin.com/in/miguelarias/', category: 'VC' },
+  { name: 'Jaime Novoa', url: 'https://www.linkedin.com/in/jaimenovoa/', category: 'VC' },
+  { name: 'Jose del Barrio', url: 'https://www.linkedin.com/in/josedelbarrio/', category: 'VC' },
+  { name: 'Rubén Domínguez Ibar', url: 'https://www.linkedin.com/in/rubendominguezibar/', category: 'VC' },
+  { name: 'Enrique Linares', url: 'https://www.linkedin.com/in/enriquelinares/', category: 'VC' },
+  { name: 'Itxaso del Palacio', url: 'https://www.linkedin.com/in/itxasodp/', category: 'VC' },
+];
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json',
+};
+
+function findCreator(postAuthorUrl: string) {
+  if (!postAuthorUrl) return undefined;
+  const clean = (u: string) => u.replace(/\/$/, '').replace(/\?.*$/, '').toLowerCase();
+  const cleaned = clean(postAuthorUrl);
+  // Try exact match first
+  const exact = CREATORS.find((c) => clean(c.url) === cleaned);
+  if (exact) return exact;
+  // Try slug match (Apify sometimes returns just the slug like "jccortizo")
+  const slug = cleaned.split('/').filter(Boolean).pop() || '';
+  if (slug) {
+    return CREATORS.find((c) => {
+      const creatorSlug = clean(c.url).split('/').filter(Boolean).pop() || '';
+      return creatorSlug === slug;
+    });
+  }
+  return undefined;
+}
+
+// Fallback knowledge — used when no per-person knowledge base is available
+const G4U_KNOWLEDGE_FALLBACK = `
+TEMAS QUE DOMINA GROWTH4U (usa estos como contexto para enriquecer comentarios):
+- CAC sostenible: unit economics, payback periods, ratio LTV/CAC, optimizar coste de adquisición
+- Mesetas de crecimiento: diagnosticar estancamiento, pivotes de canal, reactivar growth loops
+- Sistemas de growth: frameworks de experimentación, procesos repetibles, north star metrics
+- David vs Goliat: startups compitiendo contra incumbentes, nichos, diferenciación por velocidad
+- Delegación y escalabilidad: liberar al founder de operaciones, construir equipos de growth
+- Attribution y analytics: modelos de atribución multi-touch, medir ROI real, dashboards accionables
+- GEO (Generative Engine Optimization): optimizar para ser citado por LLMs, no solo SEO clásico
+- Growth para fintechs: compliance como ventaja, trust loops, regulación como moat
+- Signal-based outreach: detectar señales de intención antes de contactar
+`.trim();
+
+// Fetch per-person knowledge from Firebase
+async function fetchPersonKnowledge(slug: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${FIREBASE_BASE}/li_knowledge/${slug}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const f = data?.fields;
+    if (!f) return null;
+
+    const name = f.name?.stringValue || slug;
+    const role = f.role?.stringValue || '';
+    const tone = f.tone?.stringValue || '';
+    const topics = (f.topics?.arrayValue?.values || []).map((v: any) => v.stringValue).join(', ');
+    const opinions = (f.opinions?.arrayValue?.values || []).map((v: any) => `- ${v.stringValue}`).join('\n');
+    const experiences = (f.experiences?.arrayValue?.values || []).map((v: any) => `- ${v.stringValue}`).join('\n');
+
+    return `PERFIL DE QUIEN COMENTA: ${name} (${role} en Growth4U)
+
+TONO Y ESTILO: ${tone}
+
+TEMAS QUE DOMINA:
+${topics}
+
+OPINIONES Y POSTURAS (usa estas como base para comentar con voz propia):
+${opinions}
+
+EXPERIENCIAS Y CASOS REALES (puedes referenciar estos, anonimizados):
+${experiences}`;
+  } catch {
+    return null;
+  }
+}
+
+// Cache knowledge per person during a single function execution
+const knowledgeCache: Record<string, string | null> = {};
+
+async function getKnowledgeContext(personSlug?: string): Promise<string> {
+  if (!personSlug) return G4U_KNOWLEDGE_FALLBACK;
+
+  if (!(personSlug in knowledgeCache)) {
+    knowledgeCache[personSlug] = await fetchPersonKnowledge(personSlug);
+  }
+
+  return knowledgeCache[personSlug] || G4U_KNOWLEDGE_FALLBACK;
+}
+
+async function generateComment(authorName: string, content: string, personSlug?: string): Promise<string> {
+  // Detect language from post content — count Spanish-specific patterns vs English ones
+  const spanishSignals = (content.match(/\b(de|en|los|las|del|para|por|que|una?|con|como|pero|más|también|sobre|esto|esta|puede|tiene|hacer|ser|está|hay|sin|desde|entre|cada|cuando|porque|mejor|todo|solo|mucho|otro|nuestro|empresa|negocio|crecimiento|marketing)\b/gi) || []).length;
+  const englishSignals = (content.match(/\b(the|is|are|was|were|have|has|been|will|would|could|should|with|from|this|that|they|their|which|about|into|more|also|just|than|very|most|some|only|your|what|when|how|growth|business|company|marketing|team|product)\b/gi) || []).length;
+  const postLang = englishSignals > spanishSignals ? 'inglés' : 'español';
+
+  // Fetch personalized knowledge or fallback to generic G4U knowledge
+  const knowledgeContext = await getKnowledgeContext(personSlug);
+  const hasPersonalKnowledge = knowledgeContext !== G4U_KNOWLEDGE_FALLBACK;
+
+  const personaInstruction = hasPersonalKnowledge
+    ? `Estás comentando COMO la persona descrita abajo. Usa su tono, sus temas y sus experiencias. Comenta como si fueras esa persona, no como un community manager genérico.`
+    : `Eres el community manager de Growth4U, una consultora de Growth Marketing para startups y scale-ups tech B2B/B2C.`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 600,
+      messages: [{
+        role: 'user',
+        content: `${personaInstruction}
+
+Genera un comentario para este post de LinkedIn de ${authorName}:
+
+"""
+${content.slice(0, 1500)}
+"""
+
+IDIOMA: El post está en ${postLang}. Tu comentario DEBE estar 100% en ${postLang}. No mezcles idiomas.
+
+${knowledgeContext}
+
+Reglas:
+- Entre 1.500 y 2.000 caracteres (ni más ni menos). Lo suficiente para aportar valor real sin soltar un "quijote"
+- Tono profesional pero cercano, nunca corporativo ni vendedor
+- Aporta valor: añade un dato, perspectiva, experiencia propia o pregunta inteligente que enriquezca la conversación
+- Si el tema conecta con algo que Growth4U domina (ver arriba), incorpora esa perspectiva DENTRO del comentario de forma natural — como opinión propia, no como publicidad
+- NUNCA incluyas links, URLs ni menciones a recursos externos. El objetivo es generar curiosidad y que te pregunten, no vender
+- NO seas genérico ("gran post", "totalmente de acuerdo", "interesante reflexión")
+- Empieza directamente con el comentario, sin explicación
+- El objetivo es APORTAR a la conversación del autor, no desviarla hacia Growth4U
+
+Solo devuelve el comentario en ${postLang}, nada más.`,
+      }],
+    }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Claude API ${res.status}: ${errText.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  return data?.content?.[0]?.text || '';
+}
+
+async function saveComment(comment: {
+  profileName: string; profileUrl: string; profileTitle: string;
+  postUrl: string; postSnippet: string; commentDraft: string; commentType: string;
+  postDate?: string;
+}) {
+  const fields: Record<string, any> = {
+    profileName: { stringValue: comment.profileName },
+    profileUrl: { stringValue: comment.profileUrl },
+    profileTitle: { stringValue: comment.profileTitle || '' },
+    postUrl: { stringValue: comment.postUrl },
+    postSnippet: { stringValue: comment.postSnippet },
+    commentDraft: { stringValue: comment.commentDraft },
+    commentType: { stringValue: comment.commentType },
+    status: { stringValue: 'pending' },
+    createdAt: { timestampValue: new Date().toISOString() },
+    updatedAt: { timestampValue: new Date().toISOString() },
+  };
+  if (comment.postDate) {
+    fields.postDate = { stringValue: comment.postDate };
+  }
+  const res = await fetch(`${FIREBASE_BASE}/li_comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields }),
+  });
+  return res.ok;
+}
+
+// =====================================================
+// ASYNC ARCHITECTURE — 3 actions via query param
+// =====================================================
+// POST ?action=start   → launches Apify run, returns { runId, datasetId }
+// GET  ?action=status&runId=xxx → checks if Apify finished
+// POST ?action=process&datasetId=xxx → fetches results + generates comments + saves to Firebase
+// =====================================================
+
+export default async function handler(req: Request) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
+  if (!APIFY_TOKEN) {
+    return new Response(JSON.stringify({ error: 'Missing APIFY_API_TOKEN' }), { status: 500, headers: CORS_HEADERS });
+  }
+
+  const url = new URL(req.url);
+  const action = url.searchParams.get('action') || 'start';
+
+  try {
+    // ---- ACTION: START ----
+    // Launches the Apify actor and returns immediately
+    if (action === 'start') {
+      const body = await req.json().catch(() => ({}));
+      const maxPosts = (body as any)?.maxPosts || 3;
+      const categories: string[] = (body as any)?.categories || ['Growth', 'Founder', 'VC'];
+      const onlyUrls: string[] = (body as any)?.profileUrls || [];
+
+      const targetCreators = onlyUrls.length > 0
+        ? CREATORS.filter((c) => onlyUrls.some((u: string) => c.url.includes(u)))
+        : CREATORS.filter((c) => categories.includes(c.category));
+
+      const profileUrls = targetCreators.map((c) => c.url);
+
+      const runRes = await fetch(
+        `https://api.apify.com/v2/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profileUrls, maxPosts }),
+        }
+      );
+      const runData = await runRes.json();
+      const runId = runData?.data?.id;
+      const datasetId = runData?.data?.defaultDatasetId;
+
+      if (!runId) {
+        return new Response(JSON.stringify({ error: 'Failed to start Apify run', details: runData }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      return new Response(JSON.stringify({
+        ok: true,
+        phase: 'started',
+        runId,
+        datasetId,
+        creators: targetCreators.length,
+        message: `Scraping ${targetCreators.length} perfiles (${profileUrls.length} URLs)...`,
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: STATUS ----
+    // Checks if the Apify run has finished
+    if (action === 'status') {
+      const runId = url.searchParams.get('runId');
+      if (!runId) {
+        return new Response(JSON.stringify({ error: 'Missing runId' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      const statusRes = await fetch(
+        `https://api.apify.com/v2/acts/${ACTOR_ID}/runs/${runId}?token=${APIFY_TOKEN}`
+      );
+      const statusData = await statusRes.json();
+      const status = statusData?.data?.status;
+      const datasetId = statusData?.data?.defaultDatasetId;
+
+      return new Response(JSON.stringify({
+        ok: true,
+        status, // READY, RUNNING, SUCCEEDED, FAILED, ABORTED
+        datasetId,
+        finished: status === 'SUCCEEDED' || status === 'FAILED' || status === 'ABORTED',
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: PROCESS ----
+    // Fetches Apify results, generates comments with Claude, saves to Firebase
+    if (action === 'process') {
+      if (!ANTHROPIC_KEY) {
+        return new Response(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const datasetId = (body as any)?.datasetId || url.searchParams.get('datasetId');
+      const offset = (body as any)?.offset || 0;
+      const personSlug: string | undefined = (body as any)?.personSlug; // philippe, alfonso, martin — for personalized comments
+      if (!datasetId) {
+        return new Response(JSON.stringify({ error: 'Missing datasetId' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      // Fetch posts from Apify dataset with offset + limit
+      const batchSize = 5;
+      const itemsRes = await fetch(
+        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}&offset=${offset}&limit=${batchSize}`
+      );
+      const batch = await itemsRes.json();
+
+      if (!Array.isArray(batch) || batch.length === 0) {
+        return new Response(JSON.stringify({ ok: true, phase: 'done', saved: 0, remaining: 0, message: 'All posts processed' }), { status: 200, headers: CORS_HEADERS });
+      }
+      let saved = 0;
+      let skipped = 0;
+      let errors = 0;
+      const errorDetails: string[] = [];
+
+      for (const post of batch) {
+        try {
+          const postUrl = post.linkedinUrl || '';
+          const content = post.content || '';
+          if (!content || content.length < 50) { skipped++; continue; }
+
+          const authorName = post.author?.name || 'Unknown';
+          const authorUrl = post.author?.linkedinUrl || (typeof post.query === 'string' ? post.query : post.query?.profilePublicIdentifier) || '';
+          const authorTitle = post.author?.title || '';
+          const creator = findCreator(authorUrl);
+
+          // Skip posts from authors not in our Creator Network
+          if (!creator) { skipped++; continue; }
+
+          // Skip posts older than 60 days — only engage with active creators (Anna feedback)
+          const postDateStr = post.postedAt?.date || '';
+          if (postDateStr) {
+            const postAge = Date.now() - new Date(postDateStr).getTime();
+            if (postAge > 60 * 24 * 60 * 60 * 1000) { skipped++; continue; }
+          }
+
+          const commentDraft = await generateComment(authorName, content, personSlug);
+          if (!commentDraft) {
+            errorDetails.push(`Empty comment for ${authorName}`);
+            errors++;
+            continue;
+          }
+
+          // Extract post date from Apify data
+          const postDate = post.postedAt?.date || '';
+
+          const ok = await saveComment({
+            profileName: authorName,
+            profileUrl: authorUrl,
+            profileTitle: authorTitle,
+            postUrl,
+            postSnippet: content.slice(0, 300),
+            commentDraft,
+            commentType: creator?.category === 'VC' ? 'authority' : creator?.category === 'Founder' ? 'founder' : creator?.category === 'Growth' ? 'growth' : 'outbound',
+            postDate,
+          });
+
+          if (ok) saved++;
+          else {
+            errorDetails.push(`Failed to save comment for ${authorName}`);
+            errors++;
+          }
+        } catch (e: any) {
+          errorDetails.push(e.message || 'Unknown error');
+          errors++;
+        }
+      }
+
+      return new Response(JSON.stringify({
+        ok: true,
+        phase: 'process',
+        processed: batch.length,
+        nextOffset: offset + batch.length,
+        hasMore: batch.length === batchSize,
+        saved,
+        skipped,
+        errors,
+        errorDetails: errorDetails.slice(0, 5),
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: ENRICH-PROSPECT ----
+    // Auto-fill all prospect fields using Claude when a candidate is approved
+    if (action === 'enrich-prospect') {
+      if (!ANTHROPIC_KEY) {
+        return new Response(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const { name, title, company, country, location, interactionType, sourceCreatorName, postSnippet, reason } = body as any;
+
+      const profileContext = `${name}, ${title}${company ? ` en ${company}` : ''}${location ? ` (${location}${country ? `, ${country}` : ''})` : ''}`;
+      const interactionContext = `Interactuó (${interactionType || 'comment'}) con un post de ${sourceCreatorName || 'un creator de nuestra red'}.${reason ? ` Razón de detección: ${reason}` : ''}${postSnippet ? `\nContenido del post: ${postSnippet.slice(0, 500)}` : ''}`;
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1200,
+          messages: [{
+            role: 'user',
+            content: `Analiza este perfil de LinkedIn y genera datos de enriquecimiento para prospección B2B.
+
+Perfil: ${profileContext}
+Contexto: ${interactionContext}
+
+Growth4U es una consultora de Growth Marketing especializada en startups y scale-ups tech B2B/B2C. Servicios: estrategia de crecimiento, CAC sostenible, attribution, GEO (Generative Engine Optimization), growth marketing para fintechs, trust engine.
+
+Devuelve SOLO un JSON válido (sin markdown, sin backticks) con estos campos:
+{
+  "companySector": "DEBE ser uno de: Fintech, SaaS, E-commerce, Healthtech, Edtech, Proptech, Insurtech, Marketplace, B2B Tech, B2C Tech, Agency, Otro",
+  "companySize": "DEBE ser uno de: 1-10, 11-50, 51-200, 201-500, 500+",
+  "fundingStage": "DEBE ser uno de: Pre-seed, Seed, Serie A, Serie B, Serie C+, Bootstrapped, Profitable",
+  "painPoints": "2-3 pain points probables basados en su perfil, empresa y sector. Sé específico.",
+  "g4uMatch": "DEBE ser uno de: growth-marketing, geo-fintechs, trust-engine, cac-sostenible, meseta-de-crecimiento, sistema-de-growth, david-vs-goliat, kit-de-liberacion, dashboard-attribution, discovery-call",
+  "connectionMessage": "mensaje de conexión LinkedIn MÁXIMO 280 caracteres, personalizado, tono peer, NO vendas",
+  "outreachMessage": "DM de 3-5 frases, ofrece valor primero, cierra con pregunta abierta, NO vendas directamente",
+  "signals": "array de IDs de señales activas para este prospect. SOLO usa IDs de esta lista: commented (comentó en post), reacted (reaccionó a post), multi_interaction (interacciones múltiples), engaged_competitor (interactuó con competidor), icp_match (ICP match perfecto), decision_maker (decision maker), growth_stage (empresa en crecimiento), target_sector (sector target de G4U), recent_activity (activo recientemente), new_role (nuevo rol), hiring (empresa contratando), recent_funding (funding reciente), growth_content (interesado en growth), cac_content (habla de CAC/unit economics), attribution_content (busca attribution/analytics), scaling_content (quiere escalar sin paid). Selecciona entre 2 y 6 señales que apliquen según el perfil y contexto."
+}
+
+Reglas:
+- Si el perfil parece hispano, mensajes en español. Si es anglosajón, en inglés.
+- Sé concreto, no genérico. Usa datos del perfil y la empresa.
+- Si no puedes determinar algo con certeza, haz tu mejor estimación basada en el contexto.
+- SOLO el JSON, nada más.`,
+          }],
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        return new Response(JSON.stringify({ error: 'Claude API error', details: errText }), { status: 500, headers: CORS_HEADERS });
+      }
+      const data = await res.json();
+      const raw = data?.content?.[0]?.text || '{}';
+      try {
+        const enrichment = JSON.parse(raw.trim());
+        return new Response(JSON.stringify({ ok: true, ...enrichment }), { status: 200, headers: CORS_HEADERS });
+      } catch {
+        return new Response(JSON.stringify({ ok: false, error: 'Failed to parse enrichment JSON', raw }), { status: 500, headers: CORS_HEADERS });
+      }
+    }
+
+    // ---- ACTION: CONNECTION-MSG ----
+    // Generate a LinkedIn connection message using Claude
+    if (action === 'connection-msg') {
+      if (!ANTHROPIC_KEY) {
+        return new Response(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const { name, title, company, notes, painPoints } = body as any;
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 500,
+          messages: [{
+            role: 'user',
+            content: `Genera un mensaje directo (DM) de LinkedIn para enviar a ${name} (${title}${company ? ` en ${company}` : ''}).
+
+Contexto de Growth4U: Somos una consultora de Growth Marketing especializada en startups y scale-ups tech B2B/B2C. Ayudamos con estrategia de crecimiento, CAC sostenible, attribution y GEO.
+
+${painPoints ? `Pain points detectados: ${painPoints}` : ''}
+${notes ? `Notas: ${notes}` : ''}
+
+Reglas:
+- Mensaje de 3-5 frases (entre 300 y 600 caracteres)
+- Personalizado a su perfil y situación, NO genérico
+- Menciona algo específico de su rol, empresa o pain points
+- Tono cercano y profesional, como si fuera un peer
+- Ofrece valor primero (insight, recurso, perspectiva) antes de pedir algo
+- Cierra con una pregunta abierta o propuesta concreta de valor
+- NO vendas directamente, busca iniciar conversación genuina
+- Si el perfil es en inglés, escribe en inglés
+- Si es hispano, escribe en español
+- Solo devuelve el mensaje, nada más.`,
+          }],
+        }),
+      });
+      if (!res.ok) {
+        return new Response(JSON.stringify({ error: 'Claude API error' }), { status: 500, headers: CORS_HEADERS });
+      }
+      const data = await res.json();
+      const message = data?.content?.[0]?.text || '';
+      return new Response(JSON.stringify({ ok: true, message }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: CORS_HEADERS });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS_HEADERS });
+  }
+}

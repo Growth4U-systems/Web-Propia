@@ -198,7 +198,7 @@ export default function AuditTab() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/.netlify/functions/seo-audit', {
+      const res = await fetch('/api/seo-audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: 'https://growth4u.io' }),

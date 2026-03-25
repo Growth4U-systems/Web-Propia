@@ -63,7 +63,7 @@ interface SavedScheduledPost {
   createdAt: Date | null;
 }
 
-const FUNCTION_URL = '/.netlify/functions/instagram';
+const FUNCTION_URL = '/api/instagram';
 const CLOUDINARY_CLOUD = 'dsc0jsbkz';
 const CLOUDINARY_PRESET = 'blog_uploads';
 
@@ -324,7 +324,7 @@ export default function CameraPage() {
 
   async function generateCaption(post: BlogPost): Promise<string> {
     try {
-      const res = await fetch('/.netlify/functions/generate-caption', {
+      const res = await fetch('/api/generate-caption', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

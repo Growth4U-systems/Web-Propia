@@ -189,12 +189,12 @@ export default function VitalsTab() {
     try {
       // Run both mobile and desktop in parallel
       const [mobileRes, desktopRes] = await Promise.all([
-        fetch('/.netlify/functions/web-vitals', {
+        fetch('/api/web-vitals', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: 'https://growth4u.io', strategy: 'mobile' }),
         }),
-        fetch('/.netlify/functions/web-vitals', {
+        fetch('/api/web-vitals', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: 'https://growth4u.io', strategy: 'desktop' }),

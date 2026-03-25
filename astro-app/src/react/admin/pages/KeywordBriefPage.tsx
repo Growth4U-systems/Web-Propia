@@ -210,7 +210,7 @@ export default function KeywordBriefPage() {
     setResearching(true);
     setResearchResults([]);
     try {
-      const res = await fetch('/.netlify/functions/keyword-research', {
+      const res = await fetch('/api/keyword-research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: researchTopic.trim() }),
@@ -304,7 +304,7 @@ export default function KeywordBriefPage() {
     setGenInternalLinks([]);
     try {
       const existingPosts = blogPosts.map((p) => ({ title: p.title, slug: p.slug }));
-      const res = await fetch('/.netlify/functions/generate-brief', {
+      const res = await fetch('/api/generate-brief', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ primaryKeyword, secondaryKeywords, topic, existingPosts }),

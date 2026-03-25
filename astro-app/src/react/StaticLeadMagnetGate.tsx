@@ -37,7 +37,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
 
       // Send email via GHL (new flow)
       const contentUrl = `${window.location.origin}/recursos/${magnetSlug}/?token=${encodeURIComponent(btoa(formData.email.trim().toLowerCase()))}`;
-      const resp = await fetch('/.netlify/functions/lead-magnet-gate', {
+      const resp = await fetch('/api/lead-magnet-gate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

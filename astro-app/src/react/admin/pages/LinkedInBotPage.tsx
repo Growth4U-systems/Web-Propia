@@ -308,7 +308,7 @@ export default function LinkedInBotPage() {
     if (!candidate) return;
 
     // Start enrichment in parallel with prospect creation
-    const enrichPromise = fetch('/.netlify/functions/li-scrape?action=enrich-prospect', {
+    const enrichPromise = fetch('/api/li-scrape?action=enrich-prospect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -650,7 +650,7 @@ function OverviewTab({
     setScrapeResult(null);
     try {
       // Step 1: Start the Apify run
-      const startRes = await fetch('/.netlify/functions/li-scrape?action=start', {
+      const startRes = await fetch('/api/li-scrape?action=start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ maxPosts: 3 }),
@@ -666,7 +666,7 @@ function OverviewTab({
       let finished = false;
       for (let i = 0; i < 60; i++) {
         await new Promise((r) => setTimeout(r, 5000));
-        const statusRes = await fetch(`/.netlify/functions/li-scrape?action=status&runId=${runId}`);
+        const statusRes = await fetch(`/api/li-scrape?action=status&runId=${runId}`);
         const statusData = await statusRes.json();
         if (statusData.finished) {
           finished = statusData.status === 'SUCCEEDED';
@@ -681,7 +681,7 @@ function OverviewTab({
       let offset = 0;
       let hasMore = true;
       while (hasMore) {
-        const processRes = await fetch('/.netlify/functions/li-scrape?action=process', {
+        const processRes = await fetch('/api/li-scrape?action=process', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ datasetId, offset }),
@@ -722,7 +722,7 @@ function OverviewTab({
       }
 
       // Step 1: Start Apify actors
-      const startRes = await fetch('/.netlify/functions/li-prospect?action=start', {
+      const startRes = await fetch('/api/li-prospect?action=start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ posts, maxReactions: 50, maxComments: 30 }),
@@ -740,7 +740,7 @@ function OverviewTab({
       for (let i = 0; i < 60; i++) {
         await new Promise((r) => setTimeout(r, 5000));
         const statusRes = await fetch(
-          `/.netlify/functions/li-prospect?action=status&reactionsRunId=${reactionsRunId}&commentsRunId=${commentsRunId}`
+          `/api/li-prospect?action=status&reactionsRunId=${reactionsRunId}&commentsRunId=${commentsRunId}`
         );
         const statusData = await statusRes.json();
         if (statusData.finished) {
@@ -758,7 +758,7 @@ function OverviewTab({
       let offset = 0;
       let hasMore = true;
       while (hasMore) {
-        const processRes = await fetch('/.netlify/functions/li-prospect?action=process', {
+        const processRes = await fetch('/api/li-prospect?action=process', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1613,7 +1613,7 @@ function ProspectsTab({
                       <div className="flex items-center gap-2 mt-1">
                         <button
                           onClick={async () => {
-                            const res = await fetch('/.netlify/functions/li-scrape?action=connection-msg', {
+                            const res = await fetch('/api/li-scrape?action=connection-msg', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ name: p.name, title: p.title, company: p.company, notes: p.notes, painPoints: p.painPoints }),
@@ -1652,7 +1652,7 @@ function ProspectsTab({
                       <div className="flex items-center gap-2 mt-1">
                         <button
                           onClick={async () => {
-                            const res = await fetch('/.netlify/functions/li-scrape?action=connection-msg', {
+                            const res = await fetch('/api/li-scrape?action=connection-msg', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({

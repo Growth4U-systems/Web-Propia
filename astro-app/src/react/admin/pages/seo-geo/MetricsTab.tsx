@@ -178,7 +178,7 @@ export default function MetricsTab() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const res = await fetch('/.netlify/functions/sync-google', {
+      const res = await fetch('/api/sync-google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ days: syncDays }),

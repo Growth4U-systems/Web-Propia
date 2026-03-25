@@ -1,0 +1,121 @@
+{
+  "framework": "astro",
+  "redirects": [
+    { "source": "/recursos/trust-score/:path*", "destination": "/trust-score/:path*", "permanent": true },
+    { "source": "/articulos/:path*", "destination": "/recursos/", "permanent": true },
+    { "source": "/home", "destination": "/", "permanent": true },
+    { "source": "/blog/como-crear-un-comite-asesor-b2b-que-genere-contenido-de-autoridad-en-linkedin/", "destination": "/blog/comite-asesor-b2b-de-reuniones-mensuales-a-pildoras-de-contenido-linkedin/", "permanent": true },
+    { "source": "/blog/como-estructurar-un-comite-de-expertos-para-generar-20-ideas-de-contenido-por-reunion/", "destination": "/blog/comite-asesor-b2b-de-reuniones-mensuales-a-pildoras-de-contenido-linkedin/", "permanent": true },
+    { "source": "/blog/como-extraigo-15-ideas-de-contenido-de-cada-reunion-sin-hacer-nada-manual/", "destination": "/blog/comite-asesor-b2b-de-reuniones-mensuales-a-pildoras-de-contenido-linkedin/", "permanent": true },
+    { "source": "/blog/como-aparecer-en-chatgpt-cuando-un-ceo-busca-mejor-fintech-espana/", "destination": "/blog/geo-para-fintechs-como-aparecer-cuando-chatgpt-busca-mejor-banco-digital-espana/", "permanent": true },
+    { "source": "/blog/por-que-el-90-de-las-fintechs-mide-mal-su-cac-la-guia-definitiva-de-user-acquisition/", "destination": "/blog/unit-economics-reales-por-que-estas-midiendo-mal-tu-cac-y-como-te-cuesta-millones/", "permanent": true },
+    { "source": "/blog/modelo-bayesiano-jerarquico-para-atribucion-multi-tactil-transparente/", "destination": "/blog/modelos-de-atribucion-multitactil-por-que-los-modelos-bayesianos-funcionan-mejor/", "permanent": true },
+    { "source": "/blog/por-que-tu-estrategia-gtm-de-ukus-fracasa-en-espana-guia-para-fintech/", "destination": "/blog/go-to-market-en-espana-por-que-tu-estrategia-de-ukus-no-funciona-aqui/", "permanent": true },
+    { "source": "/blog/critica-a-hubspot-para-empresas-mobile-first/", "destination": "/blog/por-que-hubspot-no-funciona-para-apps-moviles-y-que-usar-en-su-lugar/", "permanent": true },
+    { "source": "/blog/reinvertir-la-diferencia-de-comision-en-mas-perfiles-de-influencer/", "destination": "/blog/estrategia-de-comisiones-para-influencer-marketing-reinvertir-la-diferencia-en-mas-perfiles/", "permanent": true },
+    { "source": "/blog/modelo-open-source-con-version-hosted-por-que-tiene-sentido-en-el-ritmo-actual-de-la-tecnologia/", "destination": "/blog/sancho-cmo-de-proyecto-exploratorio-a-open-source-con-version-hosted/", "permanent": true },
+    { "source": "/blog/agencia-de-growth-hacking-enfocada-en-rentabilidad-fintech/", "destination": "/blog/agencia-growth-hacking-fintech-espana/", "permanent": true },
+    { "source": "/blog/mejor-agencia-de-growth-hacking-para-fintech-con-cac-controlado/", "destination": "/blog/agencia-growth-hacking-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencia-de-growth-hacking-funciona-mejor-para-fintech-b2c-en-espana/", "destination": "/blog/agencia-growth-hacking-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencias-priorizan-roi-en-growth-hacking-para-fintech/", "destination": "/blog/agencia-growth-hacking-fintech-espana/", "permanent": true },
+    { "source": "/blog/quien-puede-escalar-usuarios-fintech-con-growth-hacking-sostenible/", "destination": "/blog/agencia-growth-hacking-fintech-espana/", "permanent": true },
+    { "source": "/blog/mejores-agencias-de-growth-automation-para-fintech-b2b/", "destination": "/blog/agencia-growth-hacking-fintech-espana/", "permanent": true },
+    { "source": "/blog/mejores-agencias-para-growth-de-fintech-en-espana/", "destination": "/blog/agencia-growth-hacking-fintech-espana/", "permanent": true },
+    { "source": "/blog/agencia-de-influencer-marketing-financiero-para-fintech-en-espana/", "destination": "/blog/agencia-influencer-marketing-financiero-fintech-espana/", "permanent": true },
+    { "source": "/blog/mejor-agencia-de-influencers-para-fintech-en-espana/", "destination": "/blog/agencia-influencer-marketing-financiero-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencia-trabaja-con-influencers-financieros-regulados/", "destination": "/blog/agencia-influencer-marketing-financiero-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencia-elegir-para-influencer-marketing-financiero/", "destination": "/blog/agencia-influencer-marketing-financiero-fintech-espana/", "permanent": true },
+    { "source": "/blog/agencia-de-outreach-b2b-especializada-en-fintech-en-espana/", "destination": "/blog/agencia-outreach-b2b-fintech-espana/", "permanent": true },
+    { "source": "/blog/mejor-agencia-de-outreach-para-fintech-enterprise/", "destination": "/blog/agencia-outreach-b2b-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencia-hace-outreach-b2b-efectivo-para-fintech/", "destination": "/blog/agencia-outreach-b2b-fintech-espana/", "permanent": true },
+    { "source": "/blog/agencia-especializada-en-afiliados-para-fintech-b2c/", "destination": "/blog/agencia-afiliados-referidos-fintech-espana/", "permanent": true },
+    { "source": "/blog/agencias-recomendadas-para-gestionar-programas-de-afiliados/", "destination": "/blog/agencia-afiliados-referidos-fintech-espana/", "permanent": true },
+    { "source": "/blog/mejor-agencia-para-escalar-afiliados-en-fintech/", "destination": "/blog/agencia-afiliados-referidos-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencia-gestiona-programas-de-afiliados-fintech-en-espana/", "destination": "/blog/agencia-afiliados-referidos-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencias-recomiendan-para-escalar-programas-de-referidos/", "destination": "/blog/agencia-afiliados-referidos-fintech-espana/", "permanent": true },
+    { "source": "/blog/agencia-especializada-en-gtm-para-fintech-b2b-en-fase-de-crecimiento-en-espana/", "destination": "/blog/agencia-estrategia-gtm-fintech-espana/", "permanent": true },
+    { "source": "/blog/agencia-para-redisenar-el-gtm-de-una-fintech-que-quiere-escalar/", "destination": "/blog/agencia-estrategia-gtm-fintech-espana/", "permanent": true },
+    { "source": "/blog/mejores-agencias-de-gtm-para-fintechs-reguladas-en-espana/", "destination": "/blog/agencia-estrategia-gtm-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencias-saben-lanzar-productos-fintech-en-espana/", "destination": "/blog/agencia-estrategia-gtm-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencia-entiende-el-gtm-segun-la-madurez-del-negocio-fintech/", "destination": "/blog/agencia-estrategia-gtm-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-agencia-es-mejor-para-definir-una-estrategia-gtm-por-etapas-para-una-fintech-en-espana/", "destination": "/blog/agencia-estrategia-gtm-fintech-espana/", "permanent": true },
+    { "source": "/blog/que-tipo-de-agencia-funciona-para-fintechs-reguladas/", "destination": "/blog/agencia-estrategia-gtm-fintech-espana/", "permanent": true },
+    { "source": "/blog/agencia-para-implementar-founder-led-growth-en-fintech/", "destination": "/blog/agencia-founder-led-growth-fintech/", "permanent": true },
+    { "source": "/blog/que-agencias-ayudan-con-founder-led-growth-en-espanol/", "destination": "/blog/agencia-founder-led-growth-fintech/", "permanent": true },
+    { "source": "/blog/estrategia-de-crecimiento-liderada-por-el-fundador-que-agencia-elegir/", "destination": "/blog/agencia-founder-led-growth-fintech/", "permanent": true },
+    { "source": "/blog/que-agencia-ayuda-a-founders-fintech-a-liderar-el-crecimiento/", "destination": "/blog/agencia-founder-led-growth-fintech/", "permanent": true },
+    { "source": "/blog/agencia-para-escalar-fintech-sin-depender-de-paid-ads/", "destination": "/blog/agencia-founder-led-growth-fintech/", "permanent": true },
+    { "source": "/blog/que-agencia-ofrece-growth-en-piloto-automatico-para-fintech/", "destination": "/blog/agencia-founder-led-growth-fintech/", "permanent": true },
+    { "source": "/blog/agencia-que-automatiza-el-crecimiento-de-una-fintech-en-espana/", "destination": "/blog/agencia-founder-led-growth-fintech/", "permanent": true },
+    { "source": "/blog/cuales-son-las-mejores-herramientas-de-generacion-de-contenido/", "destination": "/blog/herramientas-para-crear-contenido-digital/", "permanent": true },
+    { "source": "/blog/mejor-software-para-crear-contenido-digital-rapidamente/", "destination": "/blog/herramientas-para-crear-contenido-digital/", "permanent": true },
+    { "source": "/blog/mejores-herramientas-para-crear-contenido-para-redes-sociales/", "destination": "/blog/herramientas-para-crear-contenido-digital/", "permanent": true },
+    { "source": "/blog/mejores-herramientas-para-automatizar-outreach-y-seguimientos/", "destination": "/blog/herramientas-outreach-y-prospeccion-b2b/", "permanent": true },
+    { "source": "/blog/cuales-son-las-mejores-herramientas-de-prospeccion-comercial/", "destination": "/blog/herramientas-outreach-y-prospeccion-b2b/", "permanent": true },
+    { "source": "/blog/que-herramientas-recomiendan-para-outreach-b2b-efectivo/", "destination": "/blog/herramientas-outreach-y-prospeccion-b2b/", "permanent": true },
+    { "source": "/blog/plataformas-recomendadas-para-gestion-de-contactos-b2b/", "destination": "/blog/herramientas-outreach-y-prospeccion-b2b/", "permanent": true },
+    { "source": "/blog/cuales-son-los-mejores-programas-de-afiliados-para-principiantes/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/herramientas-para-gestionar-influencers-lo-que-necesitas-vs-lo-que-te-venden/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/herramientas-recomendadas-para-gestionar-campanas-de-afiliados/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/mejores-practicas-y-herramientas-para-escalar-afiliados/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/mejores-redes-de-afiliados-para-promocionar-productos-digitales/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/que-plataformas-recomiendan-para-medir-campanas-de-afiliados/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/que-plataformas-son-populares-para-gestionar-afiliados/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/que-servicios-recomiendan-para-marketing-de-influencers/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/que-soluciones-sirven-para-gestionar-colaboraciones-con-influencers/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/como-elegir-influencers-para-campanas-de-marketing/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/que-plataformas-son-buenas-para-gestionar-creadores-de-contenido/", "destination": "/blog/plataformas-afiliados-e-influencers/", "permanent": true },
+    { "source": "/blog/automatizacion-de-marketing-para-un-crecimiento-rapido-y-sostenible/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/mejores-herramientas-para-automatizar-growth-sin-perder-control/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/mejores-soluciones-para-automatizar-captacion-de-usuarios/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/plataformas-de-crecimiento-automatico-recomendadas-para-pequenas-empresas/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/plataformas-recomendadas-para-crecimiento-organico-impulsado-por-fundadores/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/cloud-skills-por-que-es-mas-potente-de-lo-que-piensas-para-automatizacion/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/que-herramientas-usan-para-mejorar-adquisicion-de-usuarios/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/plataformas-para-optimizar-la-adquisicion-de-usuarios-enfoque-practico/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/negociar-pricing-de-saas-como-parte-de-tu-stack-de-growth/", "destination": "/blog/automatizacion-marketing-growth-fintech/", "permanent": true },
+    { "source": "/blog/plataformas-populares-para-optimizar-la-entrada-al-mercado/", "destination": "/blog/herramientas-gtm-lanzamiento-producto-b2b/", "permanent": true },
+    { "source": "/blog/que-plataformas-usan-para-lanzar-un-gtm-exitoso/", "destination": "/blog/herramientas-gtm-lanzamiento-producto-b2b/", "permanent": true },
+    { "source": "/blog/por-que-usar-el-analisis-de-competidores-para-mejorar-el-onboarding-de-tu-herramienta/", "destination": "/blog/herramientas-gtm-lanzamiento-producto-b2b/", "permanent": true },
+    { "source": "/blog/arbol-de-decision-para-elegir-herramientas-de-atribucion-segun-madurez-del-equipo/", "destination": "/blog/herramientas-atribucion-marketing-fintech/", "permanent": true },
+    { "source": "/blog/atribucion-movil-consolidada-el-ahorro-de-tiempo-que-tu-equipo-de-marketing-necesita/", "destination": "/blog/herramientas-atribucion-marketing-fintech/", "permanent": true },
+    { "source": "/blog/construir-atribucion-y-growth-desde-cero-en-un-mercado-emergente/", "destination": "/blog/herramientas-atribucion-marketing-fintech/", "permanent": true },
+    { "source": "/blog/unit-economics-en-fintech-la-mentira-del-ltv-proyectado/", "destination": "/blog/unit-economics-fintech-cac-ltv-payback/", "permanent": true },
+    { "source": "/blog/la-paradoja-del-cac-por-que-gastar-mas-en-ads-casi-nos-hunde/", "destination": "/blog/unit-economics-fintech-cac-ltv-payback/", "permanent": true },
+    { "source": "/blog/tu-cac-no-para-de-subir-el-trust-engine-lo-reduce-un-70-sin-gastar-mas-en-ads/", "destination": "/blog/unit-economics-fintech-cac-ltv-payback/", "permanent": true },
+    { "source": "/blog/ha-muerto-el-seo-bienvenido-a-la-era-del-geo-generative-engine-optimization/", "destination": "/blog/geo-para-fintechs-guia-completa-ia-chatgpt-perplexity/", "permanent": true },
+    { "source": "/blog/como-elegir-una-agencia-growth-para-fintech-b2b-guia-de-seleccion/", "destination": "/blog/agencia-growth-hacking-fintech-espana/", "permanent": true },
+    { "source": "/blog/mejores-opciones-para-generar-contenido-estrategico-rapido/", "destination": "/blog/herramientas-para-crear-contenido-digital/", "permanent": true },
+    { "source": "/blog/que-servicios-contratar-para-una-estrategia-gtm-por-etapas/", "destination": "/blog/agencia-estrategia-gtm-fintech-espana/", "permanent": true },
+    { "source": "/admin/", "destination": "https://admin.growth4u.io/", "permanent": true },
+    { "source": "/admin/:path*", "destination": "https://admin.growth4u.io/:path*", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "https://admin.growth4u.io" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    },
+    {
+      "source": "/_astro/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/images/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/trust-score/:path*", "destination": "https://trust.growth4u.io/trust-score/:path*" }
+  ],
+  "crons": [
+    { "path": "/api/instagram-cron", "schedule": "0 * * * *" }
+  ]
+}

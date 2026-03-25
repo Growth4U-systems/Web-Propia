@@ -240,7 +240,7 @@ export default function PartnersPage() {
     setDiscoverLoading(true);
     setSuggestions([]);
     try {
-      const res = await fetch('/.netlify/functions/partner-suggest', {
+      const res = await fetch('/api/partner-suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

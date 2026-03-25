@@ -13,6 +13,7 @@ import InstagramPage from './pages/InstagramPage';
 import LinkedInPage from './pages/LinkedInPage';
 import LinkedInBotPage from './pages/LinkedInBotPage';
 import InstagramBotPage from './pages/InstagramBotPage';
+import NewsletterPage from './pages/NewsletterPage';
 import PartnersPage from './pages/PartnersPage';
 
 export default function AdminApp() {
@@ -33,6 +34,7 @@ export default function AdminApp() {
           <Route path="/admin/geo/" element={<Navigate to="/admin/visibilidad/" replace />} />
           <Route path="/admin/seo-geo-audit/" element={<Navigate to="/admin/visibilidad/" replace />} />
           <Route path="/admin/keyword-briefs/" element={<Navigate to="/admin/visibilidad/" replace />} />
+          <Route path="/admin/newsletter/" element={<NewsletterPage />} />
           <Route path="/admin/partners/" element={<PartnersPage />} />
           <Route path="/admin/validation/" element={<ValidationPage />} />
           <Route path="/admin/checklist/" element={<ChecklistPage />} />

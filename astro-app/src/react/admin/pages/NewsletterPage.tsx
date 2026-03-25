@@ -164,7 +164,7 @@ export default function NewsletterPage() {
       const fullHtml = wrapInEmailTemplate(bodyHtml, subject);
       const emails = subscribers.map((s) => s.email);
 
-      const res = await fetch('/.netlify/functions/send-newsletter', {
+      const res = await fetch('/api/send-newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject, htmlContent: fullHtml, recipients: emails }),

@@ -102,7 +102,7 @@ export default function OwnMediaTab() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/.netlify/functions/own-media-scan', {
+      const res = await fetch('/api/own-media-scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: 'https://growth4u.io' }),

@@ -593,7 +593,7 @@ export default function SeoPage() {
     setSyncingDataForSEO(true);
     setDataForSEOError(null);
     try {
-      const response = await fetch('/.netlify/functions/sync-dataforseo');
+      const response = await fetch('/api/sync-dataforseo');
       const data = await response.json();
 
       if (!response.ok || !data.success) {
