@@ -159,7 +159,7 @@ export default function GeoPage() {
         </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
         >
           <Plus className="w-5 h-5" />
           Nueva Prueba
@@ -297,7 +297,7 @@ export default function GeoPage() {
                           href={test.citedUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-[#6351d5] hover:underline flex items-center gap-1 mt-1"
+                          className="text-xs text-[#3ecda5] hover:underline flex items-center gap-1 mt-1"
                         >
                           <Link2 className="w-3 h-3" /> URL citada
                         </a>
@@ -371,7 +371,7 @@ export default function GeoPage() {
                       onClick={() => setNewTest({ ...newTest, promptType: pt.value })}
                       className={`p-3 rounded-lg text-left transition-colors ${
                         newTest.promptType === pt.value
-                          ? 'bg-[#6351d5] text-white'
+                          ? 'bg-[#3ecda5] text-white'
                           : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
                       }`}
                     >
@@ -387,7 +387,7 @@ export default function GeoPage() {
                 <textarea
                   value={newTest.prompt}
                   onChange={(e) => setNewTest({ ...newTest, prompt: e.target.value })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-24"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-24"
                   placeholder="Escribe la pregunta que hiciste a la IA"
                   required
                 />
@@ -466,7 +466,7 @@ export default function GeoPage() {
                   type="url"
                   value={newTest.citedUrl}
                   onChange={(e) => setNewTest({ ...newTest, citedUrl: e.target.value })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="https://growth4u.io/blog/..."
                 />
               </div>
@@ -477,7 +477,7 @@ export default function GeoPage() {
                   type="text"
                   value={newTest.notes}
                   onChange={(e) => setNewTest({ ...newTest, notes: e.target.value })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="Observaciones adicionales"
                 />
               </div>
@@ -492,7 +492,7 @@ export default function GeoPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   Guardar

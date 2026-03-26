@@ -119,7 +119,7 @@ const ACCOUNTS: LinkedInAccount[] = [
   {
     id: 'growth4u',
     name: 'Growth4U',
-    color: '#6351d5',
+    color: '#3ecda5',
     template: {
       url: 'https://res.cloudinary.com/dsc0jsbkz/image/upload/v1772734314/li-template-1.jpg',
       textX: 100,
@@ -319,13 +319,13 @@ const CAROUSEL_TEMPLATES: CarouselTemplate[] = [
     id: 'growth4u',
     name: 'Growth4U',
     preview: '💜',
-    bg: '#6351d5',
+    bg: '#3ecda5',
     cardBg: '#FFFFFF',
     titleColor: '#032149',
     bodyColor: '#374151',
-    badgeBg: '#6351d5',
+    badgeBg: '#3ecda5',
     badgeColor: '#FFFFFF',
-    accentColor: '#6351d5',
+    accentColor: '#3ecda5',
   },
   {
     id: 'dark',
@@ -1000,7 +1000,7 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowGenerator(!showGenerator)}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-[#6351d5] to-[#0077B5] text-white hover:opacity-90 transition-opacity font-medium"
+            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-[#3ecda5] to-[#0077B5] text-white hover:opacity-90 transition-opacity font-medium"
           >
             <Sparkles className="w-4 h-4" />
             Generar con IA
@@ -1020,10 +1020,10 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
 
       {/* AI Generator panel */}
       {showGenerator && (
-        <div className="bg-gradient-to-br from-[#6351d5]/5 to-[#0077B5]/5 rounded-xl border border-[#6351d5]/20 p-6 space-y-4">
+        <div className="bg-gradient-to-br from-[#3ecda5]/5 to-[#0077B5]/5 rounded-xl border border-[#3ecda5]/20 p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-[#032149] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#6351d5]" />
+              <Sparkles className="w-4 h-4 text-[#3ecda5]" />
               Generar contenido con IA
             </h3>
             <button onClick={() => setShowGenerator(false)} className="text-slate-400 hover:text-slate-600">
@@ -1039,7 +1039,7 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
                 onClick={() => setGenFormat(f.value)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
                   genFormat === f.value
-                    ? 'border-[#6351d5] bg-[#6351d5]/10 text-[#6351d5]'
+                    ? 'border-[#3ecda5] bg-[#3ecda5]/10 text-[#3ecda5]'
                     : 'border-slate-200 text-slate-500 hover:border-slate-300'
                 }`}
               >
@@ -1059,7 +1059,7 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
                     key={t.id}
                     onClick={() => setGenTemplate(t)}
                     className={`flex flex-col items-center gap-1.5 px-4 py-3 rounded-lg border-2 transition-all ${
-                      genTemplate.id === t.id ? 'border-[#6351d5] bg-[#6351d5]/5' : 'border-slate-200 hover:border-slate-300'
+                      genTemplate.id === t.id ? 'border-[#3ecda5] bg-[#3ecda5]/5' : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
                     <div
@@ -1099,7 +1099,7 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
               value={genPrompt}
               onChange={(e) => setGenPrompt(e.target.value)}
               rows={3}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]"
               placeholder="Ej: 5 errores que cometen las fintechs al medir el CAC, con datos reales y ejemplos de Growth4U..."
             />
           </div>
@@ -1114,7 +1114,7 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
           <button
             onClick={handleGenerate}
             disabled={generating || !genPrompt.trim()}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#6351d5] text-white text-sm font-medium rounded-lg hover:bg-[#5242b8] disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#3ecda5] text-white text-sm font-medium rounded-lg hover:bg-[#35b894] disabled:opacity-50 transition-colors"
           >
             {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             {generating ? 'Generando...' : 'Generar contenido'}

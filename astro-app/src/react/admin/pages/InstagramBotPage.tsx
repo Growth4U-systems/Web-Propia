@@ -49,7 +49,7 @@ export default function InstagramBotPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
       </div>
     );
   }
@@ -275,7 +275,7 @@ function ActivityTab({ activities }: { activities: IGBotActivity[] }) {
                         href={`https://www.instagram.com/${activity.username}/`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-[#6351d5] hover:underline"
+                        className="text-sm text-[#3ecda5] hover:underline"
                       >
                         @{activity.username}
                       </a>
@@ -355,7 +355,7 @@ function OverviewTab({ stats, sum7, last7 }: {
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h3 className="text-lg font-semibold text-[#032149] mb-4">Progreso de hoy</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          <ProgressBar label="Follows" current={todayStats.follows} max={limits.maxFollowsPerDay} icon={UserPlus} color="#6351d5" />
+          <ProgressBar label="Follows" current={todayStats.follows} max={limits.maxFollowsPerDay} icon={UserPlus} color="#3ecda5" />
           <ProgressBar label="Unfollows" current={todayStats.unfollows} max={limits.maxUnfollowsPerDay} icon={UserMinus} color="#64748b" />
           <ProgressBar label="Likes" current={todayStats.likes} max={limits.maxLikesPerDay} icon={Heart} color="#ec4899" />
           <ProgressBar label="Comments" current={todayStats.comments} max={limits.maxCommentsPerDay} icon={MessageCircle} color="#0faec1" />
@@ -383,7 +383,7 @@ function OverviewTab({ stats, sum7, last7 }: {
                 return (
                   <div key={i} className="flex-1 flex flex-col items-center gap-1">
                     <div className="w-full flex flex-col gap-0.5" style={{ height: `${height}%` }}>
-                      <div className="w-full rounded-t bg-[#6351d5]" style={{ flex: day.follows }} title={`${day.follows} follows`} />
+                      <div className="w-full rounded-t bg-[#3ecda5]" style={{ flex: day.follows }} title={`${day.follows} follows`} />
                       <div className="w-full bg-pink-400" style={{ flex: day.likes }} title={`${day.likes} likes`} />
                       <div className="w-full rounded-b bg-teal-400" style={{ flex: day.comments || 0.01 }} title={`${day.comments} comments`} />
                     </div>
@@ -393,7 +393,7 @@ function OverviewTab({ stats, sum7, last7 }: {
               })}
             </div>
             <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#6351d5]" /> Follows</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#3ecda5]" /> Follows</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-400" /> Likes</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-400" /> Comments</span>
             </div>

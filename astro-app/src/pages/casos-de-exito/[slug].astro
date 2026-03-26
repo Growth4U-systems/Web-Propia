@@ -97,19 +97,19 @@ const breadcrumbSchema = {
         {caseStudy.image && (
           <img src={caseStudy.image} alt={caseStudy.company} class="h-8 w-auto object-contain" />
         )}
-        <span class="inline-block px-3 py-1 bg-[#6351d5]/10 text-[#6351d5] rounded-full text-xs font-bold uppercase tracking-wider">
+        <span class="inline-block px-3 py-1 bg-[#3ecda5]/10 text-[#3ecda5] rounded-full text-xs font-bold uppercase tracking-wider">
           {caseStudy.company}
         </span>
       </div>
       <h1 class="text-4xl md:text-5xl font-extrabold mb-4 text-[#032149] leading-tight">
-        <span class="text-[#6351d5]">{caseStudy.stat}</span> {caseStudy.statLabel}
+        <span class="text-[#3ecda5]">{caseStudy.stat}</span> {caseStudy.statLabel}
       </h1>
       <p class="text-xl text-slate-600 leading-relaxed mb-6">
         {caseStudy.summary}
       </p>
       {caseStudy.highlight && (
-        <div class="bg-[#6351d5]/5 border-l-4 border-[#6351d5] rounded-r-xl px-6 py-4">
-          <p class="text-[#6351d5] font-semibold italic">
+        <div class="bg-[#3ecda5]/5 border-l-4 border-[#3ecda5] rounded-r-xl px-6 py-4">
+          <p class="text-[#3ecda5] font-semibold italic">
             &ldquo;{caseStudy.highlight}&rdquo;
           </p>
         </div>
@@ -178,7 +178,7 @@ const breadcrumbSchema = {
           {caseStudy.results.map((result) => (
             <div class="flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
               <!-- CheckCircle SVG -->
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6351d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 flex-shrink-0 mt-0.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3ecda5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 flex-shrink-0 mt-0.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
               <span class="text-slate-700 leading-relaxed">{result}</span>
             </div>
           ))}
@@ -198,7 +198,7 @@ const breadcrumbSchema = {
       <div class="mb-12">
         <blockquote class="bg-slate-50 rounded-2xl p-8 md:p-10 border border-slate-100 relative">
           <!-- Quote mark -->
-          <div class="absolute top-6 left-8 text-[#6351d5]/20 text-6xl font-serif leading-none">&ldquo;</div>
+          <div class="absolute top-6 left-8 text-[#3ecda5]/20 text-6xl font-serif leading-none">&ldquo;</div>
           <p class="text-lg text-slate-700 italic leading-relaxed mb-6 relative pt-6">
             {caseStudy.testimonial}
           </p>
@@ -207,8 +207,8 @@ const breadcrumbSchema = {
               {caseStudy.testimonialImage ? (
                 <img src={caseStudy.testimonialImage} alt={caseStudy.testimonialAuthor || ''} class="w-10 h-10 rounded-full object-cover" />
               ) : (
-                <div class="w-10 h-10 bg-[#6351d5]/10 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6351d5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4.5 h-4.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <div class="w-10 h-10 bg-[#3ecda5]/10 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3ecda5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4.5 h-4.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
               )}
               <div>
@@ -235,7 +235,7 @@ const breadcrumbSchema = {
         href={BOOKING_LINK}
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center justify-center gap-2 bg-[#6351d5] hover:bg-[#3f45fe] text-white font-bold py-4 px-8 rounded-full shadow-lg transition-all transform hover:scale-105"
+        class="inline-flex items-center justify-center gap-2 bg-[#3ecda5] hover:bg-[#2ab89a] text-white font-bold py-4 px-8 rounded-full shadow-lg transition-all transform hover:scale-105"
       >
         Agendar Llamada
         <!-- ArrowRight SVG -->

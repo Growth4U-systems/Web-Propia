@@ -80,7 +80,7 @@ export default function AdminLayout() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
       </div>
     );
   }
@@ -174,7 +174,7 @@ export default function AdminLayout() {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-[#6351d5] text-white'
+                      ? 'bg-[#3ecda5] text-white'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >

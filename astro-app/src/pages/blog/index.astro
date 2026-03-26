@@ -103,7 +103,7 @@ const allNonPillar = uniquePosts
             </svg>
           </button>
           <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
-             class="hidden sm:inline-flex bg-white text-[#032149] font-bold py-2 px-5 rounded-full text-sm transition-all duration-200 hover:bg-white/90">
+             class="hidden sm:inline-flex bg-[#3ecda5] text-white font-bold py-2 px-5 rounded-full text-sm transition-all duration-200 hover:bg-[#35b894]">
             Agenda tu demo
           </a>
         </div>
@@ -134,7 +134,7 @@ const allNonPillar = uniquePosts
         <div class="flex items-baseline gap-3 mb-6">
           <h2 class="text-xl font-bold text-[#032149]">Resultados</h2>
           <span id="search-count" class="text-sm text-slate-400"></span>
-          <button id="clear-search" class="ml-auto text-sm text-[#6351d5] hover:underline">Limpiar búsqueda</button>
+          <button id="clear-search" class="ml-auto text-sm text-[#3ecda5] hover:underline">Limpiar búsqueda</button>
         </div>
         <div id="search-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
       </div>
@@ -159,7 +159,7 @@ const allNonPillar = uniquePosts
             </div>
             <div class="md:w-1/2 p-6 md:p-8 flex flex-col justify-center">
               <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{heroPost.category}</span>
-              <h3 class="text-xl md:text-2xl font-extrabold text-[#032149] group-hover/hero:text-[#6351d5] transition-colors leading-tight mt-2 mb-4">{heroPost.title}</h3>
+              <h3 class="text-xl md:text-2xl font-extrabold text-[#032149] group-hover/hero:text-[#3ecda5] transition-colors leading-tight mt-2 mb-4">{heroPost.title}</h3>
               <div class="w-16 h-0.5 bg-[#032149] mb-4"></div>
               <p class="text-slate-500 text-sm leading-relaxed line-clamp-4">{heroPost.excerpt}</p>
             </div>
@@ -179,7 +179,7 @@ const allNonPillar = uniquePosts
                 </div>
                 <div class="p-4">
                   <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
-                  <h3 class="font-extrabold text-[#032149] group-hover/sub:text-[#6351d5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
+                  <h3 class="font-extrabold text-[#032149] group-hover/sub:text-[#3ecda5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
                 </div>
               </a>
             ))}
@@ -210,7 +210,7 @@ const allNonPillar = uniquePosts
                 </div>
                 <div class="p-4">
                   <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
-                  <h3 class="font-extrabold text-[#032149] group-hover/card:text-[#6351d5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
+                  <h3 class="font-extrabold text-[#032149] group-hover/card:text-[#3ecda5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
                 </div>
               </a>
             ))}
@@ -223,14 +223,14 @@ const allNonPillar = uniquePosts
 
             <!-- Artículos más leídos -->
             <div class="rounded-xl overflow-hidden shadow-sm">
-              <div class="bg-[#6351d5] text-white text-center font-bold py-2.5 px-4 text-sm">
+              <div class="bg-[#3ecda5] text-white text-center font-bold py-2.5 px-4 text-sm">
                 Artículos más leídos
               </div>
               <div class="bg-white divide-y divide-slate-100">
                 {popularPosts.map((post) => (
                   <a href={`/blog/${post.slug}/`} class="block px-4 py-3 hover:bg-slate-50 transition-colors group/pop">
-                    <p class="font-semibold text-sm text-[#032149] group-hover/pop:text-[#6351d5] transition-colors line-clamp-2 leading-snug">{post.title}</p>
-                    <span class="text-[#6351d5] text-xs font-medium mt-1 inline-block">Leer artículo</span>
+                    <p class="font-semibold text-sm text-[#032149] group-hover/pop:text-[#3ecda5] transition-colors line-clamp-2 leading-snug">{post.title}</p>
+                    <span class="text-[#3ecda5] text-xs font-medium mt-1 inline-block">Leer artículo</span>
                   </a>
                 ))}
               </div>
@@ -255,11 +255,11 @@ const allNonPillar = uniquePosts
             </div>
 
             <!-- CTA -->
-            <div class="bg-gradient-to-br from-[#032149] to-[#6351d5] rounded-xl p-5 text-center">
+            <div class="bg-gradient-to-br from-[#032149] to-[#3ecda5] rounded-xl p-5 text-center">
               <p class="text-white font-bold mb-1">¿Listo para escalar?</p>
               <p class="text-white/60 text-xs mb-4">Consulta estratégica gratuita de 30 min.</p>
               <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
-                 class="inline-block bg-white text-[#6351d5] font-bold py-2 px-5 rounded-full text-sm hover:shadow-lg transition-all">
+                 class="inline-block bg-white text-[#3ecda5] font-bold py-2 px-5 rounded-full text-sm hover:shadow-lg transition-all">
                 Agenda tu demo
               </a>
             </div>
@@ -322,10 +322,10 @@ const allNonPillar = uniquePosts
   <style>
     .blog-header-gradient-sub div::-webkit-scrollbar { display: none; }
     .blog-header-gradient {
-      background: linear-gradient(135deg, #6351d5 0%, #3f45fe 40%, #45b6f7 75%, #0faec1 100%);
+      background: linear-gradient(135deg, #3ecda5 0%, #2ab89a 40%, #45b6f7 75%, #0faec1 100%);
     }
     .blog-header-gradient-sub {
-      background: linear-gradient(135deg, #5242b8 0%, #3539d6 40%, #3a9fd6 75%, #0d9aaa 100%);
+      background: linear-gradient(135deg, #35b894 0%, #3539d6 40%, #3a9fd6 75%, #0d9aaa 100%);
     }
   </style>
 </BaseLayout>

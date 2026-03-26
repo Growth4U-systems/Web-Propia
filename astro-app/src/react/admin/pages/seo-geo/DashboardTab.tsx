@@ -170,7 +170,7 @@ export default function DashboardTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
       </div>
     );
   }
@@ -204,7 +204,7 @@ export default function DashboardTab() {
           <MetricCard
             label="Backlinks Totales"
             value={dataForSEO?.backlinks?.toLocaleString() ?? '—'}
-            icon={<Link2 className="w-5 h-5 text-[#6351d5]" />}
+            icon={<Link2 className="w-5 h-5 text-[#3ecda5]" />}
           />
           <MetricCard
             label="Dominios de Referencia"
@@ -247,9 +247,9 @@ export default function DashboardTab() {
 
       {/* GEO Quick Insight */}
       {audit && (
-        <div className="bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-xl p-6">
+        <div className="bg-[#3ecda5]/5 border border-[#3ecda5]/20 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-3">
-            <Bot className="w-5 h-5 text-[#6351d5]" />
+            <Bot className="w-5 h-5 text-[#3ecda5]" />
             <h3 className="font-bold text-[#032149]">GEO Insight</h3>
           </div>
           <p className="text-slate-600 text-sm">

@@ -31,15 +31,15 @@ const serviceLinkMap: Record<string, { title: string; desc: string; href: string
 const service = serviceLinkMap[category] || serviceLinkMap['Estrategia'];
 ---
 
-<div class="my-10 bg-[#6351d5]/5 border border-[#6351d5]/10 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6">
+<div class="my-10 bg-[#3ecda5]/5 border border-[#3ecda5]/10 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6">
   <div class="flex-1">
-    <p class="text-xs font-bold text-[#6351d5] uppercase tracking-wider mb-2">SERVICIO RELACIONADO</p>
+    <p class="text-xs font-bold text-[#3ecda5] uppercase tracking-wider mb-2">SERVICIO RELACIONADO</p>
     <h4 class="text-lg font-bold text-[#032149] mb-1">{service.title}</h4>
     <p class="text-sm text-slate-600">{service.desc}</p>
   </div>
   <a
     href={service.href}
-    class="inline-flex items-center gap-2 bg-[#6351d5] text-white font-bold py-3 px-6 rounded-full text-sm hover:bg-[#3f45fe] transition-all whitespace-nowrap"
+    class="inline-flex items-center gap-2 bg-[#3ecda5] text-white font-bold py-3 px-6 rounded-full text-sm hover:bg-[#2ab89a] transition-all whitespace-nowrap"
   >
     Ver servicio
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>

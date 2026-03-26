@@ -337,7 +337,7 @@ export default function PartnersPage() {
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#4a3cb0] text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#4a3cb0] text-white rounded-lg transition-colors"
         >
           <Plus className="w-5 h-5" />
           Nuevo Partner
@@ -352,7 +352,7 @@ export default function PartnersPage() {
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? 'bg-[#6351d5] text-white'
+                ? 'bg-[#3ecda5] text-white'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -363,7 +363,7 @@ export default function PartnersPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#6351d5]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#3ecda5]" />
         </div>
       ) : (
         <>
@@ -373,7 +373,7 @@ export default function PartnersPage() {
               {/* Stat Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Total Partners', count: totalPartners, icon: Users, iconColor: 'text-[#6351d5]' },
+                  { label: 'Total Partners', count: totalPartners, icon: Users, iconColor: 'text-[#3ecda5]' },
                   { label: 'Activos', count: countByStatus('active'), icon: Handshake, iconColor: 'text-green-500' },
                   { label: 'Negociando', count: countByStatus('negotiating'), icon: MessageSquare, iconColor: 'text-amber-500' },
                   { label: 'Descubiertos', count: countByStatus('discovered'), icon: Eye, iconColor: 'text-slate-500' },
@@ -391,7 +391,7 @@ export default function PartnersPage() {
               {/* Pipeline Funnel */}
               <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-[#032149] mb-4 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-[#6351d5]" />
+                  <BarChart3 className="w-5 h-5 text-[#3ecda5]" />
                   Pipeline de Partners
                 </h2>
                 <div className="space-y-3">
@@ -428,7 +428,7 @@ export default function PartnersPage() {
               {/* Recent Outreach */}
               <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-[#032149] mb-4 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-[#6351d5]" />
+                  <Calendar className="w-5 h-5 text-[#3ecda5]" />
                   Actividad Reciente
                 </h2>
                 {recentOutreach.length === 0 ? (
@@ -441,12 +441,12 @@ export default function PartnersPage() {
                       const typeBadge = getTypeBadge(ev.partnerType);
                       return (
                         <div key={i} className="py-3 flex items-center gap-4">
-                          <div className="w-9 h-9 rounded-full bg-[#6351d5]/10 flex items-center justify-center flex-shrink-0">
-                            {ev.type === 'email' && <Mail className="w-4 h-4 text-[#6351d5]" />}
-                            {ev.type === 'dm' && <MessageSquare className="w-4 h-4 text-[#6351d5]" />}
-                            {ev.type === 'call' && <Phone className="w-4 h-4 text-[#6351d5]" />}
-                            {ev.type === 'meeting' && <Users className="w-4 h-4 text-[#6351d5]" />}
-                            {ev.type === 'other' && <Calendar className="w-4 h-4 text-[#6351d5]" />}
+                          <div className="w-9 h-9 rounded-full bg-[#3ecda5]/10 flex items-center justify-center flex-shrink-0">
+                            {ev.type === 'email' && <Mail className="w-4 h-4 text-[#3ecda5]" />}
+                            {ev.type === 'dm' && <MessageSquare className="w-4 h-4 text-[#3ecda5]" />}
+                            {ev.type === 'call' && <Phone className="w-4 h-4 text-[#3ecda5]" />}
+                            {ev.type === 'meeting' && <Users className="w-4 h-4 text-[#3ecda5]" />}
+                            {ev.type === 'other' && <Calendar className="w-4 h-4 text-[#3ecda5]" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-[#032149] font-medium truncate">
@@ -479,13 +479,13 @@ export default function PartnersPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar por nombre, nicho o tags..."
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   />
                 </div>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as PartnerStatus | '')}
-                  className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                 >
                   <option value="">Todos los estados</option>
                   {PARTNER_STATUSES.map((s) => (
@@ -495,7 +495,7 @@ export default function PartnersPage() {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value as PartnerType | '')}
-                  className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                 >
                   <option value="">Todos los tipos</option>
                   {PARTNER_TYPES.map((t) => (
@@ -560,7 +560,7 @@ export default function PartnersPage() {
                                 <div className="flex items-center gap-2">
                                   <div className="w-20 h-2 bg-slate-100 rounded-full overflow-hidden">
                                     <div
-                                      className="h-full bg-[#6351d5] rounded-full"
+                                      className="h-full bg-[#3ecda5] rounded-full"
                                       style={{ width: `${(p.relevanceScore / 10) * 100}%` }}
                                     />
                                   </div>
@@ -602,7 +602,7 @@ export default function PartnersPage() {
             <div className="space-y-6">
               <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-[#032149] mb-2 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#6351d5]" />
+                  <Sparkles className="w-5 h-5 text-[#3ecda5]" />
                   Descubrir Partners
                 </h2>
                 <p className="text-slate-400 text-sm mb-4">
@@ -614,13 +614,13 @@ export default function PartnersPage() {
                     value={discoverNiche}
                     onChange={(e) => setDiscoverNiche(e.target.value)}
                     placeholder="Ej: fintech B2B en España, marketing SaaS..."
-                    className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     onKeyDown={(e) => e.key === 'Enter' && handleDiscover()}
                   />
                   <button
                     onClick={handleDiscover}
                     disabled={discoverLoading || !discoverNiche.trim()}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#6351d5] hover:bg-[#4a3cb0] disabled:opacity-50 text-white rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-6 py-3 bg-[#3ecda5] hover:bg-[#4a3cb0] disabled:opacity-50 text-white rounded-lg transition-colors"
                   >
                     {discoverLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -635,7 +635,7 @@ export default function PartnersPage() {
               {discoverLoading && (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#6351d5] mx-auto mb-3" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[#3ecda5] mx-auto mb-3" />
                     <p className="text-slate-400 text-sm">Buscando partners potenciales...</p>
                   </div>
                 </div>
@@ -669,7 +669,7 @@ export default function PartnersPage() {
                         <button
                           onClick={() => addSuggestionToPipeline(s, idx)}
                           disabled={addingIdx === idx}
-                          className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#6351d5] text-[#6351d5] hover:bg-[#6351d5] hover:text-white disabled:opacity-50 rounded-lg transition-colors text-sm font-medium"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#3ecda5] text-[#3ecda5] hover:bg-[#3ecda5] hover:text-white disabled:opacity-50 rounded-lg transition-colors text-sm font-medium"
                         >
                           {addingIdx === idx ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -715,7 +715,7 @@ export default function PartnersPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Nombre del partner"
                     required
                   />
@@ -725,7 +725,7 @@ export default function PartnersPage() {
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as PartnerType })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   >
                     {PARTNER_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
@@ -737,7 +737,7 @@ export default function PartnersPage() {
                   <select
                     value={formData.platform}
                     onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   >
                     {PLATFORMS.map((p) => (
                       <option key={p} value={p}>{p}</option>
@@ -753,7 +753,7 @@ export default function PartnersPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as PartnerStatus })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   >
                     {PARTNER_STATUSES.map((s) => (
                       <option key={s.value} value={s.value}>{s.label}</option>
@@ -770,7 +770,7 @@ export default function PartnersPage() {
                     max={10}
                     value={formData.relevanceScore}
                     onChange={(e) => setFormData({ ...formData, relevanceScore: Math.min(10, Math.max(1, Number(e.target.value))) })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   />
                 </div>
                 <div>
@@ -779,7 +779,7 @@ export default function PartnersPage() {
                     type="text"
                     value={formData.audienceSize}
                     onChange={(e) => setFormData({ ...formData, audienceSize: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Ej: 10K-50K"
                   />
                 </div>
@@ -793,7 +793,7 @@ export default function PartnersPage() {
                     type="text"
                     value={formData.contactName}
                     onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Persona de contacto"
                   />
                 </div>
@@ -803,7 +803,7 @@ export default function PartnersPage() {
                     type="email"
                     value={formData.contactEmail}
                     onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="email@ejemplo.com"
                   />
                 </div>
@@ -813,7 +813,7 @@ export default function PartnersPage() {
                     type="text"
                     value={formData.contactUrl}
                     onChange={(e) => setFormData({ ...formData, contactUrl: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="https://..."
                   />
                 </div>
@@ -827,7 +827,7 @@ export default function PartnersPage() {
                     type="text"
                     value={formData.niche}
                     onChange={(e) => setFormData({ ...formData, niche: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Ej: Fintech, SaaS B2B..."
                   />
                 </div>
@@ -837,7 +837,7 @@ export default function PartnersPage() {
                     type="text"
                     value={tagsInput}
                     onChange={(e) => setTagsInput(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="growth, fintech, españa"
                   />
                 </div>
@@ -849,7 +849,7 @@ export default function PartnersPage() {
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-24"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-24"
                   placeholder="Notas internas sobre este partner..."
                 />
               </div>
@@ -864,7 +864,7 @@ export default function PartnersPage() {
                       return (
                         <div key={idx} className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg">
                           <span className="text-xs text-slate-500 font-mono">{ev.date}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-[#6351d5]/10 text-[#6351d5] font-medium">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-[#3ecda5]/10 text-[#3ecda5] font-medium">
                             {typeLabel}
                           </span>
                           <span className="text-sm text-slate-600 flex-1 truncate">{ev.notes || '--'}</span>
@@ -888,7 +888,7 @@ export default function PartnersPage() {
                       type="date"
                       value={newEvent.date}
                       onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                      className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                      className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     />
                   </div>
                   <div>
@@ -896,7 +896,7 @@ export default function PartnersPage() {
                     <select
                       value={newEvent.type}
                       onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as OutreachEvent['type'] })}
-                      className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                      className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     >
                       {OUTREACH_TYPES.map((t) => (
                         <option key={t.value} value={t.value}>{t.label}</option>
@@ -909,7 +909,7 @@ export default function PartnersPage() {
                       type="text"
                       value={newEvent.notes}
                       onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                       placeholder="Descripción breve"
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addOutreachEvent())}
                     />
@@ -918,7 +918,7 @@ export default function PartnersPage() {
                     type="button"
                     onClick={addOutreachEvent}
                     disabled={!newEvent.date}
-                    className="px-4 py-2 bg-[#6351d5] hover:bg-[#4a3cb0] disabled:opacity-50 text-white rounded-lg transition-colors"
+                    className="px-4 py-2 bg-[#3ecda5] hover:bg-[#4a3cb0] disabled:opacity-50 text-white rounded-lg transition-colors"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -937,7 +937,7 @@ export default function PartnersPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-6 py-2 bg-[#6351d5] hover:bg-[#4a3cb0] disabled:opacity-50 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-[#3ecda5] hover:bg-[#4a3cb0] disabled:opacity-50 text-white rounded-lg transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Guardando...' : 'Guardar Partner'}

@@ -133,7 +133,7 @@ export default function OwnMediaTab() {
         <button
           onClick={runScan}
           disabled={loading}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#6351d5] hover:bg-[#5242b8] disabled:opacity-50 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#3ecda5] hover:bg-[#35b894] disabled:opacity-50 text-white rounded-lg transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           {loading ? 'Escaneando...' : 'Escanear Own Media'}
@@ -156,7 +156,7 @@ export default function OwnMediaTab() {
           {/* Blog Section */}
           <div className="bg-white border border-slate-200 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <BookOpen className="w-5 h-5 text-[#6351d5]" />
+              <BookOpen className="w-5 h-5 text-[#3ecda5]" />
               <h3 className="text-lg font-bold text-[#032149]">Blog</h3>
               {ownMedia.blog.hasBlog ? (
                 <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -168,7 +168,7 @@ export default function OwnMediaTab() {
             {ownMedia.blog.hasBlog ? (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <MetricCard label="Posts" value={ownMedia.blog.postCount} icon={<FileText className="w-4 h-4 text-[#6351d5]" />} />
+                  <MetricCard label="Posts" value={ownMedia.blog.postCount} icon={<FileText className="w-4 h-4 text-[#3ecda5]" />} />
                   <MetricCard
                     label="Ultimo Post"
                     value={ownMedia.blog.lastPostDate ? new Date(ownMedia.blog.lastPostDate).toLocaleDateString('es-ES') : '—'}
@@ -183,7 +183,7 @@ export default function OwnMediaTab() {
                     <p className="text-sm font-medium text-slate-500 mb-2">Categorias</p>
                     <div className="flex flex-wrap gap-2">
                       {ownMedia.blog.categories.map((cat, i) => (
-                        <span key={i} className="text-xs bg-[#6351d5]/10 text-[#6351d5] px-2 py-1 rounded">{cat}</span>
+                        <span key={i} className="text-xs bg-[#3ecda5]/10 text-[#3ecda5] px-2 py-1 rounded">{cat}</span>
                       ))}
                     </div>
                   </div>
@@ -205,7 +205,7 @@ export default function OwnMediaTab() {
                           {ownMedia.blog.samplePosts.slice(0, 10).map((post, i) => (
                             <tr key={i} className="hover:bg-slate-50">
                               <td className="px-4 py-2 text-sm text-[#032149]">
-                                <a href={post.url} target="_blank" rel="noopener noreferrer" className="hover:text-[#6351d5] flex items-center gap-1">
+                                <a href={post.url} target="_blank" rel="noopener noreferrer" className="hover:text-[#3ecda5] flex items-center gap-1">
                                   {post.title} <ExternalLink className="w-3 h-3 flex-shrink-0" />
                                 </a>
                               </td>
@@ -227,7 +227,7 @@ export default function OwnMediaTab() {
           {/* Social Section */}
           <div className="bg-white border border-slate-200 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Share2 className="w-5 h-5 text-[#6351d5]" />
+              <Share2 className="w-5 h-5 text-[#3ecda5]" />
               <h3 className="text-lg font-bold text-[#032149]">Redes Sociales</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -242,7 +242,7 @@ export default function OwnMediaTab() {
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${found ? 'text-[#032149]' : 'text-slate-400'}`}>{label}</p>
                       {found ? (
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#6351d5] hover:underline truncate block">
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#3ecda5] hover:underline truncate block">
                           Conectado
                         </a>
                       ) : (

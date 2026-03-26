@@ -530,7 +530,7 @@ export default function CameraPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
       </div>
     );
   }
@@ -590,7 +590,7 @@ export default function CameraPage() {
         <div>
           {metricsLoading && (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+              <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
             </div>
           )}
 
@@ -657,7 +657,7 @@ export default function CameraPage() {
                 <button
                   onClick={loadMetrics}
                   disabled={metricsLoading}
-                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#6351d5] transition-colors"
+                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#3ecda5] transition-colors"
                 >
                   <RefreshCw className={`w-4 h-4 ${metricsLoading ? 'animate-spin' : ''}`} />
                   Actualizar
@@ -723,7 +723,7 @@ export default function CameraPage() {
                               href={m.permalink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-slate-400 hover:text-[#6351d5] transition-colors"
+                              className="text-slate-400 hover:text-[#3ecda5] transition-colors"
                             >
                               <ExternalLink className="w-4 h-4" />
                             </a>
@@ -775,7 +775,7 @@ export default function CameraPage() {
                       />
                     ) : item.status === 'generating' ? (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 text-[#6351d5] animate-spin" />
+                        <Loader2 className="w-5 h-5 text-[#3ecda5] animate-spin" />
                       </div>
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
@@ -793,7 +793,7 @@ export default function CameraPage() {
                           <>
                             <button
                               onClick={() => setPreviewItem(item)}
-                              className="p-1.5 text-slate-400 hover:text-[#6351d5] transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-[#3ecda5] transition-colors"
                               title="Preview"
                             >
                               <Eye className="w-4 h-4" />
@@ -818,7 +818,7 @@ export default function CameraPage() {
                           <span className="text-xs text-slate-400">Generando imagen...</span>
                         )}
                         {item.status === 'publishing' && (
-                          <Loader2 className="w-4 h-4 text-[#6351d5] animate-spin" />
+                          <Loader2 className="w-4 h-4 text-[#3ecda5] animate-spin" />
                         )}
                         {item.status === 'published' && (
                           <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -827,7 +827,7 @@ export default function CameraPage() {
                           <>
                             <button
                               onClick={() => setPreviewItem(item)}
-                              className="p-1.5 text-slate-400 hover:text-[#6351d5] transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-[#3ecda5] transition-colors"
                               title="Preview"
                             >
                               <Eye className="w-4 h-4" />
@@ -847,12 +847,12 @@ export default function CameraPage() {
                           value={item.caption}
                           onChange={(e) => updateCaption(index, e.target.value)}
                           rows={3}
-                          className="w-full mt-2 text-xs text-slate-600 border border-slate-200 rounded-lg p-2 resize-none focus:outline-none focus:border-[#6351d5]"
+                          className="w-full mt-2 text-xs text-slate-600 border border-slate-200 rounded-lg p-2 resize-none focus:outline-none focus:border-[#3ecda5]"
                         />
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <button
                             onClick={() => publishItem(index, true)}
-                            className="text-xs bg-[#6351d5] text-white px-4 py-1.5 rounded-lg hover:bg-[#5040c0] transition-colors font-medium"
+                            className="text-xs bg-[#3ecda5] text-white px-4 py-1.5 rounded-lg hover:bg-[#5040c0] transition-colors font-medium"
                           >
                             Publicar ahora
                           </button>
@@ -861,17 +861,17 @@ export default function CameraPage() {
                               type="date"
                               value={item.scheduledDate}
                               onChange={(e) => updateSchedule(index, 'scheduledDate', e.target.value)}
-                              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#6351d5]"
+                              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#3ecda5]"
                             />
                             <input
                               type="time"
                               value={item.scheduledTime}
                               onChange={(e) => updateSchedule(index, 'scheduledTime', e.target.value)}
-                              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#6351d5]"
+                              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#3ecda5]"
                             />
                             <button
                               onClick={() => publishItem(index, false)}
-                              className="text-xs text-[#6351d5] border border-[#6351d5] px-3 py-1.5 rounded-lg hover:bg-[#6351d5]/10 transition-colors"
+                              className="text-xs text-[#3ecda5] border border-[#3ecda5] px-3 py-1.5 rounded-lg hover:bg-[#3ecda5]/10 transition-colors"
                             >
                               Programar
                             </button>
@@ -928,7 +928,7 @@ export default function CameraPage() {
                 alert(`Publicados: ${data.processed || 0}`);
                 loadSavedPosts();
               }}
-              className="flex items-center gap-2 text-sm text-[#6351d5] hover:underline"
+              className="flex items-center gap-2 text-sm text-[#3ecda5] hover:underline"
             >
               <Send className="w-4 h-4" />
               Publicar pendientes ahora
@@ -959,7 +959,7 @@ export default function CameraPage() {
                           scheduledTime: '',
                           status: 'scheduled',
                         })}
-                        className="p-1.5 text-slate-400 hover:text-[#6351d5] transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-[#3ecda5] transition-colors"
                         title="Preview"
                       >
                         <Eye className="w-4 h-4" />
@@ -1011,7 +1011,7 @@ export default function CameraPage() {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#6351d5]"
+              className="text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#3ecda5]"
             >
               <option value="all">Todas las categorías</option>
               {categories.map((cat) => (
@@ -1023,7 +1023,7 @@ export default function CameraPage() {
 
             <button
               onClick={selectAll}
-              className="text-sm text-[#6351d5] hover:underline"
+              className="text-sm text-[#3ecda5] hover:underline"
             >
               {selectedPosts.size === filtered.length
                 ? 'Deseleccionar'
@@ -1040,7 +1040,7 @@ export default function CameraPage() {
             <button
               onClick={generateCaptions}
               disabled={generatingCaptions}
-              className="flex items-center gap-2 bg-[#6351d5] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#5040c0] transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 bg-[#3ecda5] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#5040c0] transition-colors disabled:opacity-50"
             >
               {generatingCaptions ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -1071,7 +1071,7 @@ export default function CameraPage() {
                     : isInQueue
                       ? 'border-blue-300 opacity-50 cursor-not-allowed'
                       : isSelected
-                        ? 'border-[#6351d5] shadow-lg ring-2 ring-[#6351d5]/20 bg-purple-50/50'
+                        ? 'border-[#3ecda5] shadow-lg ring-2 ring-[#3ecda5]/20 bg-purple-50/50'
                         : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -1097,7 +1097,7 @@ export default function CameraPage() {
                     </span>
                   </div>
                   {isSelected && (
-                    <div className="w-5 h-5 bg-[#6351d5] rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 bg-[#3ecda5] rounded-full flex items-center justify-center flex-shrink-0">
                       <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                     </div>
                   )}
@@ -1134,7 +1134,7 @@ export default function CameraPage() {
 
             <div>
               <div className="flex items-center gap-3 p-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6351d5] to-[#0faec1] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3ecda5] to-[#0faec1] flex items-center justify-center">
                   <span className="text-white text-xs font-bold">G4U</span>
                 </div>
                 <span className="text-sm font-semibold">growth4u_systems</span>

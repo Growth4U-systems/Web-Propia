@@ -77,15 +77,15 @@ export default function LeadsAdminPage() {
           <h1 className="text-3xl font-bold text-[#032149]">Leads</h1>
           <p className="text-slate-400 mt-2">Todos los contactos capturados por lead magnets y artículos</p>
         </div>
-        <div className="bg-[#6351d5]/10 border border-[#6351d5]/20 rounded-xl px-5 py-3 text-center">
-          <p className="text-2xl font-bold text-[#6351d5]">{leads.length}</p>
+        <div className="bg-[#3ecda5]/10 border border-[#3ecda5]/20 rounded-xl px-5 py-3 text-center">
+          <p className="text-2xl font-bold text-[#3ecda5]">{leads.length}</p>
           <p className="text-xs text-slate-500">leads totales</p>
         </div>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#6351d5]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#3ecda5]" />
         </div>
       ) : leads.length === 0 ? (
         <div className="text-center py-20">
@@ -101,8 +101,8 @@ export default function LeadsAdminPage() {
                 onClick={() => setExpandedSlug(expandedSlug === slug ? null : slug)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="bg-[#6351d5]/10 p-2 rounded-lg">
-                    <Users className="w-5 h-5 text-[#6351d5]" />
+                  <div className="bg-[#3ecda5]/10 p-2 rounded-lg">
+                    <Users className="w-5 h-5 text-[#3ecda5]" />
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-[#032149]">{groupLeads[0].source || slug}</p>
@@ -110,7 +110,7 @@ export default function LeadsAdminPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="bg-[#6351d5]/10 text-[#6351d5] text-sm font-bold px-3 py-1 rounded-full">
+                  <span className="bg-[#3ecda5]/10 text-[#3ecda5] text-sm font-bold px-3 py-1 rounded-full">
                     {groupLeads.length} lead{groupLeads.length !== 1 ? 's' : ''}
                   </span>
                   {expandedSlug === slug
@@ -125,7 +125,7 @@ export default function LeadsAdminPage() {
                     <div key={lead.id} className="px-6 py-4 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-bold text-[#6351d5]">
+                          <span className="text-sm font-bold text-[#3ecda5]">
                             {lead.nombre?.charAt(0)?.toUpperCase() || '?'}
                           </span>
                         </div>

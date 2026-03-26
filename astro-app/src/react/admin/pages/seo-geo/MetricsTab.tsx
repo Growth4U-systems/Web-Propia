@@ -423,7 +423,7 @@ export default function MetricsTab() {
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="flex items-center gap-2 px-5 py-2 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-[#6351d5]/50 text-white rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 px-5 py-2 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-[#3ecda5]/50 text-white rounded-lg text-sm transition-colors"
           >
             {syncing ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Sincronizando...</>
@@ -480,7 +480,7 @@ export default function MetricsTab() {
                 <li>3. Selecciona últimos 7 días</li>
                 <li>4. Copia totales aquí</li>
               </ol>
-              <button onClick={() => setShowGscForm(true)} className="mt-3 text-sm text-[#6351d5] hover:underline">+ Añadir manualmente</button>
+              <button onClick={() => setShowGscForm(true)} className="mt-3 text-sm text-[#3ecda5] hover:underline">+ Añadir manualmente</button>
             </div>
             <div>
               <h4 className="font-medium text-[#032149] mb-2">Google Analytics</h4>
@@ -490,7 +490,7 @@ export default function MetricsTab() {
                 <li>3. Selecciona últimos 28 días</li>
                 <li>4. Copia sesiones, usuarios, etc.</li>
               </ol>
-              <button onClick={() => setShowAnalyticsForm(true)} className="mt-3 text-sm text-[#6351d5] hover:underline">+ Añadir manualmente</button>
+              <button onClick={() => setShowAnalyticsForm(true)} className="mt-3 text-sm text-[#3ecda5] hover:underline">+ Añadir manualmente</button>
             </div>
           </div>
         </div>
@@ -533,7 +533,7 @@ export default function MetricsTab() {
                 <button type="button" onClick={() => setShowGscForm(false)}
                   className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg">Cancelar</button>
                 <button type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg">
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg">
                   <Save className="w-4 h-4" /> Guardar
                 </button>
               </div>
@@ -600,7 +600,7 @@ export default function MetricsTab() {
                 <button type="button" onClick={() => setShowAnalyticsForm(false)}
                   className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg">Cancelar</button>
                 <button type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg">
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg">
                   <Save className="w-4 h-4" /> Guardar
                 </button>
               </div>

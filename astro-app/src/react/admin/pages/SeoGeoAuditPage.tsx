@@ -398,7 +398,7 @@ export default function SeoGeoAuditPage() {
             setActiveTab('new');
             setWizardStep(1);
           }}
-          className="bg-[#6351d5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors"
+          className="bg-[#3ecda5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors"
         >
           <Plus size={16} /> Nueva Auditoría
         </button>
@@ -412,7 +412,7 @@ export default function SeoGeoAuditPage() {
             onClick={() => setActiveTab(tab.key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? 'bg-[#6351d5] text-white'
+                ? 'bg-[#3ecda5] text-white'
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -437,7 +437,7 @@ export default function SeoGeoAuditPage() {
     if (loading) {
       return (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="animate-spin text-[#6351d5]" size={32} />
+          <Loader2 className="animate-spin text-[#3ecda5]" size={32} />
         </div>
       );
     }
@@ -453,7 +453,7 @@ export default function SeoGeoAuditPage() {
               setActiveTab('new');
               setWizardStep(1);
             }}
-            className="bg-[#6351d5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+            className="bg-[#3ecda5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
           >
             Crear auditoría
           </button>
@@ -508,7 +508,7 @@ export default function SeoGeoAuditPage() {
                 onClick={() => setWizardStep(step)}
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                   wizardStep === step
-                    ? 'bg-[#6351d5] text-white'
+                    ? 'bg-[#3ecda5] text-white'
                     : wizardStep > step
                       ? 'bg-green-500 text-white'
                       : 'bg-slate-200 text-slate-500'
@@ -523,10 +523,10 @@ export default function SeoGeoAuditPage() {
           ))}
         </div>
         <div className="flex justify-center gap-8 text-xs text-slate-500">
-          <span className={wizardStep === 1 ? 'text-[#6351d5] font-medium' : ''}>Configuración</span>
-          <span className={wizardStep === 2 ? 'text-[#6351d5] font-medium' : ''}>Web Vitals</span>
-          <span className={wizardStep === 3 ? 'text-[#6351d5] font-medium' : ''}>Test GEO</span>
-          <span className={wizardStep === 4 ? 'text-[#6351d5] font-medium' : ''}>Resultados</span>
+          <span className={wizardStep === 1 ? 'text-[#3ecda5] font-medium' : ''}>Configuración</span>
+          <span className={wizardStep === 2 ? 'text-[#3ecda5] font-medium' : ''}>Web Vitals</span>
+          <span className={wizardStep === 3 ? 'text-[#3ecda5] font-medium' : ''}>Test GEO</span>
+          <span className={wizardStep === 4 ? 'text-[#3ecda5] font-medium' : ''}>Resultados</span>
         </div>
 
         {/* Step content */}
@@ -547,7 +547,7 @@ export default function SeoGeoAuditPage() {
           {wizardStep < totalSteps ? (
             <button
               onClick={() => setWizardStep(Math.min(totalSteps, wizardStep + 1))}
-              className="flex items-center gap-2 bg-[#6351d5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              className="flex items-center gap-2 bg-[#3ecda5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             >
               Siguiente <ChevronRight size={16} />
             </button>
@@ -555,7 +555,7 @@ export default function SeoGeoAuditPage() {
             <button
               onClick={handleSaveAudit}
               disabled={savingAudit || !auditName || !domain}
-              className="flex items-center gap-2 bg-[#6351d5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-[#3ecda5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {savingAudit ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
               Guardar Auditoría
@@ -579,7 +579,7 @@ export default function SeoGeoAuditPage() {
             value={auditName}
             onChange={(e) => setAuditName(e.target.value)}
             placeholder="Ej: Auditoría Q1 2026 — growth4u.io"
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent"
           />
         </div>
         <div>
@@ -589,7 +589,7 @@ export default function SeoGeoAuditPage() {
             value={domain}
             onChange={(e) => handleDomainChange(e.target.value)}
             placeholder="Ej: growth4u.io"
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent"
           />
         </div>
         <div>
@@ -601,7 +601,7 @@ export default function SeoGeoAuditPage() {
             onChange={(e) => setKeywords(e.target.value)}
             rows={5}
             placeholder={"growth marketing España\nagencia growth B2B\nconsultoría crecimiento startups"}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent resize-none"
           />
         </div>
       </div>
@@ -621,7 +621,7 @@ export default function SeoGeoAuditPage() {
         <button
           onClick={fetchWebVitals}
           disabled={fetchingVitals || !domain}
-          className="flex items-center gap-2 bg-[#6351d5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 bg-[#3ecda5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {fetchingVitals ? (
             <Loader2 size={16} className="animate-spin" />
@@ -704,7 +704,7 @@ export default function SeoGeoAuditPage() {
                 key={platform}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${
                   geoPlatforms[platform]
-                    ? 'border-[#6351d5] bg-[#6351d5]/5 text-[#6351d5]'
+                    ? 'border-[#3ecda5] bg-[#3ecda5]/5 text-[#3ecda5]'
                     : 'border-slate-200 text-slate-500 hover:border-slate-300'
                 }`}
               >
@@ -718,7 +718,7 @@ export default function SeoGeoAuditPage() {
                 />
                 <CheckCircle2
                   size={16}
-                  className={geoPlatforms[platform] ? 'text-[#6351d5]' : 'text-slate-300'}
+                  className={geoPlatforms[platform] ? 'text-[#3ecda5]' : 'text-slate-300'}
                 />
                 {platform}
               </label>
@@ -737,7 +737,7 @@ export default function SeoGeoAuditPage() {
                   value={prompt}
                   onChange={(e) => updatePrompt(idx, e.target.value)}
                   placeholder="Escribe un prompt de prueba..."
-                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent"
+                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent"
                 />
                 <button
                   onClick={() => removePrompt(idx)}
@@ -750,7 +750,7 @@ export default function SeoGeoAuditPage() {
           </div>
           <button
             onClick={addPrompt}
-            className="mt-2 flex items-center gap-1 text-sm text-[#6351d5] hover:text-[#4a3cb0] font-medium transition-colors"
+            className="mt-2 flex items-center gap-1 text-sm text-[#3ecda5] hover:text-[#4a3cb0] font-medium transition-colors"
           >
             <Plus size={14} /> Añadir prompt
           </button>
@@ -959,7 +959,7 @@ export default function SeoGeoAuditPage() {
                 <select
                   value={selectedDomain}
                   onChange={(e) => setSelectedDomain(e.target.value)}
-                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent"
+                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent"
                 >
                   <option value="">-- Seleccionar --</option>
                   {domainsWithMultiple.map((d) => (
@@ -1068,7 +1068,7 @@ export default function SeoGeoAuditPage() {
                             <div className="flex flex-col items-center gap-1">
                               <span className="text-xs font-bold text-slate-600">{a.seoScore}</span>
                               <div
-                                className="w-8 bg-[#6351d5] rounded-t"
+                                className="w-8 bg-[#3ecda5] rounded-t"
                                 style={{ height: `${(a.seoScore / 100) * 128}px` }}
                               />
                             </div>
@@ -1088,7 +1088,7 @@ export default function SeoGeoAuditPage() {
                     </div>
                     <div className="flex items-center justify-center gap-6 mt-4">
                       <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <div className="w-3 h-3 rounded bg-[#6351d5]" /> SEO Score
+                        <div className="w-3 h-3 rounded bg-[#3ecda5]" /> SEO Score
                       </div>
                       <div className="flex items-center gap-2 text-xs text-slate-500">
                         <div className="w-3 h-3 rounded bg-[#0faec1]" /> GEO Score
@@ -1248,7 +1248,7 @@ function AuditRow({
                 e.stopPropagation();
                 onToggle();
               }}
-              className="text-slate-400 hover:text-[#6351d5] transition-colors p-1"
+              className="text-slate-400 hover:text-[#3ecda5] transition-colors p-1"
             >
               {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>

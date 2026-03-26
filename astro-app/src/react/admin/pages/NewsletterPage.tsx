@@ -57,10 +57,10 @@ function wrapInEmailTemplate(body: string, subject: string): string {
   .content { padding: 32px 24px; color: #333; font-size: 16px; line-height: 1.6; }
   .content h1 { color: #032149; font-size: 24px; margin-top: 0; }
   .content h2 { color: #032149; font-size: 20px; }
-  .content a { color: #6351d5; }
-  .cta-button { display: inline-block; background: #6351d5; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0; }
+  .content a { color: #3ecda5; }
+  .cta-button { display: inline-block; background: #3ecda5; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0; }
   .footer { background: #f4f4f7; padding: 24px; text-align: center; font-size: 12px; color: #999; }
-  .footer a { color: #6351d5; }
+  .footer a { color: #3ecda5; }
   .divider { border: none; border-top: 1px solid #e5e5e5; margin: 24px 0; }
 </style>
 </head>
@@ -248,7 +248,7 @@ export default function NewsletterPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
       </div>
     );
   }
@@ -266,7 +266,7 @@ export default function NewsletterPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-5">
           <div className="flex items-center justify-between mb-1">
             <span className="text-slate-400 text-sm">Suscriptores</span>
-            <Users className="w-5 h-5 text-[#6351d5]" />
+            <Users className="w-5 h-5 text-[#3ecda5]" />
           </div>
           <span className="text-2xl font-bold text-[#032149]">{subscribers.length}</span>
         </div>
@@ -301,14 +301,14 @@ export default function NewsletterPage() {
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 isActive
-                  ? 'border-[#6351d5] text-[#6351d5]'
+                  ? 'border-[#3ecda5] text-[#3ecda5]'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
               <Icon className="w-4 h-4" />
               {t.label}
               {t.count !== undefined && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-[#6351d5]/10 text-[#6351d5]' : 'bg-slate-100 text-slate-400'}`}>
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-[#3ecda5]/10 text-[#3ecda5]' : 'bg-slate-100 text-slate-400'}`}>
                   {t.count}
                 </span>
               )}
@@ -336,7 +336,7 @@ export default function NewsletterPage() {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Ej: Esta semana en Growth: cómo reducir tu CAC un 40%"
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent"
               />
             </div>
 
@@ -352,7 +352,7 @@ export default function NewsletterPage() {
                 value={bodyHtml}
                 onChange={(e) => setBodyHtml(e.target.value)}
                 placeholder={`<h1>Hola 👋</h1>\n<p>Esta semana te traemos...</p>\n<h2>1. Título de sección</h2>\n<p>Contenido aquí...</p>\n<a class="cta-button" href="https://growth4u.io/blog/">Leer más →</a>`}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent font-mono text-sm"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent font-mono text-sm"
                 rows={16}
               />
             </div>
@@ -376,7 +376,7 @@ export default function NewsletterPage() {
               <button
                 onClick={handleSend}
                 disabled={sending || !subject.trim() || !bodyHtml.trim() || subscribers.length === 0}
-                className="flex items-center gap-2 px-5 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors disabled:opacity-50 ml-auto"
+                className="flex items-center gap-2 px-5 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors disabled:opacity-50 ml-auto"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 Enviar a {subscribers.length} suscriptor{subscribers.length !== 1 ? 'es' : ''}
@@ -502,7 +502,7 @@ export default function NewsletterPage() {
                     {nl.status === 'draft' && (
                       <button
                         onClick={() => handleEditDraft(nl)}
-                        className="p-2 text-slate-400 hover:text-[#6351d5] transition-colors"
+                        className="p-2 text-slate-400 hover:text-[#3ecda5] transition-colors"
                         title="Editar borrador"
                       >
                         <Edit3 className="w-4 h-4" />

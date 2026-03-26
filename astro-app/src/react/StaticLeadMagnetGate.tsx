@@ -107,7 +107,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
               href="https://api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-[#6351d5] hover:bg-[#5242b8] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#6351d5]/30"
+              className="inline-block bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#3ecda5]/30"
             >
               Agendar llamada →
             </a>
@@ -126,14 +126,14 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
         </div>
         <div className="mt-8 max-w-md mx-auto text-center">
           <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-lg">
-            <div className="w-16 h-16 bg-[#6351d5]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-[#3ecda5]/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">📬</span>
             </div>
             <h3 className="text-xl font-bold text-[#032149] mb-2">¡Revisa tu email!</h3>
             <p className="text-slate-500 text-sm mb-2">
               Te hemos enviado el contenido completo a:
             </p>
-            <p className="text-[#6351d5] font-semibold mb-4">{sentEmail}</p>
+            <p className="text-[#3ecda5] font-semibold mb-4">{sentEmail}</p>
             <p className="text-slate-400 text-xs">
               Revisa tu bandeja de entrada (y spam, por si acaso).
             </p>
@@ -155,9 +155,9 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
 
       {!showForm ? (
         <div className="mt-8">
-          <div className="bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-2xl p-8 text-center">
-            <div className="w-14 h-14 bg-[#6351d5]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-[#6351d5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="bg-[#3ecda5]/5 border border-[#3ecda5]/20 rounded-2xl p-8 text-center">
+            <div className="w-14 h-14 bg-[#3ecda5]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-[#3ecda5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
@@ -165,7 +165,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
             <p className="text-slate-400 text-sm mb-6">Gratis. Sin spam. Te lo enviamos a tu email.</p>
             <button
               onClick={() => setShowForm(true)}
-              className="bg-[#6351d5] hover:bg-[#5242b8] text-white font-bold py-4 px-10 rounded-full text-lg transition-all duration-200 hover:scale-105 shadow-lg shadow-[#6351d5]/20"
+              className="bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold py-4 px-10 rounded-full text-lg transition-all duration-200 hover:scale-105 shadow-lg shadow-[#3ecda5]/20"
             >
               Desbloquear →
             </button>
@@ -186,7 +186,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                   placeholder="María García"
                   disabled={submitting}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent disabled:opacity-50"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent disabled:opacity-50"
                   required
                 />
               </div>
@@ -198,7 +198,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="maria@tuempresa.com"
                   disabled={submitting}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent disabled:opacity-50"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent disabled:opacity-50"
                   required
                 />
               </div>
@@ -210,7 +210,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
                   onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
                   placeholder="Nombre de tu empresa tech"
                   disabled={submitting}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent disabled:opacity-50"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent disabled:opacity-50"
                 />
               </div>
 
@@ -228,7 +228,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-[2] py-3 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-300 text-white font-bold rounded-xl transition-all"
+                  className="flex-[2] py-3 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-300 text-white font-bold rounded-xl transition-all"
                 >
                   {submitting ? 'Enviando...' : 'Recibir por email →'}
                 </button>

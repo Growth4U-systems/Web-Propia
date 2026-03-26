@@ -524,7 +524,7 @@ export default function BlogAdminPage() {
           </button>
           <button
             onClick={handleNewPost}
-            className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
           >
             <Plus className="w-5 h-5" />
             Nuevo Post
@@ -545,7 +545,7 @@ export default function BlogAdminPage() {
             onChange={(e) => setPublishAfterSave(e.target.checked)}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6351d5]"></div>
+          <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3ecda5]"></div>
         </label>
       </div>
 
@@ -592,7 +592,7 @@ export default function BlogAdminPage() {
             <p className="text-slate-400">No hay posts publicados</p>
             <button
               onClick={handleNewPost}
-              className="mt-4 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+              className="mt-4 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
             >
               Crear primer post
             </button>
@@ -685,7 +685,7 @@ export default function BlogAdminPage() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="Título del post"
                   required
                 />
@@ -705,7 +705,7 @@ export default function BlogAdminPage() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   >
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -720,7 +720,7 @@ export default function BlogAdminPage() {
                     type="text"
                     value={formData.readTime}
                     onChange={(e) => setFormData({ ...formData, readTime: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="5 min lectura"
                   />
                 </div>
@@ -734,7 +734,7 @@ export default function BlogAdminPage() {
                 <select
                   value={formData.author}
                   onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   required
                 >
                   <option value="">Seleccionar autor...</option>
@@ -754,7 +754,7 @@ export default function BlogAdminPage() {
                     type="button"
                     onClick={generateCoverImage}
                     disabled={generatingCover || uploadingImage || !formData.title.trim()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#6351d5]/15 hover:bg-[#6351d5]/25 disabled:opacity-40 text-[#6351d5] text-xs font-bold rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#3ecda5]/15 hover:bg-[#3ecda5]/25 disabled:opacity-40 text-[#3ecda5] text-xs font-bold rounded-lg transition-colors"
                     title="Genera una portada automáticamente con el título del post"
                   >
                     {generatingCover ? (
@@ -789,7 +789,7 @@ export default function BlogAdminPage() {
                   >
                     {uploadingImage ? (
                       <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+                        <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
                         <span className="text-slate-400">Subiendo imagen...</span>
                       </div>
                     ) : (
@@ -821,7 +821,7 @@ export default function BlogAdminPage() {
                             type="url"
                             value={formData.image}
                             onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                            className="w-full mt-3 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                            className="w-full mt-3 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                             placeholder="https://..."
                           />
                         )}
@@ -839,7 +839,7 @@ export default function BlogAdminPage() {
                 <textarea
                   value={formData.excerpt}
                   onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-24"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-24"
                   placeholder="Breve descripción del post..."
                 />
               </div>
@@ -863,7 +863,7 @@ export default function BlogAdminPage() {
                 <textarea
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-96 font-mono text-sm"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-96 font-mono text-sm"
                   placeholder="# Título&#10;&#10;Tu contenido en Markdown..."
                 />
                 <p className="text-slate-500 text-xs mt-1">
@@ -883,7 +883,7 @@ export default function BlogAdminPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-6 py-2 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-600 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-600 text-white rounded-lg transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Guardando...' : 'Guardar Post'}
@@ -903,7 +903,7 @@ export default function BlogAdminPage() {
         </p>
         <p className="text-slate-500 text-xs mt-3">
           Si necesitas publicar manualmente, usa el botón "Publicar" en la cabecera o visita{' '}
-          <a href="https://app.netlify.com" target="_blank" rel="noopener noreferrer" className="text-[#6351d5] hover:underline">
+          <a href="https://app.netlify.com" target="_blank" rel="noopener noreferrer" className="text-[#3ecda5] hover:underline">
             Netlify
           </a>
         </p>

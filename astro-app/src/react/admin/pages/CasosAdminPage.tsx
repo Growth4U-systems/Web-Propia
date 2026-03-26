@@ -268,7 +268,7 @@ export default function CasosAdminPage() {
           </button>
           <button
             onClick={handleNewCase}
-            className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
           >
             <Plus className="w-5 h-5" />
             Nuevo Caso
@@ -289,7 +289,7 @@ export default function CasosAdminPage() {
             onChange={(e) => setPublishAfterSave(e.target.checked)}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6351d5]"></div>
+          <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3ecda5]"></div>
         </label>
       </div>
 
@@ -316,7 +316,7 @@ export default function CasosAdminPage() {
             <p className="text-slate-400">No hay casos de éxito publicados</p>
             <button
               onClick={handleNewCase}
-              className="mt-4 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+              className="mt-4 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
             >
               Crear primer caso
             </button>
@@ -331,7 +331,7 @@ export default function CasosAdminPage() {
                     {caseStudy.image ? (
                       <img src={caseStudy.image} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#6351d5] to-[#3f45fe]">
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#3ecda5] to-[#2ab89a]">
                         <span className="text-[#032149] font-bold text-lg">{caseStudy.company.charAt(0)}</span>
                       </div>
                     )}
@@ -341,7 +341,7 @@ export default function CasosAdminPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-[#032149]">{caseStudy.company}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-2xl font-bold text-[#6351d5]">{caseStudy.stat}</span>
+                      <span className="text-2xl font-bold text-[#3ecda5]">{caseStudy.stat}</span>
                       <span className="text-slate-400">{caseStudy.statLabel}</span>
                     </div>
                     <p className="text-slate-400 text-sm mt-1 line-clamp-1">{caseStudy.summary}</p>
@@ -409,7 +409,7 @@ export default function CasosAdminPage() {
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Ej: BNEXT"
                     required
                   />
@@ -427,7 +427,7 @@ export default function CasosAdminPage() {
                     type="text"
                     value={formData.stat}
                     onChange={(e) => setFormData({ ...formData, stat: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Ej: 500K, -70%, 10K €"
                   />
                 </div>
@@ -439,7 +439,7 @@ export default function CasosAdminPage() {
                     type="text"
                     value={formData.statLabel}
                     onChange={(e) => setFormData({ ...formData, statLabel: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Ej: Usuarios activos"
                   />
                 </div>
@@ -454,7 +454,7 @@ export default function CasosAdminPage() {
                   type="text"
                   value={formData.highlight}
                   onChange={(e) => setFormData({ ...formData, highlight: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="Ej: conseguidos en 30 meses"
                 />
               </div>
@@ -467,7 +467,7 @@ export default function CasosAdminPage() {
                 <textarea
                   value={formData.summary}
                   onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-20"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-20"
                   placeholder="Breve descripción del caso..."
                 />
               </div>
@@ -481,7 +481,7 @@ export default function CasosAdminPage() {
                   <textarea
                     value={formData.challenge}
                     onChange={(e) => setFormData({ ...formData, challenge: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-32"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-32"
                     placeholder="¿Cuál era el problema?"
                   />
                 </div>
@@ -492,7 +492,7 @@ export default function CasosAdminPage() {
                   <textarea
                     value={formData.solution}
                     onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-32"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-32"
                     placeholder="¿Cómo lo solucionamos?"
                   />
                 </div>
@@ -523,14 +523,14 @@ export default function CasosAdminPage() {
                       type="text"
                       value={newResult}
                       onChange={(e) => setNewResult(e.target.value)}
-                      className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                      className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                       placeholder="Añadir resultado..."
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addResult())}
                     />
                     <button
                       type="button"
                       onClick={addResult}
-                      className="px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg"
+                      className="px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
@@ -567,7 +567,7 @@ export default function CasosAdminPage() {
                   >
                     {uploadingImage ? (
                       <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+                        <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
                         <span className="text-slate-400">Subiendo imagen...</span>
                       </div>
                     ) : (
@@ -599,7 +599,7 @@ export default function CasosAdminPage() {
                             type="url"
                             value={formData.image}
                             onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                            className="w-full mt-3 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                            className="w-full mt-3 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                             placeholder="https://..."
                           />
                         )}
@@ -619,7 +619,7 @@ export default function CasosAdminPage() {
                   type="url"
                   value={formData.videoUrl}
                   onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/..."
                 />
                 <p className="text-slate-500 text-xs mt-1">
@@ -656,7 +656,7 @@ export default function CasosAdminPage() {
                   type="url"
                   value={formData.mediaUrl}
                   onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="https://..."
                 />
                 {formData.mediaUrl && (
@@ -676,7 +676,7 @@ export default function CasosAdminPage() {
                 <textarea
                   value={formData.testimonial}
                   onChange={(e) => setFormData({ ...formData, testimonial: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-24"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-24"
                   placeholder="Cita del cliente..."
                 />
                 <div className="grid grid-cols-2 gap-4 mt-2">
@@ -684,14 +684,14 @@ export default function CasosAdminPage() {
                     type="text"
                     value={formData.testimonialAuthor}
                     onChange={(e) => setFormData({ ...formData, testimonialAuthor: e.target.value })}
-                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Nombre del autor"
                   />
                   <input
                     type="text"
                     value={formData.testimonialRole}
                     onChange={(e) => setFormData({ ...formData, testimonialRole: e.target.value })}
-                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Cargo"
                   />
                 </div>
@@ -705,7 +705,7 @@ export default function CasosAdminPage() {
                 <textarea
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-48 font-mono text-sm"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-48 font-mono text-sm"
                   placeholder="## Contexto&#10;&#10;Contenido adicional en Markdown..."
                 />
               </div>
@@ -722,7 +722,7 @@ export default function CasosAdminPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 px-6 py-2 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-600 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-600 text-white rounded-lg transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Guardando...' : 'Guardar Caso'}

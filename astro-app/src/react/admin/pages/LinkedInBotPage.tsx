@@ -489,7 +489,7 @@ export default function LinkedInBotPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-[#6351d5]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#3ecda5]" />
       </div>
     );
   }
@@ -509,14 +509,14 @@ export default function LinkedInBotPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-              tab === t.id ? 'bg-[#6351d5] text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              tab === t.id ? 'bg-[#3ecda5] text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             }`}
           >
             <t.icon className="w-4 h-4" />
             {t.label}
             {t.badge !== undefined && t.badge > 0 && (
               <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${
-                tab === t.id ? 'bg-white/20 text-white' : 'bg-[#6351d5]/10 text-[#6351d5]'
+                tab === t.id ? 'bg-white/20 text-white' : 'bg-[#3ecda5]/10 text-[#3ecda5]'
               }`}>
                 {t.badge}
               </span>
@@ -789,7 +789,7 @@ function OverviewTab({
   const stats = [
     { label: 'Pendientes de aprobar', value: pendingComments, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
     { label: 'Aprobados hoy', value: approvedToday, color: 'text-green-600', bg: 'bg-green-50 border-green-200' },
-    { label: 'Comentarios publicados', value: postedTotal, color: 'text-[#6351d5]', bg: 'bg-[#6351d5]/5 border-[#6351d5]/20' },
+    { label: 'Comentarios publicados', value: postedTotal, color: 'text-[#3ecda5]', bg: 'bg-[#3ecda5]/5 border-[#3ecda5]/20' },
     { label: 'Prospects activos', value: activeProspects, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
     { label: 'En reunión', value: meetingProspects, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
     { label: 'Creator Network', value: activeCreators, color: 'text-purple-600', bg: 'bg-purple-50 border-purple-200' },
@@ -821,7 +821,7 @@ function OverviewTab({
                 ? 'bg-green-50 text-green-600 border-green-200'
                 : scrapeResult && !scrapeResult.ok
                 ? 'bg-red-50 text-red-600 border-red-200'
-                : 'bg-[#6351d5] text-white border-[#6351d5] hover:bg-[#5241c5]'
+                : 'bg-[#3ecda5] text-white border-[#3ecda5] hover:bg-[#5241c5]'
             } disabled:opacity-50`}
           >
             {scraping ? (
@@ -870,7 +870,7 @@ function OverviewTab({
                 ? 'bg-green-50 text-green-600 border-green-200'
                 : slackSent === 'error'
                 ? 'bg-red-50 text-red-600 border-red-200'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-[#6351d5] hover:text-[#6351d5]'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-[#3ecda5] hover:text-[#3ecda5]'
             } disabled:opacity-50`}
           >
             {slackSending ? (
@@ -953,7 +953,7 @@ function OverviewTab({
           <div className="space-y-2 text-sm">
             {['Scrapear posts de 47 perfiles', 'IA genera comentarios de valor', 'G4U revisa y aprueba', 'Publicar manualmente', 'Trackear engagement'].map((step, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-[#6351d5]/10 text-[#6351d5] text-xs flex items-center justify-center font-medium">{i + 1}</span>
+                <span className="w-5 h-5 rounded-full bg-[#3ecda5]/10 text-[#3ecda5] text-xs flex items-center justify-center font-medium">{i + 1}</span>
                 <span className="text-slate-600">{step}</span>
               </div>
             ))}
@@ -1092,10 +1092,10 @@ function CommentsTab({
                         value={editDraft}
                         onChange={(e) => setEditDraft(e.target.value)}
                         rows={3}
-                        className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#6351d5] focus:border-[#6351d5] outline-none"
+                        className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#3ecda5] focus:border-[#3ecda5] outline-none"
                       />
                       <div className="flex gap-2">
-                        <button onClick={() => onSaveEdit(c.id)} className="px-3 py-1.5 text-xs bg-[#6351d5] text-white rounded-lg">
+                        <button onClick={() => onSaveEdit(c.id)} className="px-3 py-1.5 text-xs bg-[#3ecda5] text-white rounded-lg">
                           Guardar
                         </button>
                         <button onClick={onCancelEdit} className="px-3 py-1.5 text-xs text-slate-500 border border-slate-200 rounded-lg">
@@ -1104,7 +1104,7 @@ function CommentsTab({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-[#032149] bg-[#6351d5]/5 rounded-lg p-3 border border-[#6351d5]/10">
+                    <p className="text-sm text-[#032149] bg-[#3ecda5]/5 rounded-lg p-3 border border-[#3ecda5]/10">
                       {c.commentDraft}
                     </p>
                   )}
@@ -1239,7 +1239,7 @@ function CandidatesTab({
                   </div>
                   <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                     <span>Fuente: {c.sourceCreatorName}</span>
-                    {c.reason && <span className="text-[#6351d5] font-medium">• {c.reason}</span>}
+                    {c.reason && <span className="text-[#3ecda5] font-medium">• {c.reason}</span>}
                   </div>
                   {c.sourceCommentDraft && (
                     <div className="mt-2 p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-600">
@@ -1375,14 +1375,14 @@ function ProspectsTab({
           <button
             onClick={async () => { setSeeding(true); await onSeedFounders(); setSeeding(false); }}
             disabled={seeding}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white text-slate-600 border border-slate-200 rounded-lg hover:border-[#6351d5] hover:text-[#6351d5] disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white text-slate-600 border border-slate-200 rounded-lg hover:border-[#3ecda5] hover:text-[#3ecda5] disabled:opacity-50"
           >
             {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
             {seeding ? 'Cargando...' : 'Seed 22 Founders'}
           </button>
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#6351d5] text-white rounded-lg hover:bg-[#5040b0]"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#3ecda5] text-white rounded-lg hover:bg-[#5040b0]"
           >
             <Plus className="w-4 h-4" /> Añadir
           </button>
@@ -1426,7 +1426,7 @@ function ProspectsTab({
                         <span className="text-xs px-1.5 py-0.5 rounded border bg-slate-50 text-slate-500 border-slate-200">{p.companySector}</span>
                       )}
                       {p.g4uMatch && (
-                        <span className="text-xs px-1.5 py-0.5 rounded border bg-[#6351d5]/10 text-[#6351d5] border-[#6351d5]/20">
+                        <span className="text-xs px-1.5 py-0.5 rounded border bg-[#3ecda5]/10 text-[#3ecda5] border-[#3ecda5]/20">
                           <Sparkles className="w-3 h-3 inline mr-0.5" />
                           {G4U_SERVICES.find((s) => s.value === p.g4uMatch)?.label || p.g4uMatch}
                         </span>
@@ -1545,22 +1545,22 @@ function ProspectsTab({
                       </h4>
                       <div className="grid md:grid-cols-4 gap-2">
                         <select value={p.companySector} onChange={(e) => onUpdateField(p.id, { companySector: e.target.value })}
-                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]">
+                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]">
                           <option value="">Sector...</option>
                           {COMPANY_SECTORS.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                         <select value={p.companySize} onChange={(e) => onUpdateField(p.id, { companySize: e.target.value })}
-                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]">
+                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]">
                           <option value="">Tamaño...</option>
                           {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                         <select value={p.fundingStage} onChange={(e) => onUpdateField(p.id, { fundingStage: e.target.value })}
-                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]">
+                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]">
                           <option value="">Funding...</option>
                           {FUNDING_STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                         <select value={p.profileType} onChange={(e) => onUpdateField(p.id, { profileType: e.target.value as LIProspect['profileType'] })}
-                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]">
+                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]">
                           {PROFILE_TYPES.map((pt) => <option key={pt.value} value={pt.value}>{pt.label}</option>)}
                         </select>
                       </div>
@@ -1576,7 +1576,7 @@ function ProspectsTab({
                         onChange={(e) => onUpdateField(p.id, { painPoints: e.target.value })}
                         placeholder="¿Qué problemas tiene? ¿CAC alto? ¿No escalan? ¿Dependen de paid? ¿No tienen attribution?"
                         rows={2}
-                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]"
+                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]"
                       />
                     </div>
 
@@ -1587,7 +1587,7 @@ function ProspectsTab({
                       </h4>
                       <div className="grid md:grid-cols-2 gap-2">
                         <select value={p.g4uMatch} onChange={(e) => onUpdateField(p.id, { g4uMatch: e.target.value })}
-                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]">
+                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]">
                           <option value="">Seleccionar servicio/recurso...</option>
                           {G4U_SERVICES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                         </select>
@@ -1608,7 +1608,7 @@ function ProspectsTab({
                         placeholder="Mensaje corto para solicitud de conexión en LinkedIn (max 300 chars)..."
                         rows={2}
                         maxLength={300}
-                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]"
+                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]"
                       />
                       <div className="flex items-center gap-2 mt-1">
                         <button
@@ -1621,13 +1621,13 @@ function ProspectsTab({
                             const data = await res.json();
                             if (data.message) onUpdateField(p.id, { connectionMessage: data.message });
                           }}
-                          className="flex items-center gap-1 text-xs text-[#6351d5] hover:underline"
+                          className="flex items-center gap-1 text-xs text-[#3ecda5] hover:underline"
                         >
                           <Sparkles className="w-3 h-3" /> Generar con IA
                         </button>
                         {p.connectionMessage && (
                           <button onClick={() => navigator.clipboard.writeText(p.connectionMessage)}
-                            className="flex items-center gap-1 text-xs text-[#6351d5] hover:underline">
+                            className="flex items-center gap-1 text-xs text-[#3ecda5] hover:underline">
                             <Copy className="w-3 h-3" /> Copiar
                           </button>
                         )}
@@ -1647,7 +1647,7 @@ function ProspectsTab({
                         onChange={(e) => onUpdateField(p.id, { outreachMessage: e.target.value })}
                         placeholder="Mensaje personalizado para DM o email basado en su perfil y pain points..."
                         rows={3}
-                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]"
+                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]"
                       />
                       <div className="flex items-center gap-2 mt-1">
                         <button
@@ -1666,13 +1666,13 @@ function ProspectsTab({
                             const data = await res.json();
                             if (data.message) onUpdateField(p.id, { outreachMessage: data.message });
                           }}
-                          className="flex items-center gap-1 text-xs text-[#6351d5] hover:underline"
+                          className="flex items-center gap-1 text-xs text-[#3ecda5] hover:underline"
                         >
                           <Sparkles className="w-3 h-3" /> Generar DM personalizado
                         </button>
                         {p.outreachMessage && (
                           <button onClick={() => navigator.clipboard.writeText(p.outreachMessage)}
-                            className="flex items-center gap-1 text-xs text-[#6351d5] hover:underline">
+                            className="flex items-center gap-1 text-xs text-[#3ecda5] hover:underline">
                             <Copy className="w-3 h-3" /> Copiar mensaje
                           </button>
                         )}
@@ -1686,7 +1686,7 @@ function ProspectsTab({
                         onChange={(e) => onUpdateField(p.id, { notes: e.target.value })}
                         placeholder="Notas internas..."
                         rows={2}
-                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#6351d5]"
+                        className="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white outline-none focus:ring-1 focus:ring-[#3ecda5]"
                       />
                     </div>
                   </div>
@@ -1716,31 +1716,31 @@ function AddProspectForm({ onAdd, onCancel }: {
       <h3 className="font-medium text-[#032149] mb-3">Nuevo Prospect</h3>
       <div className="grid md:grid-cols-3 gap-3">
         <input placeholder="Nombre *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
         <select value={form.profileType} onChange={(e) => setForm({ ...form, profileType: e.target.value as LIProspect['profileType'] })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]">
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]">
           {PROFILE_TYPES.map((pt) => <option key={pt.value} value={pt.value}>{pt.label}</option>)}
         </select>
         <input placeholder="Cargo" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
         <input placeholder="Empresa" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
         <select value={form.companySector} onChange={(e) => setForm({ ...form, companySector: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]">
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]">
           <option value="">Sector...</option>
           {COMPANY_SECTORS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={form.companySize} onChange={(e) => setForm({ ...form, companySize: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]">
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]">
           <option value="">Tamaño...</option>
           {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <input placeholder="LinkedIn URL" value={form.linkedinUrl} onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
         <input placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
         <input placeholder="Fuente (ej: Post de Lenny)" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
       </div>
       <div className="flex gap-2 mt-3">
         <button
@@ -1750,7 +1750,7 @@ function AddProspectForm({ onAdd, onCancel }: {
             intentScore: 0, signals: [],
           })}
           disabled={!form.name}
-          className="px-4 py-2 text-sm bg-[#6351d5] text-white rounded-lg hover:bg-[#5040b0] disabled:opacity-40"
+          className="px-4 py-2 text-sm bg-[#3ecda5] text-white rounded-lg hover:bg-[#5040b0] disabled:opacity-40"
         >
           Guardar
         </button>
@@ -1799,7 +1799,7 @@ function CreatorsTab({
           )}
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#6351d5] text-white rounded-lg hover:bg-[#5040b0]"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#3ecda5] text-white rounded-lg hover:bg-[#5040b0]"
           >
             <Plus className="w-4 h-4" /> Añadir
           </button>
@@ -1822,7 +1822,7 @@ function CreatorsTab({
             <div key={c.id} className={`bg-white rounded-xl border p-4 transition-colors ${c.active ? 'border-slate-200' : 'border-slate-100 opacity-50'}`}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#6351d5] flex items-center justify-center text-white text-sm font-medium">
+                  <div className="w-9 h-9 rounded-full bg-[#3ecda5] flex items-center justify-center text-white text-sm font-medium">
                     {c.name.charAt(0)}
                   </div>
                   <div>
@@ -1873,23 +1873,23 @@ function AddCreatorForm({ onAdd, onCancel }: {
       <h3 className="font-medium text-[#032149] mb-3">Nuevo Perfil</h3>
       <div className="grid md:grid-cols-2 gap-3">
         <input placeholder="Nombre *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
         <input placeholder="LinkedIn URL" value={form.linkedinUrl} onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
         <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]">
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]">
           <option>Growth</option>
           <option>Founder</option>
           <option>VC</option>
         </select>
         <input placeholder="Notas" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
-          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#6351d5]" />
+          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]" />
       </div>
       <div className="flex gap-2 mt-3">
         <button
           onClick={() => form.name && onAdd({ ...form, lastPostDate: '', lastCommentDate: '', commentCount: 0, active: true })}
           disabled={!form.name}
-          className="px-4 py-2 text-sm bg-[#6351d5] text-white rounded-lg hover:bg-[#5040b0] disabled:opacity-40"
+          className="px-4 py-2 text-sm bg-[#3ecda5] text-white rounded-lg hover:bg-[#5040b0] disabled:opacity-40"
         >
           Guardar
         </button>

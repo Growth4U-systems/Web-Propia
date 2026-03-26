@@ -46,8 +46,8 @@ function FeedbackCard({ feedback, onDelete }: { feedback: FeedbackResponse; onDe
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="bg-[#6351d5]/10 p-3 rounded-xl">
-              <Building2 className="w-6 h-6 text-[#6351d5]" />
+            <div className="bg-[#3ecda5]/10 p-3 rounded-xl">
+              <Building2 className="w-6 h-6 text-[#3ecda5]" />
             </div>
             <div>
               <h3 className="font-bold text-[#032149] text-lg">{feedback.companyName}</h3>
@@ -164,7 +164,7 @@ export default function FeedbackAdminPage() {
       <nav className="bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/admin/" className="flex items-center gap-2 text-[#6351d5] hover:underline">
+            <Link to="/admin/" className="flex items-center gap-2 text-[#3ecda5] hover:underline">
               <ArrowLeft className="w-4 h-4" />
               Volver
             </Link>
@@ -183,7 +183,7 @@ export default function FeedbackAdminPage() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-[#6351d5]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#3ecda5]" />
           </div>
         ) : feedbacks.length === 0 ? (
           <div className="text-center py-20">

@@ -534,7 +534,7 @@ export default function BacklinksTab() {
             {t.icon}
             {t.label}
             {t.count !== undefined && t.count > 0 && (
-              <span className="bg-[#6351d5] text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+              <span className="bg-[#3ecda5] text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                 {t.count}
               </span>
             )}
@@ -552,7 +552,7 @@ export default function BacklinksTab() {
               <button
                 onClick={syncDataForSEO}
                 disabled={loading}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#6351d5] hover:bg-[#5242b8] disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#3ecda5] hover:bg-[#35b894] disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 {loading ? 'Sincronizando...' : 'Sincronizar Metricas'}
@@ -577,7 +577,7 @@ export default function BacklinksTab() {
             {dataForSEO && !loading && (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <MetricCard label="Domain Rank" value={dataForSEO.domainRank} icon={<Shield className="w-5 h-5 text-[#6351d5]" />} />
+                  <MetricCard label="Domain Rank" value={dataForSEO.domainRank} icon={<Shield className="w-5 h-5 text-[#3ecda5]" />} />
                   <MetricCard label="Backlinks Totales" value={dataForSEO.backlinks.toLocaleString()} icon={<Link2 className="w-5 h-5 text-[#45b6f7]" />} />
                   <MetricCard label="Dominios de Referencia" value={dataForSEO.referringDomains.toLocaleString()} icon={<Globe className="w-5 h-5 text-green-500" />} />
                   <MetricCard label="IPs de Referencia" value={dataForSEO.referringIps.toLocaleString()} icon={<Server className="w-5 h-5 text-amber-500" />} />
@@ -620,7 +620,7 @@ export default function BacklinksTab() {
               <SectionHeader title="Metricas de Autoridad Manual" subtitle="Registra datos de DA desde herramientas externas" />
               <button
                 onClick={() => setShowAddForm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
               >
                 <Plus className="w-5 h-5" />
                 Anadir Datos
@@ -690,7 +690,7 @@ export default function BacklinksTab() {
               {savedActions.length === 0 && generatedActions.length > 0 && (
                 <button
                   onClick={handleSaveActions}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
                 >
                   <Zap className="w-4 h-4" />
                   Generar Plan
@@ -759,7 +759,7 @@ export default function BacklinksTab() {
                       <span className="text-[10px] font-medium text-slate-400 uppercase bg-slate-100 px-1.5 py-0.5 rounded">
                         {actionCategoryLabels[action.category]}
                       </span>
-                      <span className="text-xs text-[#6351d5] font-semibold">{action.expectedImpact}</span>
+                      <span className="text-xs text-[#3ecda5] font-semibold">{action.expectedImpact}</span>
                       {action.status !== 'open' && <StatusBadge status={action.status} />}
                     </div>
 
@@ -814,7 +814,7 @@ export default function BacklinksTab() {
 
                   <button
                     onClick={() => setExpandedAction(expandedAction === action.id ? null : action.id)}
-                    className="p-1.5 text-slate-400 hover:text-[#6351d5] hover:bg-[#6351d5]/5 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-[#3ecda5] hover:bg-[#3ecda5]/5 rounded-lg transition-colors"
                   >
                     {expandedAction === action.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
@@ -844,7 +844,7 @@ export default function BacklinksTab() {
             />
             <button
               onClick={() => { resetProspectForm(); setShowProspectForm(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
               Nuevo Prospecto
@@ -860,7 +860,7 @@ export default function BacklinksTab() {
               { key: 'writing', color: 'bg-purple-50 border-purple-200' },
               { key: 'published', color: 'bg-green-50 border-green-200' },
               { key: 'rejected', color: 'bg-red-50 border-red-200' },
-              { key: 'conversion', color: 'bg-[#6351d5]/5 border-[#6351d5]/20' },
+              { key: 'conversion', color: 'bg-[#3ecda5]/5 border-[#3ecda5]/20' },
             ] as const).map(s => (
               <div key={s.key} className={`${s.color} border rounded-lg p-2.5 text-center`}>
                 <p className="text-lg font-bold text-[#032149]">
@@ -903,7 +903,7 @@ export default function BacklinksTab() {
                             <span className="text-sm font-medium text-[#032149]">{p.domain}</span>
                             {p.publishedUrl && (
                               <a href={p.publishedUrl} target="_blank" rel="noopener noreferrer"
-                                className="text-[#6351d5] hover:text-[#5242b8]">
+                                className="text-[#3ecda5] hover:text-[#35b894]">
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </a>
                             )}
@@ -929,7 +929,7 @@ export default function BacklinksTab() {
                         <td className="px-4 py-3 text-sm text-slate-500 max-w-[120px] truncate">{p.anchorText || '—'}</td>
                         <td className="px-4 py-3">
                           {p.contactEmail ? (
-                            <a href={`mailto:${p.contactEmail}`} className="text-xs text-[#6351d5] hover:underline">{p.contactName || p.contactEmail}</a>
+                            <a href={`mailto:${p.contactEmail}`} className="text-xs text-[#3ecda5] hover:underline">{p.contactName || p.contactEmail}</a>
                           ) : (
                             <span className="text-xs text-slate-400">{p.contactName || '—'}</span>
                           )}
@@ -937,7 +937,7 @@ export default function BacklinksTab() {
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <button onClick={() => handleEditProspect(p)}
-                              className="p-1.5 text-slate-400 hover:text-[#6351d5] transition-colors">
+                              className="p-1.5 text-slate-400 hover:text-[#3ecda5] transition-colors">
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => handleDeleteProspect(p.id)}
@@ -966,35 +966,35 @@ export default function BacklinksTab() {
                 <label className="block text-sm font-medium text-slate-600 mb-1">Fecha</label>
                 <input type="date" value={newMetric.date}
                   onChange={e => setNewMetric({ ...newMetric, date: e.target.value })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Domain Authority (0-100)</label>
                 <input type="number" min={0} max={100} value={newMetric.domainAuthority}
                   onChange={e => setNewMetric({ ...newMetric, domainAuthority: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Backlinks</label>
                 <input type="number" min={0} value={newMetric.backlinks}
                   onChange={e => setNewMetric({ ...newMetric, backlinks: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Dominios de Referencia</label>
                 <input type="number" min={0} value={newMetric.referringDomains}
                   onChange={e => setNewMetric({ ...newMetric, referringDomains: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Fuente</label>
                 <select value={newMetric.source}
                   onChange={e => setNewMetric({ ...newMetric, source: e.target.value })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]">
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]">
                   {sources.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
@@ -1002,14 +1002,14 @@ export default function BacklinksTab() {
                 <label className="block text-sm font-medium text-slate-600 mb-1">Notas (opcional)</label>
                 <input type="text" value={newMetric.notes}
                   onChange={e => setNewMetric({ ...newMetric, notes: e.target.value })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="Observaciones" />
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowAddForm(false)}
                   className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg transition-colors">Cancelar</button>
                 <button type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors">
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors">
                   <Save className="w-4 h-4" /> Guardar
                 </button>
               </div>
@@ -1031,14 +1031,14 @@ export default function BacklinksTab() {
                   <label className="block text-sm font-medium text-slate-600 mb-1">Dominio *</label>
                   <input type="text" value={newProspect.domain}
                     onChange={e => setNewProspect({ ...newProspect, domain: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="blog.ejemplo.com" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1">DA estimado</label>
                   <input type="number" min={0} max={100} value={newProspect.domainAuthority}
                     onChange={e => setNewProspect({ ...newProspect, domainAuthority: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]" />
+                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]" />
                 </div>
               </div>
 
@@ -1047,14 +1047,14 @@ export default function BacklinksTab() {
                   <label className="block text-sm font-medium text-slate-600 mb-1">Contacto</label>
                   <input type="text" value={newProspect.contactName}
                     onChange={e => setNewProspect({ ...newProspect, contactName: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="Nombre del editor" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
                   <input type="email" value={newProspect.contactEmail}
                     onChange={e => setNewProspect({ ...newProspect, contactEmail: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="editor@ejemplo.com" />
                 </div>
               </div>
@@ -1063,7 +1063,7 @@ export default function BacklinksTab() {
                 <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
                 <select value={newProspect.status}
                   onChange={e => setNewProspect({ ...newProspect, status: e.target.value as GuestPostStatus })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]">
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]">
                   {Object.entries(guestPostStatusLabels).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
                   ))}
@@ -1074,7 +1074,7 @@ export default function BacklinksTab() {
                 <label className="block text-sm font-medium text-slate-600 mb-1">Tema propuesto</label>
                 <input type="text" value={newProspect.topic}
                   onChange={e => setNewProspect({ ...newProspect, topic: e.target.value })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="Ej: Growth marketing para fintechs en 2026" />
               </div>
 
@@ -1083,14 +1083,14 @@ export default function BacklinksTab() {
                   <label className="block text-sm font-medium text-slate-600 mb-1">Anchor text</label>
                   <input type="text" value={newProspect.anchorText}
                     onChange={e => setNewProspect({ ...newProspect, anchorText: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="growth marketing" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-1">URL destino</label>
                   <input type="url" value={newProspect.targetUrl}
                     onChange={e => setNewProspect({ ...newProspect, targetUrl: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="https://growth4u.io/..." />
                 </div>
               </div>
@@ -1100,7 +1100,7 @@ export default function BacklinksTab() {
                   <label className="block text-sm font-medium text-slate-600 mb-1">URL publicada</label>
                   <input type="url" value={newProspect.publishedUrl}
                     onChange={e => setNewProspect({ ...newProspect, publishedUrl: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                     placeholder="https://blog.ejemplo.com/tu-guest-post" />
                 </div>
               )}
@@ -1109,7 +1109,7 @@ export default function BacklinksTab() {
                 <label className="block text-sm font-medium text-slate-600 mb-1">Notas</label>
                 <textarea value={newProspect.notes} rows={2}
                   onChange={e => setNewProspect({ ...newProspect, notes: e.target.value })}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#6351d5] resize-none"
+                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] focus:outline-none focus:ring-2 focus:ring-[#3ecda5] resize-none"
                   placeholder="Observaciones, requisitos del blog, etc." />
               </div>
 
@@ -1117,7 +1117,7 @@ export default function BacklinksTab() {
                 <button type="button" onClick={resetProspectForm}
                   className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg transition-colors">Cancelar</button>
                 <button type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors">
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors">
                   <Save className="w-4 h-4" /> {editingProspect ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>

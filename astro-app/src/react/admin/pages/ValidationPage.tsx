@@ -137,7 +137,7 @@ export default function ValidationPage() {
             type="url"
             value={urlToValidate}
             onChange={(e) => setUrlToValidate(e.target.value)}
-            className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+            className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
             placeholder="https://growth4u.io/blog/tu-post"
           />
         </div>

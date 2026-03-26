@@ -245,7 +245,7 @@ export default function AuditTab() {
         <button
           onClick={runAudit}
           disabled={loading}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#6351d5] hover:bg-[#5242b8] disabled:opacity-50 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#3ecda5] hover:bg-[#35b894] disabled:opacity-50 text-white rounded-lg transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           {loading ? 'Analizando...' : 'Ejecutar Auditoria'}

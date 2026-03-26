@@ -420,7 +420,7 @@ export default function KeywordBriefPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition ${
                 activeTab === tab.key
-                  ? 'bg-[#6351d5] text-white'
+                  ? 'bg-[#3ecda5] text-white'
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
@@ -434,7 +434,7 @@ export default function KeywordBriefPage() {
       {/* Loading */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-[#6351d5]" />
+          <Loader2 className="w-6 h-6 animate-spin text-[#3ecda5]" />
           <span className="ml-2 text-slate-500">Cargando...</span>
         </div>
       ) : (
@@ -451,7 +451,7 @@ export default function KeywordBriefPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value as BriefStatus | 'all')}
-                    className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                    className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                   >
                     <option value="all">Todos los estados</option>
                     {BRIEF_STATUSES.map((s) => (
@@ -469,7 +469,7 @@ export default function KeywordBriefPage() {
                       placeholder="Buscar por tema, keyword o titulo..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                      className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                     />
                   </div>
                 </div>
@@ -515,7 +515,7 @@ export default function KeywordBriefPage() {
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 onClick={() => openDetail(brief)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-[#6351d5] hover:bg-slate-100 transition"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-[#3ecda5] hover:bg-slate-100 transition"
                                 title="Ver detalle"
                               >
                                 <Eye className="w-4 h-4" />
@@ -554,7 +554,7 @@ export default function KeywordBriefPage() {
             <div className="space-y-4">
               <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <Search className="w-5 h-5 text-[#6351d5]" />
+                  <Search className="w-5 h-5 text-[#3ecda5]" />
                   Investigacion de Keywords
                 </h2>
                 <textarea
@@ -562,12 +562,12 @@ export default function KeywordBriefPage() {
                   placeholder="Ej: Growth marketing para fintechs B2B, estrategias de reduccion de CAC..."
                   value={researchTopic}
                   onChange={(e) => setResearchTopic(e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30 resize-none"
+                  className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30 resize-none"
                 />
                 <button
                   onClick={handleResearch}
                   disabled={researching || !researchTopic.trim()}
-                  className="bg-[#6351d5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
+                  className="bg-[#3ecda5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
                 >
                   {researching ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -610,7 +610,7 @@ export default function KeywordBriefPage() {
                             <div
                               className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${
                                 kw.selected
-                                  ? 'bg-[#6351d5] border-[#6351d5]'
+                                  ? 'bg-[#3ecda5] border-[#3ecda5]'
                                   : 'border-slate-300'
                               }`}
                             >
@@ -632,7 +632,7 @@ export default function KeywordBriefPage() {
                             <div className="flex items-center gap-2">
                               <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-[#6351d5] rounded-full transition-all"
+                                  className="h-full bg-[#3ecda5] rounded-full transition-all"
                                   style={{ width: `${(kw.relevance / 10) * 100}%` }}
                                 />
                               </div>
@@ -647,7 +647,7 @@ export default function KeywordBriefPage() {
                     <button
                       onClick={handleSaveResearch}
                       disabled={savingResearch || researchResults.filter((k) => k.selected).length === 0}
-                      className="bg-[#6351d5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
+                      className="bg-[#3ecda5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
                     >
                       {savingResearch ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -669,7 +669,7 @@ export default function KeywordBriefPage() {
             <div className="space-y-4">
               <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-5">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#6351d5]" />
+                  <Sparkles className="w-5 h-5 text-[#3ecda5]" />
                   Generador de Briefs
                 </h2>
 
@@ -679,7 +679,7 @@ export default function KeywordBriefPage() {
                     onClick={() => setGenMode('existing')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                       genMode === 'existing'
-                        ? 'bg-[#6351d5] text-white'
+                        ? 'bg-[#3ecda5] text-white'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
@@ -689,7 +689,7 @@ export default function KeywordBriefPage() {
                     onClick={() => setGenMode('manual')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                       genMode === 'manual'
-                        ? 'bg-[#6351d5] text-white'
+                        ? 'bg-[#3ecda5] text-white'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
@@ -705,7 +705,7 @@ export default function KeywordBriefPage() {
                     <select
                       value={genSelectedBriefId}
                       onChange={(e) => setGenSelectedBriefId(e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                     >
                       <option value="">— Seleccionar —</option>
                       {researchedBriefs.map((b) => (
@@ -729,7 +729,7 @@ export default function KeywordBriefPage() {
                         placeholder="Ej: Growth marketing para fintechs"
                         value={genTopic}
                         onChange={(e) => setGenTopic(e.target.value)}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                       />
                     </div>
                     <div>
@@ -739,7 +739,7 @@ export default function KeywordBriefPage() {
                         placeholder="Ej: growth marketing fintech"
                         value={genPrimaryKw}
                         onChange={(e) => setGenPrimaryKw(e.target.value)}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                       />
                     </div>
                     <div>
@@ -751,7 +751,7 @@ export default function KeywordBriefPage() {
                         placeholder="Ej: CAC fintech, growth hacking, adquisicion usuarios"
                         value={genSecondaryKw}
                         onChange={(e) => setGenSecondaryKw(e.target.value)}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                       />
                     </div>
                   </div>
@@ -760,7 +760,7 @@ export default function KeywordBriefPage() {
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="bg-[#6351d5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
+                  className="bg-[#3ecda5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
                 >
                   {generating ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -786,7 +786,7 @@ export default function KeywordBriefPage() {
                         type="text"
                         value={genResult.suggestedTitle || ''}
                         onChange={(e) => setGenResult({ ...genResult, suggestedTitle: e.target.value })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                       />
                     </div>
 
@@ -807,7 +807,7 @@ export default function KeywordBriefPage() {
                         rows={2}
                         value={genResult.metaDescription || ''}
                         onChange={(e) => setGenResult({ ...genResult, metaDescription: e.target.value })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30 resize-none"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30 resize-none"
                       />
                     </div>
 
@@ -819,7 +819,7 @@ export default function KeywordBriefPage() {
                         onChange={(e) =>
                           setGenResult({ ...genResult, targetWordCount: parseInt(e.target.value) || 1000 })
                         }
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                       />
                     </div>
 
@@ -829,7 +829,7 @@ export default function KeywordBriefPage() {
                         type="text"
                         value={genResult.targetAudience || ''}
                         onChange={(e) => setGenResult({ ...genResult, targetAudience: e.target.value })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                       />
                     </div>
 
@@ -839,7 +839,7 @@ export default function KeywordBriefPage() {
                         rows={3}
                         value={genResult.contentAngle || ''}
                         onChange={(e) => setGenResult({ ...genResult, contentAngle: e.target.value })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30 resize-none"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30 resize-none"
                       />
                     </div>
                   </div>
@@ -861,7 +861,7 @@ export default function KeywordBriefPage() {
                               updated[idx] = e.target.value;
                               setGenResult({ ...genResult, outline: updated });
                             }}
-                            className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                            className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                           />
                           <button
                             onClick={() => {
@@ -878,7 +878,7 @@ export default function KeywordBriefPage() {
                         onClick={() =>
                           setGenResult({ ...genResult, outline: [...(genResult.outline || []), ''] })
                         }
-                        className="flex items-center gap-1 text-sm text-[#6351d5] hover:text-[#4a3cb0] transition"
+                        className="flex items-center gap-1 text-sm text-[#3ecda5] hover:text-[#4a3cb0] transition"
                       >
                         <Plus className="w-4 h-4" />
                         Agregar seccion
@@ -901,7 +901,7 @@ export default function KeywordBriefPage() {
                             <div
                               className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${
                                 link.selected
-                                  ? 'bg-[#6351d5] border-[#6351d5]'
+                                  ? 'bg-[#3ecda5] border-[#3ecda5]'
                                   : 'border-slate-300'
                               }`}
                               onClick={() => {
@@ -924,7 +924,7 @@ export default function KeywordBriefPage() {
                     <button
                       onClick={handleSaveGeneratedBrief}
                       disabled={savingBrief}
-                      className="bg-[#6351d5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
+                      className="bg-[#3ecda5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
                     >
                       {savingBrief ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -977,7 +977,7 @@ export default function KeywordBriefPage() {
                       type="text"
                       value={editForm.topic || ''}
                       onChange={(e) => setEditForm({ ...editForm, topic: e.target.value })}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -987,7 +987,7 @@ export default function KeywordBriefPage() {
                         type="text"
                         value={editForm.primaryKeyword || ''}
                         onChange={(e) => setEditForm({ ...editForm, primaryKeyword: e.target.value })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                       />
                     </div>
                     <div>
@@ -998,7 +998,7 @@ export default function KeywordBriefPage() {
                         onChange={(e) =>
                           setEditForm({ ...editForm, targetWordCount: parseInt(e.target.value) || 1000 })
                         }
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                       />
                     </div>
                   </div>
@@ -1008,7 +1008,7 @@ export default function KeywordBriefPage() {
                       type="text"
                       value={editForm.suggestedTitle || ''}
                       onChange={(e) => setEditForm({ ...editForm, suggestedTitle: e.target.value })}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                     />
                   </div>
                   <div>
@@ -1017,7 +1017,7 @@ export default function KeywordBriefPage() {
                       rows={2}
                       value={editForm.metaDescription || ''}
                       onChange={(e) => setEditForm({ ...editForm, metaDescription: e.target.value })}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30 resize-none"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30 resize-none"
                     />
                   </div>
                   <div>
@@ -1026,7 +1026,7 @@ export default function KeywordBriefPage() {
                       type="text"
                       value={editForm.targetAudience || ''}
                       onChange={(e) => setEditForm({ ...editForm, targetAudience: e.target.value })}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                     />
                   </div>
                   <div>
@@ -1035,7 +1035,7 @@ export default function KeywordBriefPage() {
                       rows={3}
                       value={editForm.contentAngle || ''}
                       onChange={(e) => setEditForm({ ...editForm, contentAngle: e.target.value })}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30 resize-none"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30 resize-none"
                     />
                   </div>
                   <div>
@@ -1052,7 +1052,7 @@ export default function KeywordBriefPage() {
                               updated[idx] = e.target.value;
                               setEditForm({ ...editForm, outline: updated });
                             }}
-                            className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#6351d5]/30"
+                            className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3ecda5]/30"
                           />
                           <button
                             onClick={() => {
@@ -1069,7 +1069,7 @@ export default function KeywordBriefPage() {
                         onClick={() =>
                           setEditForm({ ...editForm, outline: [...(editForm.outline || []), ''] })
                         }
-                        className="flex items-center gap-1 text-sm text-[#6351d5] hover:text-[#4a3cb0] transition"
+                        className="flex items-center gap-1 text-sm text-[#3ecda5] hover:text-[#4a3cb0] transition"
                       >
                         <Plus className="w-4 h-4" />
                         Agregar seccion
@@ -1182,7 +1182,7 @@ export default function KeywordBriefPage() {
                       <span className="text-xs font-medium text-slate-400 uppercase">Enlaces internos</span>
                       <ul className="mt-2 space-y-1">
                         {selectedBrief.internalLinks.map((url, idx) => (
-                          <li key={idx} className="flex items-center gap-2 text-sm text-[#6351d5]">
+                          <li key={idx} className="flex items-center gap-2 text-sm text-[#3ecda5]">
                             <ExternalLink className="w-3 h-3 flex-shrink-0" />
                             <span className="truncate">{url}</span>
                           </li>
@@ -1221,7 +1221,7 @@ export default function KeywordBriefPage() {
                     <button
                       onClick={saveEdit}
                       disabled={savingBrief}
-                      className="bg-[#6351d5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
+                      className="bg-[#3ecda5] text-white hover:bg-[#4a3cb0] disabled:opacity-50 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
                     >
                       {savingBrief ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       Guardar
@@ -1239,7 +1239,7 @@ export default function KeywordBriefPage() {
                     {selectedBrief.status === 'brief_ready' && (
                       <button
                         onClick={() => handleSendToBlog(selectedBrief)}
-                        className="bg-[#6351d5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
+                        className="bg-[#3ecda5] text-white hover:bg-[#4a3cb0] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition"
                       >
                         <Send className="w-4 h-4" />
                         Enviar a Blog

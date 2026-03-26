@@ -65,7 +65,7 @@ export default function NewsletterCTA() {
             href={BOOKING_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 text-center px-5 py-3 bg-[#6351d5] hover:bg-[#5242b8] text-white font-semibold rounded-xl text-sm transition-all"
+            className="flex-1 text-center px-5 py-3 bg-[#3ecda5] hover:bg-[#35b894] text-white font-semibold rounded-xl text-sm transition-all"
           >
             Reservar consulta gratuita →
           </a>
@@ -76,7 +76,7 @@ export default function NewsletterCTA() {
 
   if (step === 'form') {
     return (
-      <div className="my-10 bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-2xl p-6">
+      <div className="my-10 bg-[#3ecda5]/5 border border-[#3ecda5]/20 rounded-2xl p-6">
         <p className="font-bold text-[#032149] mb-1">Suscríbete a la newsletter</p>
         <p className="text-slate-500 text-sm mb-4">Una vez por semana. Sin spam. Puedes darte de baja cuando quieras.</p>
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -85,7 +85,7 @@ export default function NewsletterCTA() {
             value={formData.nombre}
             onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
             placeholder="Tu nombre"
-            className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent bg-white text-sm"
+            className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent bg-white text-sm"
             required
           />
           <input
@@ -93,13 +93,13 @@ export default function NewsletterCTA() {
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="tu@empresa.com"
-            className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent bg-white text-sm"
+            className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent bg-white text-sm"
             required
           />
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-3 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-300 text-white font-bold rounded-xl text-sm transition-all whitespace-nowrap"
+            className="px-6 py-3 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-300 text-white font-bold rounded-xl text-sm transition-all whitespace-nowrap"
           >
             {submitting ? 'Enviando...' : 'Suscribirme →'}
           </button>
@@ -110,10 +110,10 @@ export default function NewsletterCTA() {
   }
 
   return (
-    <div className="my-10 bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-2xl p-6 flex items-center justify-between gap-4 flex-wrap">
+    <div className="my-10 bg-[#3ecda5]/5 border border-[#3ecda5]/20 rounded-2xl p-6 flex items-center justify-between gap-4 flex-wrap">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-[#6351d5]/10 rounded-full flex items-center justify-center flex-shrink-0">
-          <svg className="w-5 h-5 text-[#6351d5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="w-10 h-10 bg-[#3ecda5]/10 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg className="w-5 h-5 text-[#3ecda5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
           </svg>
         </div>
@@ -124,7 +124,7 @@ export default function NewsletterCTA() {
       </div>
       <button
         onClick={() => setStep('form')}
-        className="px-5 py-2.5 bg-[#6351d5] hover:bg-[#5242b8] text-white font-bold rounded-full text-sm transition-all hover:scale-105 whitespace-nowrap"
+        className="px-5 py-2.5 bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold rounded-full text-sm transition-all hover:scale-105 whitespace-nowrap"
       >
         Suscribirme gratis →
       </button>

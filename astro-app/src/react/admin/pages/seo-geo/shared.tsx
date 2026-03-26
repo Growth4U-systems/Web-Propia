@@ -29,7 +29,7 @@ export function MetricInfoTooltip({ metricKey }: { metricKey: string }) {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="p-0.5 text-slate-300 hover:text-[#6351d5] transition-colors"
+        className="p-0.5 text-slate-300 hover:text-[#3ecda5] transition-colors"
         title="Por que medimos esto"
       >
         <Info className="w-3.5 h-3.5" />
@@ -43,7 +43,7 @@ export function MetricInfoTooltip({ metricKey }: { metricKey: string }) {
               <p className="text-xs text-slate-600 mt-0.5">{info.why}</p>
             </div>
             <div>
-              <span className="text-xs font-medium text-[#6351d5] uppercase tracking-wide">Como mejorar</span>
+              <span className="text-xs font-medium text-[#3ecda5] uppercase tracking-wide">Como mejorar</span>
               <p className="text-xs text-slate-600 mt-0.5">{info.improve}</p>
             </div>
           </div>
@@ -134,8 +134,8 @@ export function SectionHeader({
   return (
     <div className="mb-4 flex items-start gap-3">
       {Icon && (
-        <div className="p-2 bg-[#6351d5]/10 rounded-lg mt-0.5">
-          <Icon className="w-5 h-5 text-[#6351d5]" />
+        <div className="p-2 bg-[#3ecda5]/10 rounded-lg mt-0.5">
+          <Icon className="w-5 h-5 text-[#3ecda5]" />
         </div>
       )}
       <div className="flex-1">
@@ -355,7 +355,7 @@ export function RecommendationCard({
             <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide bg-slate-100 px-1.5 py-0.5 rounded">
               {sourceLabels[rec.source] || rec.source}
             </span>
-            <span className="text-xs text-[#6351d5] font-semibold">
+            <span className="text-xs text-[#3ecda5] font-semibold">
               +{rec.expectedImpactPct}% impacto
             </span>
           </div>
@@ -417,7 +417,7 @@ export function RecommendationCard({
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="p-1.5 text-slate-400 hover:text-[#6351d5] hover:bg-[#6351d5]/5 rounded-lg transition-colors"
+          className="p-1.5 text-slate-400 hover:text-[#3ecda5] hover:bg-[#3ecda5]/5 rounded-lg transition-colors"
         >
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
@@ -450,7 +450,7 @@ export function IssueCard({ issue }: { issue: SEOIssue }) {
             <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide bg-slate-100 px-1.5 py-0.5 rounded">
               {typeLabels[issue.type] || issue.type}
             </span>
-            <span className="text-xs text-[#6351d5] font-semibold">
+            <span className="text-xs text-[#3ecda5] font-semibold">
               +{issue.expectedImpactPct}% impacto estimado
             </span>
           </div>
@@ -469,7 +469,7 @@ export function IssueCard({ issue }: { issue: SEOIssue }) {
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="p-1.5 text-slate-400 hover:text-[#6351d5] hover:bg-[#6351d5]/5 rounded-lg transition-colors"
+          className="p-1.5 text-slate-400 hover:text-[#3ecda5] hover:bg-[#3ecda5]/5 rounded-lg transition-colors"
         >
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
@@ -484,7 +484,7 @@ export function IssueCard({ issue }: { issue: SEOIssue }) {
 export function LoadingSpinner({ text = 'Cargando...' }: { text?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12">
-      <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin mb-3" />
+      <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin mb-3" />
       <p className="text-slate-500 text-sm">{text}</p>
     </div>
   );

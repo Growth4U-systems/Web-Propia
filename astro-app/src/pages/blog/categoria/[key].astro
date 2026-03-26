@@ -115,7 +115,7 @@ const popularPosts = uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug)).slice(0, 
         </div>
         <div class="flex items-center gap-4">
           <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
-             class="hidden sm:inline-flex bg-white text-[#032149] font-bold py-2 px-5 rounded-full text-sm transition-all duration-200 hover:bg-white/90">
+             class="hidden sm:inline-flex bg-[#3ecda5] text-white font-bold py-2 px-5 rounded-full text-sm transition-all duration-200 hover:bg-[#35b894]">
             Agenda tu demo
           </a>
         </div>
@@ -154,7 +154,7 @@ const popularPosts = uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug)).slice(0, 
                   </div>
                   <div class="p-4">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category || cat.label}</span>
-                    <h3 class="font-extrabold text-[#032149] group-hover/card:text-[#6351d5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
+                    <h3 class="font-extrabold text-[#032149] group-hover/card:text-[#3ecda5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
                   </div>
                 </a>
               ))}
@@ -166,24 +166,24 @@ const popularPosts = uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug)).slice(0, 
         <aside class="hidden lg:block">
           <div class="sticky top-28 space-y-6">
             <div class="rounded-xl overflow-hidden shadow-sm">
-              <div class="bg-[#6351d5] text-white text-center font-bold py-2.5 px-4 text-sm">
+              <div class="bg-[#3ecda5] text-white text-center font-bold py-2.5 px-4 text-sm">
                 Artículos más leídos
               </div>
               <div class="bg-white divide-y divide-slate-100">
                 {popularPosts.map((post) => (
                   <a href={`/blog/${post.slug}/`} class="block px-4 py-3 hover:bg-slate-50 transition-colors group/pop">
-                    <p class="font-semibold text-sm text-[#032149] group-hover/pop:text-[#6351d5] transition-colors line-clamp-2 leading-snug">{post.title}</p>
-                    <span class="text-[#6351d5] text-xs font-medium mt-1 inline-block">Leer artículo</span>
+                    <p class="font-semibold text-sm text-[#032149] group-hover/pop:text-[#3ecda5] transition-colors line-clamp-2 leading-snug">{post.title}</p>
+                    <span class="text-[#3ecda5] text-xs font-medium mt-1 inline-block">Leer artículo</span>
                   </a>
                 ))}
               </div>
             </div>
 
-            <div class="bg-gradient-to-br from-[#032149] to-[#6351d5] rounded-xl p-5 text-center">
+            <div class="bg-gradient-to-br from-[#032149] to-[#3ecda5] rounded-xl p-5 text-center">
               <p class="text-white font-bold mb-1">¿Listo para escalar?</p>
               <p class="text-white/60 text-xs mb-4">Consulta estratégica gratuita de 30 min.</p>
               <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer"
-                 class="inline-block bg-white text-[#6351d5] font-bold py-2 px-5 rounded-full text-sm hover:shadow-lg transition-all">
+                 class="inline-block bg-white text-[#3ecda5] font-bold py-2 px-5 rounded-full text-sm hover:shadow-lg transition-all">
                 Agenda tu demo
               </a>
             </div>
@@ -194,7 +194,7 @@ const popularPosts = uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug)).slice(0, 
 
       <!-- Volver al blog -->
       <div class="text-center mt-12">
-        <a href="/blog/" class="text-[#6351d5] font-semibold text-sm hover:underline">&larr; Volver al blog</a>
+        <a href="/blog/" class="text-[#3ecda5] font-semibold text-sm hover:underline">&larr; Volver al blog</a>
       </div>
 
     </div>
@@ -205,10 +205,10 @@ const popularPosts = uniquePosts.filter(p => PILLAR_SLUGS.has(p.slug)).slice(0, 
   <style>
     .blog-header-gradient-sub div::-webkit-scrollbar { display: none; }
     .blog-header-gradient {
-      background: linear-gradient(135deg, #6351d5 0%, #3f45fe 40%, #45b6f7 75%, #0faec1 100%);
+      background: linear-gradient(135deg, #3ecda5 0%, #2ab89a 40%, #45b6f7 75%, #0faec1 100%);
     }
     .blog-header-gradient-sub {
-      background: linear-gradient(135deg, #5242b8 0%, #3539d6 40%, #3a9fd6 75%, #0d9aaa 100%);
+      background: linear-gradient(135deg, #35b894 0%, #3539d6 40%, #3a9fd6 75%, #0d9aaa 100%);
     }
   </style>
 </BaseLayout>

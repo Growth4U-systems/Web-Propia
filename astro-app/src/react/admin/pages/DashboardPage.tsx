@@ -64,27 +64,27 @@ export default function DashboardPage() {
       <div>
         <h2 className="text-lg font-bold text-[#032149] mb-4">Contenido publicado</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <Link to="/admin/blog/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#6351d5]/40 transition-colors">
-            <FileText className="w-6 h-6 text-[#6351d5] mb-3" />
+          <Link to="/admin/blog/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#3ecda5]/40 transition-colors">
+            <FileText className="w-6 h-6 text-[#3ecda5] mb-3" />
             <p className="text-3xl font-bold text-[#032149]">{counts.blogs}</p>
             <p className="text-sm text-slate-500 mt-1">Blog posts</p>
           </Link>
-          <Link to="/admin/articulos/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#6351d5]/40 transition-colors">
+          <Link to="/admin/articulos/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#3ecda5]/40 transition-colors">
             <BookOpen className="w-6 h-6 text-[#45b6f7] mb-3" />
             <p className="text-3xl font-bold text-[#032149]">{counts.articulos}</p>
             <p className="text-sm text-slate-500 mt-1">Artículos</p>
           </Link>
-          <Link to="/admin/casos-de-exito/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#6351d5]/40 transition-colors">
+          <Link to="/admin/casos-de-exito/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#3ecda5]/40 transition-colors">
             <Trophy className="w-6 h-6 text-[#0faec1] mb-3" />
             <p className="text-3xl font-bold text-[#032149]">{counts.casos}</p>
             <p className="text-sm text-slate-500 mt-1">Casos de éxito</p>
           </Link>
-          <Link to="/admin/lead-magnets/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#6351d5]/40 transition-colors">
+          <Link to="/admin/lead-magnets/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#3ecda5]/40 transition-colors">
             <Download className="w-6 h-6 text-emerald-500 mb-3" />
             <p className="text-3xl font-bold text-[#032149]">{counts.leadMagnets}</p>
             <p className="text-sm text-slate-500 mt-1">Lead magnets</p>
           </Link>
-          <Link to="/admin/feedback/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#6351d5]/40 transition-colors">
+          <Link to="/admin/feedback/" className="bg-white border border-slate-200 rounded-xl p-5 hover:border-[#3ecda5]/40 transition-colors">
             <MessageSquare className="w-6 h-6 text-orange-400 mb-3" />
             <p className="text-3xl font-bold text-[#032149]">{counts.feedback}</p>
             <p className="text-sm text-slate-500 mt-1">Feedback</p>

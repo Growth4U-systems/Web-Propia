@@ -207,7 +207,7 @@ export default function LeadMagnetsAdminPage() {
           <button onClick={triggerDeploy} disabled={deploying} className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-[#032149] rounded-lg transition-colors">
             <Rocket className="w-5 h-5" />Publicar
           </button>
-          <button onClick={handleNew} className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors">
+          <button onClick={handleNew} className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors">
             <Plus className="w-5 h-5" />Nuevo Lead Magnet
           </button>
         </div>
@@ -221,7 +221,7 @@ export default function LeadMagnetsAdminPage() {
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" checked={publishAfterSave} onChange={(e) => setPublishAfterSave(e.target.checked)} className="sr-only peer" />
-          <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6351d5]"></div>
+          <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3ecda5]"></div>
         </label>
       </div>
 
@@ -230,7 +230,7 @@ export default function LeadMagnetsAdminPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-6">
           <div className="flex items-center justify-between">
             <span className="text-slate-400">Total</span>
-            <Download className="w-5 h-5 text-[#6351d5]" />
+            <Download className="w-5 h-5 text-[#3ecda5]" />
           </div>
           <p className="text-3xl font-bold text-[#032149] mt-2">{magnets.length}</p>
         </div>
@@ -254,7 +254,7 @@ export default function LeadMagnetsAdminPage() {
           <div className="p-8 text-center">
             <Download className="w-12 h-12 mx-auto mb-3 text-slate-600" />
             <p className="text-slate-400">No hay lead magnets todavía</p>
-            <button onClick={handleNew} className="mt-4 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors">
+            <button onClick={handleNew} className="mt-4 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors">
               Crear primer lead magnet
             </button>
           </div>
@@ -267,7 +267,7 @@ export default function LeadMagnetsAdminPage() {
                     {magnet.image ? (
                       <img src={magnet.image} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#6351d5] to-[#3f45fe]">
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#3ecda5] to-[#2ab89a]">
                         <Download className="w-6 h-6 text-[#032149]" />
                       </div>
                     )}
@@ -284,7 +284,7 @@ export default function LeadMagnetsAdminPage() {
                       <p className="text-slate-500 text-xs">growth4u.io/recursos/{magnet.slug}/</p>
                       <button
                         onClick={() => handleCopyUrl(magnet.slug)}
-                        className="p-0.5 text-slate-400 hover:text-[#6351d5] transition-colors"
+                        className="p-0.5 text-slate-400 hover:text-[#3ecda5] transition-colors"
                         title="Copiar URL"
                       >
                         {copiedSlug === magnet.slug
@@ -375,7 +375,7 @@ export default function LeadMagnetsAdminPage() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="Ej: Guía GEO para Empresas Tech 2026"
                   required
                 />
@@ -384,13 +384,13 @@ export default function LeadMagnetsAdminPage() {
               {/* Slug */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  URL (slug) * <span className="text-slate-500 font-normal">— growth4u.io/recursos/<span className="text-[#6351d5]">{formData.slug || 'tu-slug'}</span>/</span>
+                  URL (slug) * <span className="text-slate-500 font-normal">— growth4u.io/recursos/<span className="text-[#3ecda5]">{formData.slug || 'tu-slug'}</span>/</span>
                 </label>
                 <input
                   type="text"
                   value={formData.slug}
                   onChange={(e) => handleSlugChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] font-mono"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] font-mono"
                   placeholder="guia-geo-empresas tech-2026"
                   required
                 />
@@ -402,7 +402,7 @@ export default function LeadMagnetsAdminPage() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-28"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-28"
                   placeholder="Describe qué recibirá el lead y por qué es valioso..."
                 />
               </div>
@@ -415,7 +415,7 @@ export default function LeadMagnetsAdminPage() {
                 <textarea
                   value={formData.excerpt}
                   onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] font-mono text-sm h-48"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] font-mono text-sm h-48"
                   placeholder="## El problema que resuelves&#10;&#10;Escribe aquí el contenido libre que verán todos los visitantes antes de dejar sus datos..."
                 />
               </div>
@@ -428,7 +428,7 @@ export default function LeadMagnetsAdminPage() {
                 <textarea
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] font-mono text-sm h-96"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] font-mono text-sm h-96"
                   placeholder="## Parte 1: ...&#10;&#10;El framework completo, checklist, plan de acción..."
                 />
               </div>
@@ -442,7 +442,7 @@ export default function LeadMagnetsAdminPage() {
                   type="url"
                   value={formData.contentUrl}
                   onChange={(e) => setFormData({ ...formData, contentUrl: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]"
                   placeholder="https://drive.google.com/... (dejar vacío si el contenido es inline)"
                 />
               </div>
@@ -460,7 +460,7 @@ export default function LeadMagnetsAdminPage() {
                 ) : (
                   <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type.startsWith('image/')) uploadImageToCloudinary(f); }} className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-slate-500 transition-colors">
                     {uploadingImage ? (
-                      <div className="flex flex-col items-center gap-2"><Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" /><span className="text-slate-400">Subiendo...</span></div>
+                      <div className="flex flex-col items-center gap-2"><Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" /><span className="text-slate-400">Subiendo...</span></div>
                     ) : (
                       <>
                         <Upload className="w-8 h-8 text-slate-500 mx-auto mb-2" />
@@ -473,7 +473,7 @@ export default function LeadMagnetsAdminPage() {
                           <Link className="w-3 h-3" />{showUrlInput ? 'Ocultar' : 'O pegar URL'}
                         </button>
                         {showUrlInput && (
-                          <input type="url" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} className="w-full mt-3 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5]" placeholder="https://..." />
+                          <input type="url" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} className="w-full mt-3 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[#032149] text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5]" placeholder="https://..." />
                         )}
                       </>
                     )}
@@ -489,7 +489,7 @@ export default function LeadMagnetsAdminPage() {
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" checked={formData.published} onChange={(e) => setFormData({ ...formData, published: e.target.checked })} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6351d5]"></div>
+                  <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3ecda5]"></div>
                 </label>
               </div>
 
@@ -498,7 +498,7 @@ export default function LeadMagnetsAdminPage() {
                 <button type="button" onClick={() => setShowEditor(false)} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-[#032149] rounded-lg transition-colors">
                   Cancelar
                 </button>
-                <button type="submit" disabled={saving} className="flex items-center gap-2 px-6 py-2 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-600 text-white rounded-lg transition-colors">
+                <button type="submit" disabled={saving} className="flex items-center gap-2 px-6 py-2 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-600 text-white rounded-lg transition-colors">
                   <Save className="w-4 h-4" />
                   {saving ? 'Guardando...' : 'Guardar'}
                 </button>

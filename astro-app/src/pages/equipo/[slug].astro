@@ -96,7 +96,7 @@ const breadcrumbSchema = {
         <!-- Info -->
         <div class="flex-1">
           <h1 class="text-3xl md:text-4xl font-extrabold text-[#032149] mb-2">{author.name}</h1>
-          <p class="text-lg font-bold text-[#6351d5] mb-4">{author.role}</p>
+          <p class="text-lg font-bold text-[#3ecda5] mb-4">{author.role}</p>
           <p class="text-slate-600 leading-relaxed mb-6">{author.bioLong}</p>
 
           <!-- Credentials -->
@@ -143,7 +143,7 @@ const breadcrumbSchema = {
             return (
               <a
                 href={`/blog/${post.slug}/`}
-                class="group bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-[#6351d5]/20 transition-all overflow-hidden"
+                class="group bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-[#3ecda5]/20 transition-all overflow-hidden"
               >
                 {post.image && (
                   <div class="aspect-video overflow-hidden bg-slate-100">
@@ -158,8 +158,8 @@ const breadcrumbSchema = {
                   </div>
                 )}
                 <div class="p-4">
-                  <span class="text-xs font-bold text-[#6351d5] uppercase tracking-wider">{post.category}</span>
-                  <h3 class="text-sm font-bold text-[#032149] mt-1 mb-2 line-clamp-2 group-hover:text-[#6351d5] transition-colors">
+                  <span class="text-xs font-bold text-[#3ecda5] uppercase tracking-wider">{post.category}</span>
+                  <h3 class="text-sm font-bold text-[#032149] mt-1 mb-2 line-clamp-2 group-hover:text-[#3ecda5] transition-colors">
                     {post.title}
                   </h3>
                   <div class="flex items-center gap-2 text-xs text-slate-400">
@@ -176,7 +176,7 @@ const breadcrumbSchema = {
           <div class="text-center mt-8">
             <a
               href="/blog/"
-              class="inline-flex items-center gap-2 text-[#6351d5] font-bold text-sm hover:underline"
+              class="inline-flex items-center gap-2 text-[#3ecda5] font-bold text-sm hover:underline"
             >
               Ver todos los artículos →
             </a>
@@ -192,7 +192,7 @@ const breadcrumbSchema = {
         {AUTHORS.filter((a) => a.slug !== author.slug).map((member) => (
           <a
             href={`/equipo/${member.slug}/`}
-            class="group flex items-center gap-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-[#6351d5]/20 transition-all p-4"
+            class="group flex items-center gap-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-[#3ecda5]/20 transition-all p-4"
           >
             <img
               src={member.photo}
@@ -203,8 +203,8 @@ const breadcrumbSchema = {
               class="w-16 h-16 object-cover rounded-lg filter grayscale group-hover:grayscale-0 transition-all"
             />
             <div>
-              <h3 class="font-bold text-[#032149] group-hover:text-[#6351d5] transition-colors">{member.name}</h3>
-              <p class="text-sm text-[#6351d5] font-medium">{member.role}</p>
+              <h3 class="font-bold text-[#032149] group-hover:text-[#3ecda5] transition-colors">{member.name}</h3>
+              <p class="text-sm text-[#3ecda5] font-medium">{member.role}</p>
             </div>
           </a>
         ))}
@@ -223,7 +223,7 @@ const breadcrumbSchema = {
           href={BOOKING_LINK}
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 bg-[#6351d5] hover:bg-[#5242b8] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#6351d5]/30"
+          class="inline-flex items-center gap-2 bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#3ecda5]/30"
         >
           Agendar sesión gratuita →
         </a>

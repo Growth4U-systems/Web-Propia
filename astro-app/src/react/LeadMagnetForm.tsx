@@ -52,14 +52,14 @@ export default function LeadMagnetForm({ magnetSlug, magnetTitle, contentUrl }: 
           href={contentUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-[#6351d5] hover:bg-[#5242b8] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#6351d5]/20"
+          className="inline-flex items-center gap-2 bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#3ecda5]/20"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" />
           </svg>
           Descargar ahora
         </a>
-        <p className="text-slate-400 text-xs mt-4">Si el botón no funciona, <a href={contentUrl} target="_blank" rel="noopener noreferrer" className="text-[#6351d5] underline">haz clic aquí</a>.</p>
+        <p className="text-slate-400 text-xs mt-4">Si el botón no funciona, <a href={contentUrl} target="_blank" rel="noopener noreferrer" className="text-[#3ecda5] underline">haz clic aquí</a>.</p>
       </div>
     );
   }
@@ -67,8 +67,8 @@ export default function LeadMagnetForm({ magnetSlug, magnetTitle, contentUrl }: 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-lg">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#6351d5]/10 rounded-full flex items-center justify-center flex-shrink-0">
-          <svg className="w-5 h-5 text-[#6351d5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="w-10 h-10 bg-[#3ecda5]/10 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg className="w-5 h-5 text-[#3ecda5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" />
           </svg>
         </div>
@@ -86,7 +86,7 @@ export default function LeadMagnetForm({ magnetSlug, magnetTitle, contentUrl }: 
             value={formData.nombre}
             onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
             placeholder="María García"
-            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent"
             required
           />
         </div>
@@ -98,7 +98,7 @@ export default function LeadMagnetForm({ magnetSlug, magnetTitle, contentUrl }: 
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="maria@tuempresa.com"
-            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent"
             required
           />
         </div>
@@ -110,7 +110,7 @@ export default function LeadMagnetForm({ magnetSlug, magnetTitle, contentUrl }: 
             value={formData.tag}
             onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
             placeholder="Ej: GEO para empresas tech, reducir CAC..."
-            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent"
           />
         </div>
 
@@ -119,7 +119,7 @@ export default function LeadMagnetForm({ magnetSlug, magnetTitle, contentUrl }: 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full py-4 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-300 text-white font-bold rounded-xl text-lg transition-all hover:scale-[1.02] shadow-lg shadow-[#6351d5]/20 mt-2"
+          className="w-full py-4 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-300 text-white font-bold rounded-xl text-lg transition-all hover:scale-[1.02] shadow-lg shadow-[#3ecda5]/20 mt-2"
         >
           {submitting ? 'Enviando...' : 'Descargar gratis →'}
         </button>

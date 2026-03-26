@@ -53,7 +53,7 @@ export default function GeoTab() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-[#032149] flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#6351d5]" />
+              <Sparkles className="w-5 h-5 text-[#3ecda5]" />
               Analisis GEO Automatico
             </h2>
             <p className="text-slate-400 text-sm mt-1">Pregunta a motores de IA sobre tu marca automaticamente</p>
@@ -61,7 +61,7 @@ export default function GeoTab() {
           <button
             onClick={runAutoGEO}
             disabled={autoLoading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#6351d5] hover:bg-[#5242b8] disabled:opacity-50 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#3ecda5] hover:bg-[#35b894] disabled:opacity-50 text-white rounded-lg transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${autoLoading ? 'animate-spin' : ''}`} />
             {autoLoading ? 'Analizando...' : 'Ejecutar Analisis GEO'}
@@ -75,9 +75,9 @@ export default function GeoTab() {
           <div className="space-y-4">
             {/* GEO Score + Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-xl p-6 text-center">
+              <div className="bg-[#3ecda5]/5 border border-[#3ecda5]/20 rounded-xl p-6 text-center">
                 <p className="text-sm text-slate-500 mb-1">GEO Score</p>
-                <p className="text-5xl font-bold text-[#6351d5]">{geoScore}</p>
+                <p className="text-5xl font-bold text-[#3ecda5]">{geoScore}</p>
                 <p className="text-xs text-slate-400 mt-1">/100</p>
               </div>
               <MetricCard
@@ -124,7 +124,7 @@ export default function GeoTab() {
                   {result.citedUrls.length > 0 && (
                     <div className="mt-2">
                       {result.citedUrls.map((url, j) => (
-                        <a key={j} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#6351d5] hover:underline flex items-center gap-1">
+                        <a key={j} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#3ecda5] hover:underline flex items-center gap-1">
                           <Link2 className="w-3 h-3" /> {url}
                         </a>
                       ))}

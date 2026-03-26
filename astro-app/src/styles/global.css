@@ -34,7 +34,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(to right, #0284c7, #06b6d4);
+  background: linear-gradient(to right, #3ecda5, #2ab89a);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -73,7 +73,7 @@ body {
 }
 
 .nav-header {
-  background: rgba(45, 70, 160, 0.8);
+  background: rgba(28, 49, 72, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -92,7 +92,7 @@ body {
   inset: -1.5px;
   border-radius: 9999px;
   padding: 1.5px;
-  background: linear-gradient(135deg, #6351d5, #45b6f7, #0faec1);
+  background: linear-gradient(135deg, #1c3148, #3ecda5, #2ab89a);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;

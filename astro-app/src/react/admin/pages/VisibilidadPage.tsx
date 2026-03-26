@@ -34,7 +34,7 @@ const tabs: { key: Tab; label: string; icon: React.ComponentType<{ className?: s
 function TabFallback() {
   return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 text-[#6351d5] animate-spin" />
+      <Loader2 className="w-8 h-8 text-[#3ecda5] animate-spin" />
     </div>
   );
 }
@@ -61,13 +61,13 @@ export default function VisibilidadPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
                 isActive
-                  ? 'border-[#6351d5] text-[#6351d5] bg-[#6351d5]/5'
+                  ? 'border-[#3ecda5] text-[#3ecda5] bg-[#3ecda5]/5'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               <Icon className="w-4 h-4" />
               {tab.label}
-              <span className={`hidden lg:inline text-xs ${isActive ? 'text-[#6351d5]/60' : 'text-slate-400'}`}>
+              <span className={`hidden lg:inline text-xs ${isActive ? 'text-[#3ecda5]/60' : 'text-slate-400'}`}>
                 — {tab.description}
               </span>
             </button>

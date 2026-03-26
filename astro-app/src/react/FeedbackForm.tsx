@@ -75,7 +75,7 @@ function QuestionField({ label, name, value, onChange, placeholder, required = f
         placeholder={placeholder}
         required={required}
         rows={3}
-        className="w-full p-4 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent transition-all resize-none text-slate-700 placeholder-slate-400"
+        className="w-full p-4 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent transition-all resize-none text-slate-700 placeholder-slate-400"
       />
     </div>
   );
@@ -102,7 +102,7 @@ function InputField({ label, name, value, onChange, placeholder, type = 'text', 
         onChange={(e) => onChange(name, e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full p-4 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-[#6351d5] focus:border-transparent transition-all text-slate-700 placeholder-slate-400"
+        className="w-full p-4 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent transition-all text-slate-700 placeholder-slate-400"
       />
     </div>
   );
@@ -164,7 +164,7 @@ export default function FeedbackForm() {
             <a href="/" className="flex items-center gap-0 cursor-pointer">
               <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U" className="h-6 w-auto" />
             </a>
-            <a href="/" className="text-sm font-bold text-[#6351d5] flex items-center gap-2 hover:underline">
+            <a href="/" className="text-sm font-bold text-[#3ecda5] flex items-center gap-2 hover:underline">
               Volver a Home
             </a>
           </div>
@@ -204,7 +204,7 @@ export default function FeedbackForm() {
               </a>
             </div>
 
-            <a href="/" className="inline-flex items-center gap-2 text-[#6351d5] font-bold hover:underline">
+            <a href="/" className="inline-flex items-center gap-2 text-[#3ecda5] font-bold hover:underline">
               Volver a la página principal
             </a>
           </div>
@@ -220,7 +220,7 @@ export default function FeedbackForm() {
           <a href="/" className="flex items-center gap-0 cursor-pointer">
             <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U" className="h-6 w-auto" />
           </a>
-          <a href="/" className="text-sm font-bold text-[#6351d5] flex items-center gap-2 hover:underline">
+          <a href="/" className="text-sm font-bold text-[#3ecda5] flex items-center gap-2 hover:underline">
             Volver a Home
           </a>
         </div>
@@ -295,7 +295,7 @@ export default function FeedbackForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#6351d5] hover:bg-[#3f45fe] disabled:bg-slate-400 text-white font-bold py-4 px-8 rounded-full transition-all shadow-lg disabled:cursor-not-allowed"
+                className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#3ecda5] hover:bg-[#2ab89a] disabled:bg-slate-400 text-white font-bold py-4 px-8 rounded-full transition-all shadow-lg disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Enviando...' : 'Enviar Feedback'}
               </button>

@@ -832,7 +832,7 @@ export default function SeoPage() {
           onClick={() => setActiveTab('seo')}
           className={`px-6 py-3 text-sm font-semibold rounded-t-lg transition-colors ${
             activeTab === 'seo'
-              ? 'bg-[#6351d5] text-white'
+              ? 'bg-[#3ecda5] text-white'
               : 'text-slate-500 hover:text-[#032149]'
           }`}
         >
@@ -842,7 +842,7 @@ export default function SeoPage() {
           onClick={() => setActiveTab('geo')}
           className={`px-6 py-3 text-sm font-semibold rounded-t-lg transition-colors ${
             activeTab === 'geo'
-              ? 'bg-[#6351d5] text-white'
+              ? 'bg-[#3ecda5] text-white'
               : 'text-slate-500 hover:text-[#032149]'
           }`}
         >
@@ -952,7 +952,7 @@ export default function SeoPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowGscForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             Añadir datos GSC
@@ -1068,7 +1068,7 @@ export default function SeoPage() {
           <button
             onClick={fetchWebVitals}
             disabled={loadingVitals}
-            className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-600 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-600 text-white rounded-lg transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${loadingVitals ? 'animate-spin' : ''}`} />
             {loadingVitals ? 'Analizando (30-60s)...' : 'Analizar Web Vitals'}
@@ -1189,7 +1189,7 @@ export default function SeoPage() {
             </p>
             <button
               onClick={() => setShowAnalyticsForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors text-sm"
             >
               <Plus className="w-4 h-4" />
               Añadir datos ahora
@@ -1200,7 +1200,7 @@ export default function SeoPage() {
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => setShowAnalyticsForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             Añadir datos de GA
@@ -1344,7 +1344,7 @@ export default function SeoPage() {
           <button
             onClick={syncDataForSEO}
             disabled={syncingDataForSEO}
-            className="flex items-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-600 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-600 text-white rounded-lg transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${syncingDataForSEO ? 'animate-spin' : ''}`} />
             {syncingDataForSEO ? 'Sincronizando...' : 'Sincronizar DataForSEO'}
@@ -1524,7 +1524,7 @@ export default function SeoPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg"
                 >
                   <Save className="w-4 h-4" />
                   Guardar
@@ -1618,7 +1618,7 @@ export default function SeoPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg"
                 >
                   <Save className="w-4 h-4" />
                   Guardar
@@ -1740,7 +1740,7 @@ export default function SeoPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#6351d5] hover:bg-[#5242b8] text-white rounded-lg"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#3ecda5] hover:bg-[#35b894] text-white rounded-lg"
                 >
                   <Save className="w-4 h-4" />
                   Guardar

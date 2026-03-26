@@ -241,7 +241,7 @@ export default function VitalsTab() {
         <button
           onClick={runAnalysis}
           disabled={loading}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#6351d5] hover:bg-[#5242b8] disabled:opacity-50 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#3ecda5] hover:bg-[#35b894] disabled:opacity-50 text-white rounded-lg transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           {loading ? 'Analizando...' : 'Analizar Web Vitals'}
@@ -259,7 +259,7 @@ export default function VitalsTab() {
               onClick={() => setActiveView('mobile')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeView === 'mobile'
-                  ? 'bg-white text-[#6351d5] shadow-sm'
+                  ? 'bg-white text-[#3ecda5] shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -275,7 +275,7 @@ export default function VitalsTab() {
               onClick={() => setActiveView('desktop')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeView === 'desktop'
-                  ? 'bg-white text-[#6351d5] shadow-sm'
+                  ? 'bg-white text-[#3ecda5] shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -356,7 +356,7 @@ export default function VitalsTab() {
               href="https://pagespeed.web.dev/analysis?url=https://growth4u.io"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[#6351d5] hover:underline"
+              className="flex items-center gap-1 text-[#3ecda5] hover:underline"
             >
               <ExternalLink className="w-4 h-4" />
               Ver en PageSpeed Insights

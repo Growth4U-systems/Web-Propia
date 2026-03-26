@@ -295,7 +295,7 @@ export default function ChecklistPage() {
           onClick={() => setActiveTab('weekly')}
           className={`px-6 py-3 rounded-lg font-medium transition-colors ${
             activeTab === 'weekly'
-              ? 'bg-[#6351d5] text-white'
+              ? 'bg-[#3ecda5] text-white'
               : 'bg-white border border-slate-200 text-slate-300 hover:bg-slate-100'
           }`}
         >
@@ -306,7 +306,7 @@ export default function ChecklistPage() {
           onClick={() => setActiveTab('monthly')}
           className={`px-6 py-3 rounded-lg font-medium transition-colors ${
             activeTab === 'monthly'
-              ? 'bg-[#6351d5] text-white'
+              ? 'bg-[#3ecda5] text-white'
               : 'bg-white border border-slate-200 text-slate-300 hover:bg-slate-100'
           }`}
         >
@@ -323,7 +323,7 @@ export default function ChecklistPage() {
         </div>
         <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-[#6351d5] to-[#3f45fe] transition-all duration-300"
+            className="h-full bg-gradient-to-r from-[#3ecda5] to-[#2ab89a] transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -375,14 +375,14 @@ export default function ChecklistPage() {
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6351d5] h-24"
+          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-[#032149] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] h-24"
           placeholder="Observaciones, problemas encontrados, acciones pendientes..."
         />
 
         <button
           onClick={handleSaveChecklist}
           disabled={saving || completedCount === 0}
-          className="mt-4 w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#6351d5] hover:bg-[#5242b8] disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+          className="mt-4 w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#3ecda5] hover:bg-[#35b894] disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
         >
           <Save className="w-5 h-5" />
           {saving ? 'Guardando...' : `Guardar Checklist ${activeTab === 'weekly' ? 'Semanal' : 'Mensual'}`}
