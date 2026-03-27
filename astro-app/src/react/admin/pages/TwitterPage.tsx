@@ -283,16 +283,28 @@ export default function TwitterPage() {
     setCreators(prev => prev.map(x => x.id === id ? { ...x, active: !x.active } : x));
   };
 
+  const [seeding, setSeeding] = useState(false);
+  const [seedStatus, setSeedStatus] = useState('');
+
   const seedCreators = async () => {
+    setSeeding(true);
+    setSeedStatus('Cargando creators...');
     const existing = new Set(creators.map(c => c.handle.toLowerCase()));
     let added = 0;
     for (const seed of CREATOR_SEED) {
       if (!existing.has(seed.handle.toLowerCase())) {
-        await createXCreator(seed);
-        added++;
+        try {
+          await createXCreator(seed);
+          added++;
+          setSeedStatus(`Añadidos ${added} de ${CREATOR_SEED.length}...`);
+        } catch (e: any) {
+          console.error(`Error adding @${seed.handle}:`, e);
+        }
       }
     }
-    if (added > 0) loadAll();
+    setSeedStatus(added > 0 ? `${added} creators añadidos` : 'Todos ya existían');
+    setSeeding(false);
+    loadAll();
   };
 
   // ---- Counts ----
@@ -436,9 +448,11 @@ export default function TwitterPage() {
                 </div>
                 <button
                   onClick={seedCreators}
-                  className="text-sm text-amber-700 underline hover:text-amber-900"
+                  disabled={seeding}
+                  className="flex items-center gap-2 text-sm text-amber-700 hover:text-amber-900 disabled:opacity-50"
                 >
-                  Cargar {CREATOR_SEED.length} creators iniciales
+                  {seeding && <Loader2 className="w-3 h-3 animate-spin" />}
+                  {seeding ? seedStatus : `Cargar ${CREATOR_SEED.length} creators iniciales`}
                 </button>
               </div>
             )}
@@ -808,9 +822,11 @@ export default function TwitterPage() {
           {creators.length === 0 && (
             <button
               onClick={seedCreators}
-              className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-sm text-slate-500 hover:border-[#3ecda5] hover:text-[#3ecda5] transition-colors"
+              disabled={seeding}
+              className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-sm text-slate-500 hover:border-[#3ecda5] hover:text-[#3ecda5] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              Cargar {CREATOR_SEED.length} creators iniciales
+              {seeding && <Loader2 className="w-4 h-4 animate-spin" />}
+              {seeding ? seedStatus : `Cargar ${CREATOR_SEED.length} creators iniciales`}
             </button>
           )}
 
