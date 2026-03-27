@@ -288,21 +288,43 @@ export default function TwitterPage() {
 
   const seedCreators = async () => {
     setSeeding(true);
-    setSeedStatus('Cargando creators...');
-    const existing = new Set(creators.map(c => c.handle.toLowerCase()));
+    setSeedStatus('Verificando existentes...');
+    // Always fetch fresh from Firebase to avoid duplicates
+    const freshCreators = await getAllXCreators();
+    const existing = new Set(freshCreators.map((c: any) => c.handle.toLowerCase()));
     let added = 0;
     for (const seed of CREATOR_SEED) {
       if (!existing.has(seed.handle.toLowerCase())) {
         try {
           await createXCreator(seed);
+          existing.add(seed.handle.toLowerCase()); // prevent duplicates within same batch
           added++;
-          setSeedStatus(`Añadidos ${added} de ${CREATOR_SEED.length}...`);
+          setSeedStatus(`Añadidos ${added}...`);
         } catch (e: any) {
           console.error(`Error adding @${seed.handle}:`, e);
         }
       }
     }
     setSeedStatus(added > 0 ? `${added} creators añadidos` : 'Todos ya existían');
+    setSeeding(false);
+    loadAll();
+  };
+
+  const dedupCreators = async () => {
+    setSeeding(true);
+    setSeedStatus('Eliminando duplicados...');
+    const seen = new Set<string>();
+    let removed = 0;
+    for (const c of creators) {
+      const key = c.handle.toLowerCase();
+      if (seen.has(key)) {
+        await deleteXCreator(c.id);
+        removed++;
+      } else {
+        seen.add(key);
+      }
+    }
+    setSeedStatus(removed > 0 ? `${removed} duplicados eliminados` : 'No había duplicados');
     setSeeding(false);
     loadAll();
   };
@@ -818,17 +840,29 @@ export default function TwitterPage() {
             </div>
           </div>
 
-          {/* Seed button */}
-          {creators.length === 0 && (
-            <button
-              onClick={seedCreators}
-              disabled={seeding}
-              className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-sm text-slate-500 hover:border-[#3ecda5] hover:text-[#3ecda5] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {seeding && <Loader2 className="w-4 h-4 animate-spin" />}
-              {seeding ? seedStatus : `Cargar ${CREATOR_SEED.length} creators iniciales`}
-            </button>
-          )}
+          {/* Seed / Dedup buttons */}
+          <div className="flex gap-3">
+            {creators.length === 0 && (
+              <button
+                onClick={seedCreators}
+                disabled={seeding}
+                className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-xl text-sm text-slate-500 hover:border-[#3ecda5] hover:text-[#3ecda5] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {seeding && <Loader2 className="w-4 h-4 animate-spin" />}
+                {seeding ? seedStatus : `Cargar ${CREATOR_SEED.length} creators iniciales`}
+              </button>
+            )}
+            {creators.length > 0 && new Set(creators.map(c => c.handle.toLowerCase())).size < creators.length && (
+              <button
+                onClick={dedupCreators}
+                disabled={seeding}
+                className="py-2 px-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {seeding && <Loader2 className="w-4 h-4 animate-spin" />}
+                {seeding ? seedStatus : `Eliminar duplicados (${creators.length - new Set(creators.map(c => c.handle.toLowerCase())).size})`}
+              </button>
+            )}
+          </div>
 
           {/* Filter */}
           <div className="flex gap-2 flex-wrap">

@@ -6,6 +6,14 @@ const FIREBASE_PROJECT = 'landing-growth4u';
 const FIREBASE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/artifacts/growth4u-public-app/public/data`;
 const ACTOR_ID = 'apidojo/tweet-scraper';
 
+// Hardcoded fallback creators (used when Firebase collection is empty)
+const FALLBACK_HANDLES = [
+  'coreyhainesco', 'askokara', 'DeRonin_', 'ai_vaidehi', 'dotta',
+  'kanikabk', 'indexsy', 'presswhizz', 'everestchris6', 'oliverhenry',
+  'jacobsklug', 'bcherny', 'moltbook', 'Rasmic', 'remotion',
+  '_guillecasaus', 'oliviscusai', 'prukalpa', 'gregisenberg',
+];
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
@@ -225,11 +233,14 @@ export default async (req: Request, _context: Context) => {
       const maxTweets = (body as any)?.maxTweets || 5;
       const handles: string[] = (body as any)?.handles || [];
 
-      // If no handles provided, fetch from Firebase
+      // If no handles provided, fetch from Firebase (fallback to hardcoded list)
       let targetHandles = handles;
       if (targetHandles.length === 0) {
         const creators = await fetchXCreators();
         targetHandles = creators.map(c => c.handle);
+      }
+      if (targetHandles.length === 0) {
+        targetHandles = FALLBACK_HANDLES;
       }
 
       if (targetHandles.length === 0) {
