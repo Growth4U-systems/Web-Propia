@@ -585,40 +585,12 @@
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Admin moved to subdomain — redirect old URLs
-[[redirects]]
-  from = "/admin/"
-  to = "https://admin.growth4u.io/"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "/admin/*"
-  to = "https://admin.growth4u.io/:splat"
-  status = 301
-  force = true
-
 # Rewrite /api/* to Netlify functions (compatibility layer for Vercel migration)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
-
-# CORS for admin subdomain calling functions (both old and new paths)
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "https://admin.growth4u.io"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
-
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "https://admin.growth4u.io"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
 
 # Headers for caching
 [[headers]]
