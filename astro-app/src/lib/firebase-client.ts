@@ -1313,4 +1313,163 @@ export async function updateLIKnowledge(slug: string, updates: Partial<LIKnowled
   await setDoc(ref, { ...updates, updatedAt: serverTimestamp() }, { merge: true });
 }
 
+// =====================================================
+// X/Twitter Bot — Creators
+// =====================================================
+
+export interface XCreator {
+  handle: string;
+  name: string;
+  category: string;
+  notes: string;
+  active: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllXCreators() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'x_creators');
+  const q = query(ref, orderBy('handle', 'asc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      handle: data.handle || '',
+      name: data.name || '',
+      category: data.category || '',
+      notes: data.notes || '',
+      active: data.active !== false,
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createXCreator(creator: Omit<XCreator, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'x_creators');
+  const docRef = await addDoc(ref, { ...creator, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateXCreator(id: string, updates: Partial<XCreator>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'x_creators', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteXCreator(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'x_creators', id);
+  await deleteDoc(ref);
+}
+
+// =====================================================
+// X/Twitter Bot — Replies (generated replies to influencer tweets)
+// =====================================================
+
+export interface XReply {
+  handle: string;
+  tweetUrl: string;
+  tweetSnippet: string;
+  replyDraft: string;
+  category: string;
+  status: 'pending' | 'approved' | 'rejected' | 'posted';
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllXReplies() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'x_replies');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      handle: data.handle || '',
+      tweetUrl: data.tweetUrl || '',
+      tweetSnippet: data.tweetSnippet || '',
+      replyDraft: data.replyDraft || '',
+      category: data.category || 'engagement',
+      status: data.status || 'pending',
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createXReply(reply: Omit<XReply, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'x_replies');
+  const docRef = await addDoc(ref, { ...reply, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateXReply(id: string, updates: Partial<XReply>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'x_replies', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteXReply(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'x_replies', id);
+  await deleteDoc(ref);
+}
+
+// =====================================================
+// X/Twitter Bot — Posts (own content ideas and drafts)
+// =====================================================
+
+export interface XPost {
+  topic: string;
+  angle: string;
+  format: 'tweet' | 'thread' | 'quote';
+  draft: string;
+  threadSlides: string[];
+  inspiration: string;
+  language: string;
+  status: 'idea' | 'draft' | 'approved' | 'scheduled' | 'posted';
+  scheduledDate?: string;
+  scheduledTime?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function getAllXPosts() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'x_posts');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      topic: data.topic || '',
+      angle: data.angle || '',
+      format: data.format || 'tweet',
+      draft: data.draft || '',
+      threadSlides: data.threadSlides || [],
+      inspiration: data.inspiration || '',
+      language: data.language || 'es',
+      status: data.status || 'idea',
+      scheduledDate: data.scheduledDate || '',
+      scheduledTime: data.scheduledTime || '',
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    };
+  });
+}
+
+export async function createXPost(post: Omit<XPost, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'x_posts');
+  const docRef = await addDoc(ref, { ...post, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateXPost(id: string, updates: Partial<XPost>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'x_posts', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteXPost(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'x_posts', id);
+  await deleteDoc(ref);
+}
+
 export { db, auth, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, limit, where, serverTimestamp };

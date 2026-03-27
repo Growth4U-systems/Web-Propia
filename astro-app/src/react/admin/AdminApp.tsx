@@ -15,6 +15,7 @@ import LinkedInBotPage from './pages/LinkedInBotPage';
 import InstagramBotPage from './pages/InstagramBotPage';
 import NewsletterPage from './pages/NewsletterPage';
 import PartnersPage from './pages/PartnersPage';
+import TwitterPage from './pages/TwitterPage';
 
 export default function AdminApp() {
   return (
@@ -29,6 +30,7 @@ export default function AdminApp() {
           <Route path="/admin/instagram-bot/" element={<InstagramBotPage />} />
           <Route path="/admin/linkedin/" element={<LinkedInPage />} />
           <Route path="/admin/linkedin-bot/" element={<LinkedInBotPage />} />
+          <Route path="/admin/twitter/" element={<TwitterPage />} />
           <Route path="/admin/visibilidad/" element={<VisibilidadPage />} />
           <Route path="/admin/seo/" element={<Navigate to="/admin/visibilidad/" replace />} />
           <Route path="/admin/geo/" element={<Navigate to="/admin/visibilidad/" replace />} />
