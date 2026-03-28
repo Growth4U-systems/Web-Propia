@@ -97,6 +97,8 @@ export default function TwitterPage() {
   const [newHandle, setNewHandle] = useState('');
   const [newCategory, setNewCategory] = useState('Growth');
   const [copied, setCopied] = useState<string | null>(null);
+  const [posting, setPosting] = useState<string | null>(null);
+  const [postError, setPostError] = useState<string | null>(null);
   const [creatorFilter, setCreatorFilter] = useState<string>('all');
 
   // Load all data
@@ -263,6 +265,42 @@ export default function TwitterPage() {
   const removePost = async (id: string) => {
     await deleteXPost(id);
     setPosts(prev => prev.filter(p => p.id !== id));
+  };
+
+  const postReplyToX = async (replyId: string) => {
+    setPosting(replyId);
+    setPostError(null);
+    try {
+      const res = await fetch(`${FUNCTION_URL}?action=post-reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ replyId }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      setReplies(prev => prev.map(r => r.id === replyId ? { ...r, status: 'posted' as const } : r));
+    } catch (e: any) {
+      setPostError(e.message);
+    }
+    setPosting(null);
+  };
+
+  const postTweetToX = async (postId: string) => {
+    setPosting(postId);
+    setPostError(null);
+    try {
+      const res = await fetch(`${FUNCTION_URL}?action=post-tweet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'posted' as const } : p));
+    } catch (e: any) {
+      setPostError(e.message);
+    }
+    setPosting(null);
   };
 
   const addCreator = async () => {
@@ -510,6 +548,15 @@ export default function TwitterPage() {
         </div>
       )}
 
+      {/* Post error banner */}
+      {postError && (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span className="flex-1">{postError}</span>
+          <button onClick={() => setPostError(null)} className="text-red-400 hover:text-red-600"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
       {/* ===== REPLIES TAB ===== */}
       {tab === 'replies' && (
         <div className="space-y-4">
@@ -623,8 +670,9 @@ export default function TwitterPage() {
                           </>
                         )}
                         {(reply.status === 'approved') && (
-                          <button onClick={() => updateReplyStatus(reply.id, 'posted')} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600">
-                            <Send className="w-3 h-3" /> Marcar posteado
+                          <button onClick={() => postReplyToX(reply.id)} disabled={posting === reply.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
+                            {posting === reply.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                            {posting === reply.id ? 'Publicando...' : 'Post to X'}
                           </button>
                         )}
                         <button
@@ -772,8 +820,9 @@ export default function TwitterPage() {
                           </button>
                         )}
                         {(post.status === 'approved') && (
-                          <button onClick={() => updatePostStatus(post.id, 'posted')} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600">
-                            <Send className="w-3 h-3" /> Marcar posteado
+                          <button onClick={() => postTweetToX(post.id)} disabled={posting === post.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
+                            {posting === post.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                            {posting === post.id ? 'Publicando...' : 'Post to X'}
                           </button>
                         )}
                         <button

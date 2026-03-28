@@ -1,7 +1,12 @@
 import type { Context } from "@netlify/functions";
+import crypto from 'crypto';
 
 const APIFY_TOKEN = process.env.APIFY_API_TOKEN || '';
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
+const X_API_KEY = process.env.X_API_KEY || '';
+const X_API_SECRET = process.env.X_API_SECRET || '';
+const X_ACCESS_TOKEN = process.env.X_ACCESS_TOKEN || '';
+const X_ACCESS_SECRET = process.env.X_ACCESS_SECRET || '';
 const FIREBASE_PROJECT = 'landing-growth4u';
 const FIREBASE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/artifacts/growth4u-public-app/public/data`;
 const ACTOR_ID = 'apidojo~tweet-scraper';
@@ -205,13 +210,71 @@ async function savePostIdea(idea: {
   return res.ok;
 }
 
+// ---- OAuth 1.0a for X API ----
+function percentEncode(str: string): string {
+  return encodeURIComponent(str)
+    .replace(/!/g, '%21').replace(/'/g, '%27')
+    .replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A');
+}
+
+function buildOAuthHeader(method: string, url: string): string {
+  const oauthParams: Record<string, string> = {
+    oauth_consumer_key: X_API_KEY,
+    oauth_nonce: crypto.randomBytes(32).toString('base64').replace(/[^a-zA-Z0-9]/g, ''),
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+    oauth_token: X_ACCESS_TOKEN,
+    oauth_version: '1.0',
+  };
+
+  const paramString = Object.keys(oauthParams).sort()
+    .map(k => `${percentEncode(k)}=${percentEncode(oauthParams[k])}`)
+    .join('&');
+
+  const baseString = `${method}&${percentEncode(url)}&${percentEncode(paramString)}`;
+  const signingKey = `${percentEncode(X_API_SECRET)}&${percentEncode(X_ACCESS_SECRET)}`;
+  const signature = crypto.createHmac('sha1', signingKey).update(baseString).digest('base64');
+
+  oauthParams.oauth_signature = signature;
+  const header = Object.keys(oauthParams).sort()
+    .map(k => `${percentEncode(k)}="${percentEncode(oauthParams[k])}"`)
+    .join(', ');
+  return `OAuth ${header}`;
+}
+
+async function postTweet(text: string, inReplyToTweetId?: string): Promise<{ id: string; text: string }> {
+  const url = 'https://api.twitter.com/2/tweets';
+  const body: any = { text };
+  if (inReplyToTweetId) {
+    body.reply = { in_reply_to_tweet_id: inReplyToTweetId };
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': buildOAuthHeader('POST', url),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`X API ${res.status}: ${errText.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  return data?.data || {};
+}
+
 // =====================================================
-// ASYNC ARCHITECTURE — 4 actions via query param
+// ASYNC ARCHITECTURE — 6 actions via query param
 // =====================================================
 // POST ?action=start       → launches Apify run, returns { runId, datasetId }
 // GET  ?action=status      → checks if Apify finished
 // POST ?action=process     → fetches results + generates replies + saves
 // POST ?action=ideas       → generates post ideas from scraped tweets
+// POST ?action=post-reply  → posts an approved reply to X via API
+// POST ?action=post-tweet  → posts an approved post/thread to X via API
 // =====================================================
 
 export default async (req: Request, _context: Context) => {
@@ -456,6 +519,128 @@ export default async (req: Request, _context: Context) => {
         ideas: ideas.length,
         saved,
         message: `${saved} ideas de post generadas`,
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: POST-REPLY ----
+    if (action === 'post-reply') {
+      if (!X_API_KEY || !X_ACCESS_TOKEN) {
+        return new Response(JSON.stringify({ error: 'Missing X API credentials' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const replyId = (body as any)?.replyId;
+      if (!replyId) {
+        return new Response(JSON.stringify({ error: 'Missing replyId' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      // Fetch reply from Firebase
+      const docRes = await fetch(`${FIREBASE_BASE}/x_replies/${replyId}`);
+      if (!docRes.ok) {
+        return new Response(JSON.stringify({ error: 'Reply not found' }), { status: 404, headers: CORS_HEADERS });
+      }
+      const doc = await docRes.json();
+      const replyText = doc.fields?.replyDraft?.stringValue || '';
+      const tweetUrl = doc.fields?.tweetUrl?.stringValue || '';
+
+      if (!replyText) {
+        return new Response(JSON.stringify({ error: 'Reply has no text' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      // Extract tweet ID from URL (https://x.com/handle/status/123456)
+      const tweetId = tweetUrl.split('/status/')[1]?.split('?')[0];
+      if (!tweetId) {
+        return new Response(JSON.stringify({ error: 'Could not extract tweet ID from URL' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      const posted = await postTweet(replyText, tweetId);
+
+      // Update Firebase status
+      await fetch(`${FIREBASE_BASE}/x_replies/${replyId}?updateMask.fieldPaths=status&updateMask.fieldPaths=postedTweetId&updateMask.fieldPaths=postedAt`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            status: { stringValue: 'posted' },
+            postedTweetId: { stringValue: posted.id },
+            postedAt: { timestampValue: new Date().toISOString() },
+          },
+        }),
+      });
+
+      return new Response(JSON.stringify({
+        ok: true,
+        phase: 'post-reply',
+        tweetId: posted.id,
+        message: 'Reply posted to X',
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: POST-TWEET ----
+    if (action === 'post-tweet') {
+      if (!X_API_KEY || !X_ACCESS_TOKEN) {
+        return new Response(JSON.stringify({ error: 'Missing X API credentials' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const postId = (body as any)?.postId;
+      if (!postId) {
+        return new Response(JSON.stringify({ error: 'Missing postId' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      // Fetch post from Firebase
+      const docRes = await fetch(`${FIREBASE_BASE}/x_posts/${postId}`);
+      if (!docRes.ok) {
+        return new Response(JSON.stringify({ error: 'Post not found' }), { status: 404, headers: CORS_HEADERS });
+      }
+      const doc = await docRes.json();
+      const draft = doc.fields?.draft?.stringValue || '';
+      const format = doc.fields?.format?.stringValue || 'tweet';
+
+      if (!draft) {
+        return new Response(JSON.stringify({ error: 'Post has no text' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      const postedIds: string[] = [];
+
+      if (format === 'thread') {
+        // Post main tweet first
+        const main = await postTweet(draft);
+        postedIds.push(main.id);
+
+        // Post thread slides as replies
+        const slides = doc.fields?.threadSlides?.arrayValue?.values || [];
+        let lastId = main.id;
+        for (const slide of slides) {
+          const slideText = slide.stringValue;
+          if (!slideText) continue;
+          const reply = await postTweet(slideText, lastId);
+          postedIds.push(reply.id);
+          lastId = reply.id;
+        }
+      } else {
+        const posted = await postTweet(draft);
+        postedIds.push(posted.id);
+      }
+
+      // Update Firebase status
+      await fetch(`${FIREBASE_BASE}/x_posts/${postId}?updateMask.fieldPaths=status&updateMask.fieldPaths=postedTweetId&updateMask.fieldPaths=postedAt`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            status: { stringValue: 'posted' },
+            postedTweetId: { stringValue: postedIds[0] },
+            postedAt: { timestampValue: new Date().toISOString() },
+          },
+        }),
+      });
+
+      return new Response(JSON.stringify({
+        ok: true,
+        phase: 'post-tweet',
+        tweetIds: postedIds,
+        message: format === 'thread' ? `Thread posted (${postedIds.length} tweets)` : 'Tweet posted to X',
       }), { status: 200, headers: CORS_HEADERS });
     }
 
