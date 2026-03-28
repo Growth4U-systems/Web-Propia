@@ -461,6 +461,6 @@ export default async (req: Request, _context: Context) => {
 
     return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: CORS_HEADERS });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ error: err.message, stack: err.stack?.split('\n').slice(0, 3) }), { status: 500, headers: CORS_HEADERS });
   }
 };

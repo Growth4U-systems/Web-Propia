@@ -130,7 +130,10 @@ export default function TwitterPage() {
         body: JSON.stringify({ maxTweets: 5 }),
       });
       const data = await res.json();
-      if (!data.ok) throw new Error(data.error);
+      if (!data.ok) {
+        const extra = data.details || data.stack || '';
+        throw new Error(`${data.error}${extra ? ' | ' + JSON.stringify(extra) : ''}`);
+      }
       setScrapeRunId(data.runId);
       setScrapeDatasetId(data.datasetId);
       setScrapeStatus(`Scraping ${data.creators} perfiles...`);
