@@ -319,6 +319,30 @@ export default async (req: Request, _context: Context) => {
   const action = url.searchParams.get('action') || 'start';
 
   try {
+    // ---- ACTION: ME (verify X connection) ----
+    if (action === 'me') {
+      if (!X_API_KEY || !X_ACCESS_TOKEN) {
+        return new Response(JSON.stringify({ ok: false, error: 'X API keys not configured' }), { status: 200, headers: CORS_HEADERS });
+      }
+      try {
+        const data = await xApiCall('GET', '/users/me?user.fields=public_metrics,profile_image_url');
+        return new Response(JSON.stringify({
+          ok: true,
+          user: {
+            id: data?.data?.id,
+            name: data?.data?.name,
+            username: data?.data?.username,
+            avatar: data?.data?.profile_image_url,
+            followers: data?.data?.public_metrics?.followers_count || 0,
+            following: data?.data?.public_metrics?.following_count || 0,
+            tweets: data?.data?.public_metrics?.tweet_count || 0,
+          },
+        }), { status: 200, headers: CORS_HEADERS });
+      } catch (e: any) {
+        return new Response(JSON.stringify({ ok: false, error: e.message }), { status: 200, headers: CORS_HEADERS });
+      }
+    }
+
     // ---- ACTION: START ----
     if (action === 'start') {
       if (!APIFY_TOKEN) {

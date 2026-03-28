@@ -101,6 +101,25 @@ export default function TwitterPage() {
   const [postError, setPostError] = useState<string | null>(null);
   const [creatorFilter, setCreatorFilter] = useState<string>('all');
 
+  // X connection state
+  const [xConnected, setXConnected] = useState<boolean | null>(null);
+  const [xUser, setXUser] = useState<{ name: string; username: string; avatar: string; followers: number; following: number; tweets: number } | null>(null);
+  const [xConnecting, setXConnecting] = useState(false);
+
+  const checkXConnection = async () => {
+    setXConnecting(true);
+    try {
+      const res = await fetch(`${FUNCTION_URL}?action=me`);
+      const data = await res.json();
+      setXConnected(data.ok);
+      if (data.ok) setXUser(data.user);
+      else setPostError(data.error);
+    } catch {
+      setXConnected(false);
+    }
+    setXConnecting(false);
+  };
+
   // Load all data
   const loadAll = async () => {
     setLoading(true);
@@ -476,6 +495,37 @@ export default function TwitterPage() {
       {/* ===== OVERVIEW TAB ===== */}
       {tab === 'overview' && (
         <div className="space-y-4">
+          {/* X Connection Status */}
+          <div className={`rounded-xl border p-4 ${xConnected === true ? 'bg-green-50 border-green-200' : xConnected === false ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {xConnected === true && xUser ? (
+                  <>
+                    <img src={xUser.avatar} alt="" className="w-10 h-10 rounded-full" />
+                    <div>
+                      <p className="font-semibold text-[#032149]">@{xUser.username} <span className="text-green-600 text-xs font-normal ml-1">Conectado</span></p>
+                      <p className="text-xs text-slate-500">{xUser.followers} seguidores · {xUser.following} siguiendo · {xUser.tweets} tweets</p>
+                    </div>
+                  </>
+                ) : xConnected === false ? (
+                  <div>
+                    <p className="font-semibold text-red-700">X API no conectada</p>
+                    <p className="text-xs text-red-500">Verifica las credenciales de la API</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-semibold text-slate-700">Cuenta de X</p>
+                    <p className="text-xs text-slate-400">Conecta tu cuenta para publicar automáticamente</p>
+                  </div>
+                )}
+              </div>
+              <button onClick={checkXConnection} disabled={xConnecting} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm ${xConnected === true ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-[#032149] text-white hover:bg-[#043264]'} disabled:opacity-50`}>
+                {xConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                {xConnected === true ? 'Reconectar' : 'Conectar'}
+              </button>
+            </div>
+          </div>
+
           {/* Seed creators warning */}
           {creators.length === 0 && (
             <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
