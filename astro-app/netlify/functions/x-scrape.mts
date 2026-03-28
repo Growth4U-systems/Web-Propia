@@ -535,9 +535,11 @@ export default async (req: Request, _context: Context) => {
       }
 
       // Fetch reply from Firebase
-      const docRes = await fetch(`${FIREBASE_BASE}/x_replies/${replyId}`);
+      const replyUrl = `${FIREBASE_BASE}/x_replies/${replyId}`;
+      const docRes = await fetch(replyUrl);
       if (!docRes.ok) {
-        return new Response(JSON.stringify({ error: 'Reply not found' }), { status: 404, headers: CORS_HEADERS });
+        const errBody = await docRes.text();
+        return new Response(JSON.stringify({ error: 'Reply not found', url: replyUrl, status: docRes.status, details: errBody.slice(0, 300) }), { status: 404, headers: CORS_HEADERS });
       }
       const doc = await docRes.json();
       const replyText = doc.fields?.replyDraft?.stringValue || '';
