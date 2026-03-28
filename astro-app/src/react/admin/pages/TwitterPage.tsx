@@ -611,6 +611,9 @@ export default function TwitterPage() {
                       <span className="text-xs text-slate-400 truncate">{reply.tweetSnippet.slice(0, 80)}...</span>
                     </div>
                     <div className="flex items-center gap-2">
+                      {reply.views ? (
+                        <span className="text-xs text-slate-400">{reply.views >= 1000 ? `${(reply.views / 1000).toFixed(0)}K` : reply.views} views</span>
+                      ) : null}
                       <span className="text-xs text-slate-400">
                         {reply.replyDraft.length} chars
                       </span>

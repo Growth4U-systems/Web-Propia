@@ -1372,6 +1372,7 @@ export interface XReply {
   tweetSnippet: string;
   replyDraft: string;
   category: string;
+  views?: number;
   status: 'pending' | 'approved' | 'rejected' | 'posted';
   createdAt?: Date;
   updatedAt?: Date;
@@ -1390,6 +1391,7 @@ export async function getAllXReplies() {
       tweetSnippet: data.tweetSnippet || '',
       replyDraft: data.replyDraft || '',
       category: data.category || 'engagement',
+      views: data.views || 0,
       status: data.status || 'pending',
       createdAt: data.createdAt?.toDate() || null,
       updatedAt: data.updatedAt?.toDate() || null,

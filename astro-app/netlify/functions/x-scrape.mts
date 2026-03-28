@@ -160,7 +160,7 @@ Reglas:
 
 async function saveReply(reply: {
   handle: string; tweetUrl: string; tweetSnippet: string;
-  replyDraft: string; category: string;
+  replyDraft: string; category: string; views?: number;
 }) {
   const fields: Record<string, any> = {
     handle: { stringValue: reply.handle },
@@ -168,6 +168,7 @@ async function saveReply(reply: {
     tweetSnippet: { stringValue: reply.tweetSnippet },
     replyDraft: { stringValue: reply.replyDraft },
     category: { stringValue: reply.category },
+    views: { integerValue: reply.views || 0 },
     status: { stringValue: 'pending' },
     createdAt: { timestampValue: new Date().toISOString() },
     updatedAt: { timestampValue: new Date().toISOString() },
@@ -421,6 +422,10 @@ export default async (req: Request, _context: Context) => {
             if (age > 7 * 24 * 60 * 60 * 1000) { skipped++; continue; }
           }
 
+          // Filter by views — only process tweets with 20K+ views
+          const views = tweet.views_count || tweet.viewCount || tweet.ext_views?.count || tweet.views?.count || 0;
+          if (views < 20000) { skipped++; continue; }
+
           const replyDraft = await generateReply(handle, content, personSlug);
           if (!replyDraft) { errors++; continue; }
 
@@ -433,6 +438,7 @@ export default async (req: Request, _context: Context) => {
             tweetSnippet: content.slice(0, 300),
             replyDraft: finalReply,
             category: 'engagement',
+            views,
           });
 
           if (ok) saved++;
