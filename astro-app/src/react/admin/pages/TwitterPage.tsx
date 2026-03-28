@@ -174,7 +174,7 @@ export default function TwitterPage() {
   const processReplies = async () => {
     if (!scrapeDatasetId) return;
     setProcessing(true);
-    setProcessStatus('Generando replies...');
+    setProcessStatus('Generando quote tweets...');
     let offset = 0;
     let totalSaved = 0;
 
@@ -193,7 +193,7 @@ export default function TwitterPage() {
           offset = data.nextOffset;
           setTimeout(processBatch, 1000);
         } else {
-          setProcessStatus(`Completado. ${totalSaved} replies generados.`);
+          setProcessStatus(`Completado. ${totalSaved} quote tweets generados.`);
           setProcessing(false);
           loadAll();
         }
@@ -447,7 +447,7 @@ export default function TwitterPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#032149]">X / Twitter Bot</h1>
-        <p className="text-slate-500 mt-1">Engagement automatizado y generación de contenido</p>
+        <p className="text-slate-500 mt-1">Scrape → Genera → Aprueba → Publica</p>
       </div>
 
       {/* Tabs */}
@@ -475,124 +475,147 @@ export default function TwitterPage() {
 
       {/* ===== OVERVIEW TAB ===== */}
       {tab === 'overview' && (
-        <div className="space-y-6">
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Quotes pendientes', value: pendingReplies, color: 'text-amber-600', bg: 'bg-amber-50' },
-              { label: 'Quotes posteados', value: postedReplies, color: 'text-green-600', bg: 'bg-green-50' },
-              { label: 'Ideas de posts', value: ideaPosts + draftPosts, color: 'text-blue-600', bg: 'bg-blue-50' },
-              { label: 'Creators activos', value: activeCreators, color: 'text-purple-600', bg: 'bg-purple-50' },
-            ].map(kpi => (
-              <div key={kpi.label} className={`${kpi.bg} rounded-xl p-4`}>
-                <p className="text-xs text-slate-500">{kpi.label}</p>
-                <p className={`text-2xl font-bold ${kpi.color} mt-1`}>{kpi.value}</p>
+        <div className="space-y-4">
+          {/* Seed creators warning */}
+          {creators.length === 0 && (
+            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-800">Primero necesitas creators</span>
               </div>
-            ))}
-          </div>
+              <button onClick={seedCreators} disabled={seeding} className="flex items-center gap-2 text-sm text-amber-700 hover:text-amber-900 disabled:opacity-50">
+                {seeding && <Loader2 className="w-3 h-3 animate-spin" />}
+                {seeding ? seedStatus : `Cargar ${CREATOR_SEED.length} creators iniciales`}
+              </button>
+            </div>
+          )}
 
-          {/* Quick Actions */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 className="font-semibold text-[#032149] mb-4">Acciones rápidas</h2>
-
+          {/* Pipeline — 4 steps */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             {/* Step 1: Scrape */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={startScrape}
-                  disabled={scraping || processing}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-[#3ecda5] text-white rounded-lg hover:bg-[#35b892] transition-colors font-medium disabled:opacity-50"
-                >
+            <div className={`p-5 border-b border-slate-100 ${scraping ? 'bg-teal-50' : ''}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#3ecda5] text-white flex items-center justify-center text-sm font-bold">1</div>
+                  <div>
+                    <p className="font-semibold text-[#032149]">Scraping de tweets</p>
+                    <p className="text-xs text-slate-400">Busca tweets recientes de tus {activeCreators} creators</p>
+                  </div>
+                </div>
+                <button onClick={startScrape} disabled={scraping || processing || creators.length === 0} className="flex items-center gap-2 px-5 py-2.5 bg-[#3ecda5] text-white rounded-lg hover:bg-[#35b892] font-medium disabled:opacity-50 text-sm">
                   {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                  1. Scraping de tweets
-                </button>
-                {scrapeStatus && (
-                  <span className="text-sm text-slate-500">{scrapeStatus}</span>
-                )}
-              </div>
-
-              {/* Step 2: Process */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={processReplies}
-                  disabled={!scrapeDatasetId || processing || scraping}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-[#032149] text-white rounded-lg hover:bg-[#043264] transition-colors font-medium disabled:opacity-50"
-                >
-                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  2. Generar quotes
-                </button>
-                <button
-                  onClick={generateIdeas}
-                  disabled={!scrapeDatasetId || processing || scraping}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#032149] text-[#032149] rounded-lg hover:bg-slate-50 transition-colors font-medium disabled:opacity-50"
-                >
-                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lightbulb className="w-4 h-4" />}
-                  2b. Generar ideas de posts
-                </button>
-                <button
-                  onClick={followCreators}
-                  disabled={creators.length === 0}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-pink-400 text-pink-600 rounded-lg hover:bg-pink-50 transition-colors font-medium disabled:opacity-50"
-                >
-                  <Users className="w-4 h-4" />
-                  3. Follow creators
+                  {scraping ? 'Scraping...' : 'Ejecutar'}
                 </button>
               </div>
-
-              {processStatus && (
-                <p className="text-sm text-slate-500 ml-1">{processStatus}</p>
-              )}
+              {scrapeStatus && <p className="text-xs text-slate-500 mt-2 ml-11">{scrapeStatus}</p>}
             </div>
 
-            {/* Seed creators */}
-            {creators.length === 0 && (
-              <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-800">No hay creators configurados</span>
+            {/* Step 2: Generate quotes */}
+            <div className={`p-5 border-b border-slate-100 ${processing ? 'bg-blue-50' : !scrapeDatasetId ? 'opacity-50' : ''}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full ${scrapeDatasetId ? 'bg-[#032149]' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>2</div>
+                  <div>
+                    <p className="font-semibold text-[#032149]">Generar quote tweets</p>
+                    <p className="text-xs text-slate-400">IA genera quotes para tweets con +20K views</p>
+                  </div>
                 </div>
-                <button
-                  onClick={seedCreators}
-                  disabled={seeding}
-                  className="flex items-center gap-2 text-sm text-amber-700 hover:text-amber-900 disabled:opacity-50"
-                >
-                  {seeding && <Loader2 className="w-3 h-3 animate-spin" />}
-                  {seeding ? seedStatus : `Cargar ${CREATOR_SEED.length} creators iniciales`}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={processReplies} disabled={!scrapeDatasetId || processing || scraping} className="flex items-center gap-2 px-5 py-2.5 bg-[#032149] text-white rounded-lg hover:bg-[#043264] font-medium disabled:opacity-50 text-sm">
+                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {processing ? 'Generando...' : 'Generar'}
+                  </button>
+                  <button onClick={generateIdeas} disabled={!scrapeDatasetId || processing || scraping} className="flex items-center gap-2 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium disabled:opacity-50 text-sm" title="También genera ideas de posts propios">
+                    <Lightbulb className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            )}
+              {processStatus && <p className="text-xs text-slate-500 mt-2 ml-11">{processStatus}</p>}
+            </div>
+
+            {/* Step 3: Review & Approve */}
+            <div className={`p-5 border-b border-slate-100 ${pendingReplies === 0 && approvedReplies === 0 ? 'opacity-50' : ''}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full ${pendingReplies > 0 ? 'bg-amber-500' : approvedReplies > 0 ? 'bg-blue-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>3</div>
+                  <div>
+                    <p className="font-semibold text-[#032149]">Revisar y aprobar</p>
+                    <p className="text-xs text-slate-400">
+                      {pendingReplies > 0 ? `${pendingReplies} quotes esperando revisión` :
+                       approvedReplies > 0 ? `${approvedReplies} quotes aprobados, listos para publicar` :
+                       'No hay quotes pendientes'}
+                    </p>
+                  </div>
+                </div>
+                {pendingReplies > 0 && (
+                  <button onClick={() => setTab('replies')} className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium text-sm">
+                    <Check className="w-4 h-4" />
+                    Revisar ({pendingReplies})
+                  </button>
+                )}
+                {pendingReplies === 0 && approvedReplies > 0 && (
+                  <button onClick={() => setTab('replies')} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Ver aprobados ({approvedReplies})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Step 4: Publish */}
+            <div className={`p-5 ${approvedReplies === 0 ? 'opacity-50' : ''}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full ${approvedReplies > 0 ? 'bg-green-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>4</div>
+                  <div>
+                    <p className="font-semibold text-[#032149]">Publicar en X</p>
+                    <p className="text-xs text-slate-400">
+                      {approvedReplies > 0 ? `${approvedReplies} quotes listos para publicar como quote tweets` :
+                       postedReplies > 0 ? `${postedReplies} quotes ya publicados` :
+                       'Aprueba quotes en el paso 3 primero'}
+                    </p>
+                  </div>
+                </div>
+                {approvedReplies > 0 && (
+                  <button
+                    onClick={async () => {
+                      const approved = replies.filter(r => r.status === 'approved');
+                      for (const r of approved) {
+                        await postQuoteToX(r);
+                        await new Promise(res => setTimeout(res, 2000));
+                      }
+                    }}
+                    disabled={posting !== null}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium disabled:opacity-50 text-sm"
+                  >
+                    {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {posting ? 'Publicando...' : `Publicar todos (${approvedReplies})`}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Strategy reminder */}
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-6">
-            <h2 className="font-semibold text-[#032149] mb-3">Estrategia de Crecimiento</h2>
-            <div className="grid md:grid-cols-3 gap-4 text-sm text-slate-600">
-              <div>
-                <p className="font-medium text-[#032149] mb-1">Quote Tweets (engagement)</p>
-                <ul className="space-y-1 text-xs">
-                  <li>- 8-12 quotes/día a tweets +20K views</li>
-                  <li>- Aportar valor: dato, framework, take</li>
-                  <li>- Max 200 chars (el tweet original da contexto)</li>
-                  <li>- El autor recibe notificación automática</li>
-                </ul>
+          {/* Secondary actions */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-[#032149] text-sm">Follow creators</p>
+                <button onClick={followCreators} disabled={creators.length === 0} className="flex items-center gap-2 px-4 py-2 bg-pink-50 text-pink-600 rounded-lg hover:bg-pink-100 font-medium disabled:opacity-50 text-sm">
+                  <Users className="w-4 h-4" /> Follow todos
+                </button>
               </div>
-              <div>
-                <p className="font-medium text-[#032149] mb-1">Posts propios + Threads</p>
-                <ul className="space-y-1 text-xs">
-                  <li>- 3-5 tweets originales/día</li>
-                  <li>- 1-2 threads/semana</li>
-                  <li>- Sin links en el tweet principal (-50% reach)</li>
-                  <li>- Repurpose del blog → threads</li>
-                </ul>
+              <p className="text-xs text-slate-400">Sigue a los {activeCreators} creators activos para que te vean y te sigan de vuelta</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-[#032149] text-sm">Resumen</p>
+                <span className="text-xs text-slate-400">{postedReplies} quotes publicados</span>
               </div>
-              <div>
-                <p className="font-medium text-[#032149] mb-1">Follow + Like (visibilidad)</p>
-                <ul className="space-y-1 text-xs">
-                  <li>- Follow 20-30 creators/día</li>
-                  <li>- Like 50-80 tweets/día</li>
-                  <li>- Unfollow si no siguen en 14 días</li>
-                  <li>- Objetivo: follow-back → unlock replies</li>
-                </ul>
+              <div className="flex gap-4 text-xs text-slate-500">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> {pendingReplies} pendientes</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" /> {approvedReplies} aprobados</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400" /> {postedReplies} publicados</span>
               </div>
             </div>
           </div>
