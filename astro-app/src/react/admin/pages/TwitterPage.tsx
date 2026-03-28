@@ -267,11 +267,11 @@ export default function TwitterPage() {
     setPosts(prev => prev.filter(p => p.id !== id));
   };
 
-  const postReplyToX = async (reply: XReply & { id: string }) => {
+  const postQuoteToX = async (reply: XReply & { id: string }) => {
     setPosting(reply.id);
     setPostError(null);
     try {
-      const res = await fetch(`${FUNCTION_URL}?action=post-reply`, {
+      const res = await fetch(`${FUNCTION_URL}?action=post-quote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ replyId: reply.id, replyText: reply.replyDraft, tweetUrl: reply.tweetUrl }),
@@ -284,6 +284,38 @@ export default function TwitterPage() {
       setPostError(e.message);
     }
     setPosting(null);
+  };
+
+  const likeOnX = async (tweetUrl: string) => {
+    try {
+      const res = await fetch(`${FUNCTION_URL}?action=like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tweetUrl }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+    } catch (e: any) {
+      setPostError(e.message);
+    }
+  };
+
+  const followCreators = async () => {
+    setPostError(null);
+    const activeHandles = creators.filter(c => c.active).map(c => c.handle);
+    if (activeHandles.length === 0) return;
+    try {
+      const res = await fetch(`${FUNCTION_URL}?action=follow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handles: activeHandles }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      setScrapeStatus(`Followed ${data.followed}/${data.total} creators`);
+    } catch (e: any) {
+      setPostError(e.message);
+    }
   };
 
   const postTweetToX = async (post: XPost & { id: string }) => {
@@ -397,7 +429,7 @@ export default function TwitterPage() {
 
   const TABS: { id: Tab; label: string; icon: any; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'replies', label: 'Replies', icon: MessageCircle, badge: pendingReplies },
+    { id: 'replies', label: 'Quotes', icon: MessageCircle, badge: pendingReplies },
     { id: 'posts', label: 'Posts', icon: FileText, badge: ideaPosts + draftPosts },
     { id: 'creators', label: 'Creators', icon: Users },
   ];
@@ -447,8 +479,8 @@ export default function TwitterPage() {
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Replies pendientes', value: pendingReplies, color: 'text-amber-600', bg: 'bg-amber-50' },
-              { label: 'Replies posteados', value: postedReplies, color: 'text-green-600', bg: 'bg-green-50' },
+              { label: 'Quotes pendientes', value: pendingReplies, color: 'text-amber-600', bg: 'bg-amber-50' },
+              { label: 'Quotes posteados', value: postedReplies, color: 'text-green-600', bg: 'bg-green-50' },
               { label: 'Ideas de posts', value: ideaPosts + draftPosts, color: 'text-blue-600', bg: 'bg-blue-50' },
               { label: 'Creators activos', value: activeCreators, color: 'text-purple-600', bg: 'bg-purple-50' },
             ].map(kpi => (
@@ -487,7 +519,7 @@ export default function TwitterPage() {
                   className="flex items-center gap-2 px-4 py-2.5 bg-[#032149] text-white rounded-lg hover:bg-[#043264] transition-colors font-medium disabled:opacity-50"
                 >
                   {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  2. Generar replies
+                  2. Generar quotes
                 </button>
                 <button
                   onClick={generateIdeas}
@@ -496,6 +528,14 @@ export default function TwitterPage() {
                 >
                   {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lightbulb className="w-4 h-4" />}
                   2b. Generar ideas de posts
+                </button>
+                <button
+                  onClick={followCreators}
+                  disabled={creators.length === 0}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-pink-400 text-pink-600 rounded-lg hover:bg-pink-50 transition-colors font-medium disabled:opacity-50"
+                >
+                  <Users className="w-4 h-4" />
+                  3. Follow creators
                 </button>
               </div>
 
@@ -525,24 +565,33 @@ export default function TwitterPage() {
 
           {/* Strategy reminder */}
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-6">
-            <h2 className="font-semibold text-[#032149] mb-3">Estrategia 70/30</h2>
-            <div className="grid md:grid-cols-2 gap-4 text-sm text-slate-600">
+            <h2 className="font-semibold text-[#032149] mb-3">Estrategia de Crecimiento</h2>
+            <div className="grid md:grid-cols-3 gap-4 text-sm text-slate-600">
               <div>
-                <p className="font-medium text-[#032149] mb-1">70% Replies (engagement)</p>
+                <p className="font-medium text-[#032149] mb-1">Quote Tweets (engagement)</p>
                 <ul className="space-y-1 text-xs">
-                  <li>- 20-30 replies/día a creators de tu red</li>
-                  <li>- Responder en los primeros 15 min del tweet</li>
-                  <li>- Max 280 chars, aportar valor, sin links</li>
-                  <li>- Objetivo: que el autor responda (x150 boost)</li>
+                  <li>- 8-12 quotes/día a tweets +20K views</li>
+                  <li>- Aportar valor: dato, framework, take</li>
+                  <li>- Max 200 chars (el tweet original da contexto)</li>
+                  <li>- El autor recibe notificación automática</li>
                 </ul>
               </div>
               <div>
-                <p className="font-medium text-[#032149] mb-1">30% Posts propios (contenido)</p>
+                <p className="font-medium text-[#032149] mb-1">Posts propios + Threads</p>
                 <ul className="space-y-1 text-xs">
-                  <li>- 2 posts originales/día en horas pico</li>
-                  <li>- 1-2 threads/semana (54% más engagement)</li>
-                  <li>- Texto &gt; video en X</li>
+                  <li>- 3-5 tweets originales/día</li>
+                  <li>- 1-2 threads/semana</li>
                   <li>- Sin links en el tweet principal (-50% reach)</li>
+                  <li>- Repurpose del blog → threads</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-[#032149] mb-1">Follow + Like (visibilidad)</p>
+                <ul className="space-y-1 text-xs">
+                  <li>- Follow 20-30 creators/día</li>
+                  <li>- Like 50-80 tweets/día</li>
+                  <li>- Unfollow si no siguen en 14 días</li>
+                  <li>- Objetivo: follow-back → unlock replies</li>
                 </ul>
               </div>
             </div>
@@ -637,7 +686,7 @@ export default function TwitterPage() {
 
                       {/* Reply draft */}
                       <div className="mt-3">
-                        <p className="font-medium text-xs text-slate-500 mb-1">Reply generado:</p>
+                        <p className="font-medium text-xs text-slate-500 mb-1">Quote tweet:</p>
                         {editingReply === reply.id ? (
                           <div>
                             <textarea
@@ -675,9 +724,12 @@ export default function TwitterPage() {
                           </>
                         )}
                         {(reply.status === 'approved') && (
-                          <button onClick={() => postReplyToX(reply)} disabled={posting === reply.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
+                          <button onClick={() => postQuoteToX(reply)} disabled={posting === reply.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
                             {posting === reply.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                            {posting === reply.id ? 'Publicando...' : 'Post to X'}
+                            {posting === reply.id ? 'Publicando...' : 'Quote Tweet'}
+                          </button>
+                          <button onClick={() => likeOnX(reply.tweetUrl)} className="flex items-center gap-1 px-2 py-1.5 bg-pink-50 text-pink-500 rounded-lg text-xs font-medium hover:bg-pink-100">
+                            ♥ Like
                           </button>
                         )}
                         <button

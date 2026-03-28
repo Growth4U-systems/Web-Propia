@@ -11,7 +11,6 @@ const FIREBASE_PROJECT = 'landing-growth4u';
 const FIREBASE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/artifacts/growth4u-public-app/public/data`;
 const ACTOR_ID = 'apidojo~tweet-scraper';
 
-// Hardcoded fallback creators (used when Firebase collection is empty)
 const FALLBACK_HANDLES = [
   'coreyhainesco', 'askokara', 'DeRonin_', 'ai_vaidehi', 'dotta',
   'kanikabk', 'indexsy', 'presswhizz', 'everestchris6', 'oliverhenry',
@@ -26,7 +25,6 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json',
 };
 
-// Knowledge base for reply generation
 const G4U_KNOWLEDGE = `
 GROWTH4U — Consultora de Growth Marketing para startups y scale-ups tech B2B/B2C.
 
@@ -40,7 +38,7 @@ TEMAS CLAVE (úsalos como contexto, no como pitch):
 - Attribution multi-touch: medir ROI real, dashboards accionables
 `.trim();
 
-// Fetch X creators from Firebase
+// ---- Firebase helpers ----
 async function fetchXCreators(): Promise<{ handle: string; category: string; active: boolean }[]> {
   try {
     const res = await fetch(`${FIREBASE_BASE}/x_creators?pageSize=200`);
@@ -57,11 +55,19 @@ async function fetchXCreators(): Promise<{ handle: string; category: string; act
   }
 }
 
-async function generateReply(authorHandle: string, tweetContent: string, personSlug?: string): Promise<string> {
-  // Detect language
+// ---- Claude AI helpers ----
+async function generateQuoteTweet(authorHandle: string, tweetContent: string): Promise<string> {
   const spanishSignals = (tweetContent.match(/\b(de|en|los|las|del|para|por|que|una?|con|como|pero|más|también|sobre|puede|tiene|hacer|empresa|negocio|crecimiento|marketing)\b/gi) || []).length;
   const englishSignals = (tweetContent.match(/\b(the|is|are|was|were|have|has|been|will|would|could|should|with|from|this|that|they|their|which|about|growth|business|company|marketing|team|product)\b/gi) || []).length;
   const lang = englishSignals > spanishSignals ? 'inglés' : 'español';
+
+  const formats = [
+    '"Yes, and..." — coincide y extiende con un dato o ejemplo concreto',
+    '"Framework" — toma su punto y conviértelo en un mini-framework o modelo mental',
+    '"Ángulo contrario" — ofrece respetuosamente una perspectiva diferente',
+    '"Data drop" — añade un dato relevante o caso de estudio',
+  ];
+  const randomFormat = formats[Math.floor(Math.random() * formats.length)];
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -75,28 +81,30 @@ async function generateReply(authorHandle: string, tweetContent: string, personS
       max_tokens: 300,
       messages: [{
         role: 'user',
-        content: `Genera un reply para este tweet de @${authorHandle} en X (Twitter):
+        content: `Genera un quote tweet para este tweet de @${authorHandle} en X:
 
 """
 ${tweetContent.slice(0, 800)}
 """
 
-IDIOMA: El tweet está en ${lang}. Tu reply DEBE estar 100% en ${lang}.
+IDIOMA: ${lang}. Tu quote tweet DEBE estar 100% en ${lang}.
 
 ${G4U_KNOWLEDGE}
 
-Reglas para replies en X:
-- MÁXIMO 280 caracteres (esto es X/Twitter, no LinkedIn)
-- Aporta valor real: dato, perspectiva, pregunta inteligente o experiencia
+FORMATO a usar: ${randomFormat}
+
+Reglas para quote tweets en X:
+- MÁXIMO 200 caracteres (corto y potente — el tweet original ya da contexto)
+- Aporta valor real: dato, perspectiva propia, pregunta inteligente o insight
 - Si el tema conecta con expertise de Growth4U, incorpóralo como opinión propia — NUNCA como pitch
-- Tono directo, informal pero inteligente (estilo X, no LinkedIn)
-- NUNCA: "Gran tweet", "Totalmente de acuerdo", "Esto 👆" ni respuestas genéricas
+- Tono directo, informal pero inteligente (estilo X)
+- NUNCA: "Gran punto", "Totalmente de acuerdo", "Esto 👆" ni respuestas genéricas
 - NUNCA links, URLs, hashtags ni menciones a @growth4u
 - NUNCA emojis excesivos (máximo 1 si es natural)
-- Empieza directo con el contenido, sin preámbulo
-- El objetivo: que el autor te responda (el algoritmo amplifica x150 si responde)
+- NO menciones al autor con @ — el quote tweet ya lo muestra
+- Empieza directo con tu take, sin preámbulo
 
-Solo devuelve el reply en ${lang}, nada más.`,
+Solo devuelve el quote tweet en ${lang}, nada más.`,
       }],
     }),
   });
@@ -158,17 +166,19 @@ Reglas:
   return data?.content?.[0]?.text || '[]';
 }
 
-async function saveReply(reply: {
+// ---- Firebase save helpers ----
+async function saveQuoteTweet(qt: {
   handle: string; tweetUrl: string; tweetSnippet: string;
-  replyDraft: string; category: string; views?: number;
+  quoteDraft: string; category: string; views?: number;
 }) {
   const fields: Record<string, any> = {
-    handle: { stringValue: reply.handle },
-    tweetUrl: { stringValue: reply.tweetUrl },
-    tweetSnippet: { stringValue: reply.tweetSnippet },
-    replyDraft: { stringValue: reply.replyDraft },
-    category: { stringValue: reply.category },
-    views: { integerValue: reply.views || 0 },
+    handle: { stringValue: qt.handle },
+    tweetUrl: { stringValue: qt.tweetUrl },
+    tweetSnippet: { stringValue: qt.tweetSnippet },
+    replyDraft: { stringValue: qt.quoteDraft },
+    category: { stringValue: qt.category },
+    views: { integerValue: qt.views || 0 },
+    type: { stringValue: 'quote' },
     status: { stringValue: 'pending' },
     createdAt: { timestampValue: new Date().toISOString() },
     updatedAt: { timestampValue: new Date().toISOString() },
@@ -243,11 +253,14 @@ function buildOAuthHeader(method: string, url: string): string {
   return `OAuth ${header}`;
 }
 
-async function postTweet(text: string, inReplyToTweetId?: string): Promise<{ id: string; text: string }> {
+async function postTweet(text: string, opts?: { replyTo?: string; quoteTweetId?: string }): Promise<{ id: string; text: string }> {
   const url = 'https://api.twitter.com/2/tweets';
   const body: any = { text };
-  if (inReplyToTweetId) {
-    body.reply = { in_reply_to_tweet_id: inReplyToTweetId };
+  if (opts?.replyTo) {
+    body.reply = { in_reply_to_tweet_id: opts.replyTo };
+  }
+  if (opts?.quoteTweetId) {
+    body.quote_tweet_id = opts.quoteTweetId;
   }
 
   const res = await fetch(url, {
@@ -267,15 +280,34 @@ async function postTweet(text: string, inReplyToTweetId?: string): Promise<{ id:
   return data?.data || {};
 }
 
+async function xApiCall(method: string, endpoint: string, body?: any): Promise<any> {
+  const url = `https://api.twitter.com/2${endpoint}`;
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Authorization': buildOAuthHeader(method, url),
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`X API ${res.status}: ${errText.slice(0, 300)}`);
+  }
+  return res.json();
+}
+
 // =====================================================
-// ASYNC ARCHITECTURE — 6 actions via query param
+// ACTIONS via query param
 // =====================================================
-// POST ?action=start       → launches Apify run, returns { runId, datasetId }
-// GET  ?action=status      → checks if Apify finished
-// POST ?action=process     → fetches results + generates replies + saves
-// POST ?action=ideas       → generates post ideas from scraped tweets
-// POST ?action=post-reply  → posts an approved reply to X via API
-// POST ?action=post-tweet  → posts an approved post/thread to X via API
+// POST ?action=start        → launches Apify run
+// GET  ?action=status       → checks if Apify finished
+// POST ?action=process      → generates quote tweets from scraped data
+// POST ?action=ideas        → generates post ideas
+// POST ?action=post-quote   → posts a quote tweet to X
+// POST ?action=post-tweet   → posts a tweet/thread to X
+// POST ?action=like         → likes a tweet
+// POST ?action=follow       → follows creators
 // =====================================================
 
 export default async (req: Request, _context: Context) => {
@@ -297,7 +329,6 @@ export default async (req: Request, _context: Context) => {
       const maxTweets = (body as any)?.maxTweets || 5;
       const handles: string[] = (body as any)?.handles || [];
 
-      // If no handles provided, fetch from Firebase (fallback to hardcoded list)
       let targetHandles = handles;
       if (targetHandles.length === 0) {
         const creators = await fetchXCreators();
@@ -306,12 +337,10 @@ export default async (req: Request, _context: Context) => {
       if (targetHandles.length === 0) {
         targetHandles = FALLBACK_HANDLES;
       }
-
       if (targetHandles.length === 0) {
-        return new Response(JSON.stringify({ error: 'No creators configured. Add creators first.' }), { status: 400, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'No creators configured.' }), { status: 400, headers: CORS_HEADERS });
       }
 
-      // Apify tweet scraper input
       const runRes = await fetch(
         `https://api.apify.com/v2/acts/${ACTOR_ID}/runs?token=${APIFY_TOKEN}`,
         {
@@ -333,10 +362,7 @@ export default async (req: Request, _context: Context) => {
       }
 
       return new Response(JSON.stringify({
-        ok: true,
-        phase: 'started',
-        runId,
-        datasetId,
+        ok: true, phase: 'started', runId, datasetId,
         creators: targetHandles.length,
         message: `Scraping ${targetHandles.length} perfiles de X...`,
       }), { status: 200, headers: CORS_HEADERS });
@@ -361,14 +387,12 @@ export default async (req: Request, _context: Context) => {
       const datasetId = statusData?.data?.defaultDatasetId;
 
       return new Response(JSON.stringify({
-        ok: true,
-        status,
-        datasetId,
+        ok: true, status, datasetId,
         finished: status === 'SUCCEEDED' || status === 'FAILED' || status === 'ABORTED',
       }), { status: 200, headers: CORS_HEADERS });
     }
 
-    // ---- ACTION: PROCESS ----
+    // ---- ACTION: PROCESS (generates quote tweets) ----
     if (action === 'process') {
       if (!ANTHROPIC_KEY) {
         return new Response(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY' }), { status: 500, headers: CORS_HEADERS });
@@ -380,7 +404,6 @@ export default async (req: Request, _context: Context) => {
       const body = await req.json().catch(() => ({}));
       const datasetId = (body as any)?.datasetId || url.searchParams.get('datasetId');
       const offset = (body as any)?.offset || 0;
-      const personSlug: string | undefined = (body as any)?.personSlug;
       if (!datasetId) {
         return new Response(JSON.stringify({ error: 'Missing datasetId' }), { status: 400, headers: CORS_HEADERS });
       }
@@ -404,8 +427,6 @@ export default async (req: Request, _context: Context) => {
         try {
           const content = tweet.full_text || tweet.text || '';
           if (!content || content.length < 30) { skipped++; continue; }
-
-          // Skip retweets
           if (content.startsWith('RT @')) { skipped++; continue; }
 
           const handle = tweet.user?.screen_name || tweet.author?.userName || '';
@@ -415,34 +436,30 @@ export default async (req: Request, _context: Context) => {
 
           if (!handle) { skipped++; continue; }
 
-          // Skip tweets older than 7 days (X engagement window is much shorter than LinkedIn)
           const tweetDate = tweet.created_at ? new Date(tweet.created_at) : null;
           if (tweetDate) {
             const age = Date.now() - tweetDate.getTime();
             if (age > 7 * 24 * 60 * 60 * 1000) { skipped++; continue; }
           }
 
-          // Filter by views — only process tweets with 20K+ views
           const views = tweet.views_count || tweet.viewCount || tweet.ext_views?.count || tweet.views?.count || 0;
           if (views < 20000) { skipped++; continue; }
 
-          const replyDraft = await generateReply(handle, content, personSlug);
-          if (!replyDraft) { errors++; continue; }
+          const quoteDraft = await generateQuoteTweet(handle, content);
+          if (!quoteDraft) { errors++; continue; }
 
-          // Truncate to 280 chars if needed
-          const finalReply = replyDraft.length > 280 ? replyDraft.slice(0, 277) + '...' : replyDraft;
+          const finalQuote = quoteDraft.length > 280 ? quoteDraft.slice(0, 277) + '...' : quoteDraft;
 
-          const ok = await saveReply({
-            handle,
-            tweetUrl,
+          const ok = await saveQuoteTweet({
+            handle, tweetUrl,
             tweetSnippet: content.slice(0, 300),
-            replyDraft: finalReply,
+            quoteDraft: finalQuote,
             category: 'engagement',
             views,
           });
 
           if (ok) saved++;
-          else { errors++; errorDetails.push(`Failed to save reply for @${handle}`); }
+          else { errors++; errorDetails.push(`Failed to save quote for @${handle}`); }
         } catch (e: any) {
           errorDetails.push(e.message || 'Unknown error');
           errors++;
@@ -450,14 +467,10 @@ export default async (req: Request, _context: Context) => {
       }
 
       return new Response(JSON.stringify({
-        ok: true,
-        phase: 'process',
-        processed: batch.length,
-        nextOffset: offset + batch.length,
+        ok: true, phase: 'process',
+        processed: batch.length, nextOffset: offset + batch.length,
         hasMore: batch.length === batchSize,
-        saved,
-        skipped,
-        errors,
+        saved, skipped, errors,
         errorDetails: errorDetails.slice(0, 5),
       }), { status: 200, headers: CORS_HEADERS });
     }
@@ -477,7 +490,6 @@ export default async (req: Request, _context: Context) => {
         return new Response(JSON.stringify({ error: 'Missing datasetId' }), { status: 400, headers: CORS_HEADERS });
       }
 
-      // Fetch top tweets from dataset (first 20)
       const itemsRes = await fetch(
         `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}&limit=20`
       );
@@ -487,7 +499,6 @@ export default async (req: Request, _context: Context) => {
         return new Response(JSON.stringify({ ok: true, ideas: [], message: 'No tweets to analyze' }), { status: 200, headers: CORS_HEADERS });
       }
 
-      // Filter to good content (non-RT, decent length)
       const goodTweets = items
         .filter((t: any) => {
           const text = t.full_text || t.text || '';
@@ -505,7 +516,6 @@ export default async (req: Request, _context: Context) => {
 
       const rawIdeas = await generatePostIdeas(goodTweets);
 
-      // Parse and save ideas
       let ideas: any[] = [];
       try {
         ideas = JSON.parse(rawIdeas.trim());
@@ -520,38 +530,33 @@ export default async (req: Request, _context: Context) => {
       }
 
       return new Response(JSON.stringify({
-        ok: true,
-        phase: 'ideas',
-        ideas: ideas.length,
-        saved,
+        ok: true, phase: 'ideas', ideas: ideas.length, saved,
         message: `${saved} ideas de post generadas`,
       }), { status: 200, headers: CORS_HEADERS });
     }
 
-    // ---- ACTION: POST-REPLY ----
-    if (action === 'post-reply') {
+    // ---- ACTION: POST-QUOTE (quote tweet) ----
+    if (action === 'post-quote') {
       if (!X_API_KEY || !X_ACCESS_TOKEN) {
         return new Response(JSON.stringify({ error: 'Missing X API credentials' }), { status: 500, headers: CORS_HEADERS });
       }
 
       const body = await req.json().catch(() => ({}));
       const replyId = (body as any)?.replyId;
-      const replyText = (body as any)?.replyText;
+      const quoteText = (body as any)?.replyText || (body as any)?.quoteText;
       const tweetUrl = (body as any)?.tweetUrl;
 
-      if (!replyText) {
-        return new Response(JSON.stringify({ error: 'Missing replyText' }), { status: 400, headers: CORS_HEADERS });
+      if (!quoteText) {
+        return new Response(JSON.stringify({ error: 'Missing quote text' }), { status: 400, headers: CORS_HEADERS });
       }
 
-      // Extract tweet ID from URL (https://x.com/handle/status/123456)
       const tweetId = tweetUrl?.split('/status/')[1]?.split('?')[0];
       if (!tweetId) {
         return new Response(JSON.stringify({ error: 'Could not extract tweet ID from URL' }), { status: 400, headers: CORS_HEADERS });
       }
 
-      const posted = await postTweet(replyText, tweetId);
+      const posted = await postTweet(quoteText, { quoteTweetId: tweetId });
 
-      // Update Firebase status (best-effort, don't fail if quota exceeded)
       if (replyId) {
         await fetch(`${FIREBASE_BASE}/x_replies/${replyId}?updateMask.fieldPaths=status&updateMask.fieldPaths=postedTweetId&updateMask.fieldPaths=postedAt`, {
           method: 'PATCH',
@@ -567,10 +572,8 @@ export default async (req: Request, _context: Context) => {
       }
 
       return new Response(JSON.stringify({
-        ok: true,
-        phase: 'post-reply',
-        tweetId: posted.id,
-        message: 'Reply posted to X',
+        ok: true, phase: 'post-quote', tweetId: posted.id,
+        message: 'Quote tweet posted to X',
       }), { status: 200, headers: CORS_HEADERS });
     }
 
@@ -599,7 +602,7 @@ export default async (req: Request, _context: Context) => {
         let lastId = main.id;
         for (const slideText of threadSlides) {
           if (!slideText) continue;
-          const reply = await postTweet(slideText, lastId);
+          const reply = await postTweet(slideText, { replyTo: lastId });
           postedIds.push(reply.id);
           lastId = reply.id;
         }
@@ -608,7 +611,6 @@ export default async (req: Request, _context: Context) => {
         postedIds.push(posted.id);
       }
 
-      // Update Firebase status (best-effort)
       if (postId) {
         await fetch(`${FIREBASE_BASE}/x_posts/${postId}?updateMask.fieldPaths=status&updateMask.fieldPaths=postedTweetId&updateMask.fieldPaths=postedAt`, {
           method: 'PATCH',
@@ -624,10 +626,72 @@ export default async (req: Request, _context: Context) => {
       }
 
       return new Response(JSON.stringify({
-        ok: true,
-        phase: 'post-tweet',
-        tweetIds: postedIds,
+        ok: true, phase: 'post-tweet', tweetIds: postedIds,
         message: format === 'thread' ? `Thread posted (${postedIds.length} tweets)` : 'Tweet posted to X',
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: LIKE ----
+    if (action === 'like') {
+      if (!X_API_KEY || !X_ACCESS_TOKEN) {
+        return new Response(JSON.stringify({ error: 'Missing X API credentials' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const tweetUrl = (body as any)?.tweetUrl;
+      const tweetId = tweetUrl?.split('/status/')[1]?.split('?')[0] || (body as any)?.tweetId;
+
+      if (!tweetId) {
+        return new Response(JSON.stringify({ error: 'Missing tweetId or tweetUrl' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      // Need user ID for likes endpoint — extract from access token (format: userId-rest)
+      const userId = X_ACCESS_TOKEN.split('-')[0];
+
+      await xApiCall('POST', `/users/${userId}/likes`, { tweet_id: tweetId });
+
+      return new Response(JSON.stringify({
+        ok: true, phase: 'like', message: 'Tweet liked',
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: FOLLOW ----
+    if (action === 'follow') {
+      if (!X_API_KEY || !X_ACCESS_TOKEN) {
+        return new Response(JSON.stringify({ error: 'Missing X API credentials' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const handles: string[] = (body as any)?.handles || [];
+
+      if (handles.length === 0) {
+        return new Response(JSON.stringify({ error: 'No handles provided' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      const userId = X_ACCESS_TOKEN.split('-')[0];
+      const results: { handle: string; ok: boolean; error?: string }[] = [];
+
+      for (const handle of handles) {
+        try {
+          // Lookup user ID by username
+          const lookup = await xApiCall('GET', `/users/by/username/${handle}`);
+          const targetId = lookup?.data?.id;
+          if (!targetId) {
+            results.push({ handle, ok: false, error: 'User not found' });
+            continue;
+          }
+
+          await xApiCall('POST', `/users/${userId}/following`, { target_user_id: targetId });
+          results.push({ handle, ok: true });
+        } catch (e: any) {
+          results.push({ handle, ok: false, error: e.message?.slice(0, 100) });
+        }
+      }
+
+      const followed = results.filter(r => r.ok).length;
+      return new Response(JSON.stringify({
+        ok: true, phase: 'follow', followed, total: handles.length, results,
+        message: `Followed ${followed}/${handles.length} creators`,
       }), { status: 200, headers: CORS_HEADERS });
     }
 
