@@ -228,7 +228,10 @@ function percentEncode(str: string): string {
     .replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A');
 }
 
-function buildOAuthHeader(method: string, url: string): string {
+function buildOAuthHeader(method: string, fullUrl: string): string {
+  const urlObj = new URL(fullUrl);
+  const baseUrl = `${urlObj.origin}${urlObj.pathname}`;
+
   const oauthParams: Record<string, string> = {
     oauth_consumer_key: X_API_KEY,
     oauth_nonce: crypto.randomBytes(32).toString('base64').replace(/[^a-zA-Z0-9]/g, ''),
@@ -238,11 +241,15 @@ function buildOAuthHeader(method: string, url: string): string {
     oauth_version: '1.0',
   };
 
-  const paramString = Object.keys(oauthParams).sort()
-    .map(k => `${percentEncode(k)}=${percentEncode(oauthParams[k])}`)
+  // Merge query params + oauth params for signature
+  const allParams: Record<string, string> = { ...oauthParams };
+  urlObj.searchParams.forEach((v, k) => { allParams[k] = v; });
+
+  const paramString = Object.keys(allParams).sort()
+    .map(k => `${percentEncode(k)}=${percentEncode(allParams[k])}`)
     .join('&');
 
-  const baseString = `${method}&${percentEncode(url)}&${percentEncode(paramString)}`;
+  const baseString = `${method}&${percentEncode(baseUrl)}&${percentEncode(paramString)}`;
   const signingKey = `${percentEncode(X_API_SECRET)}&${percentEncode(X_ACCESS_SECRET)}`;
   const signature = crypto.createHmac('sha1', signingKey).update(baseString).digest('base64');
 
