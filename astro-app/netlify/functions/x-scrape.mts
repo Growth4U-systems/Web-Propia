@@ -300,9 +300,11 @@ async function xApiCall(method: string, endpoint: string, body?: any): Promise<a
 // =====================================================
 // ACTIONS via query param
 // =====================================================
+// GET  ?action=me           → verify X connection, return user info
 // POST ?action=start        → launches Apify run
 // GET  ?action=status       → checks if Apify finished
 // POST ?action=process      → generates quote tweets from scraped data
+// POST ?action=discover     → find new accounts from scraped tweets
 // POST ?action=ideas        → generates post ideas
 // POST ?action=post-quote   → posts a quote tweet to X
 // POST ?action=post-tweet   → posts a tweet/thread to X
@@ -556,6 +558,81 @@ export default async (req: Request, _context: Context) => {
       return new Response(JSON.stringify({
         ok: true, phase: 'ideas', ideas: ideas.length, saved,
         message: `${saved} ideas de post generadas`,
+      }), { status: 200, headers: CORS_HEADERS });
+    }
+
+    // ---- ACTION: DISCOVER (find new accounts from scraped tweets) ----
+    if (action === 'discover') {
+      if (!APIFY_TOKEN) {
+        return new Response(JSON.stringify({ error: 'Missing APIFY_API_TOKEN' }), { status: 500, headers: CORS_HEADERS });
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const datasetId = (body as any)?.datasetId;
+      const existingHandles: string[] = ((body as any)?.existingHandles || []).map((h: string) => h.toLowerCase());
+
+      if (!datasetId) {
+        return new Response(JSON.stringify({ error: 'Missing datasetId' }), { status: 400, headers: CORS_HEADERS });
+      }
+
+      // Fetch all tweets from dataset
+      const itemsRes = await fetch(
+        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}&limit=100`
+      );
+      const items = await itemsRes.json();
+      if (!Array.isArray(items) || items.length === 0) {
+        return new Response(JSON.stringify({ ok: true, discovered: [] }), { status: 200, headers: CORS_HEADERS });
+      }
+
+      // Extract all mentioned handles, quoted users, reply-to users
+      const mentionCounts: Record<string, { count: number; mentionedBy: Set<string>; context: string }> = {};
+
+      for (const tweet of items) {
+        const text = tweet.full_text || tweet.text || '';
+        const author = (tweet.user?.screen_name || tweet.author?.userName || '').toLowerCase();
+
+        // Extract @mentions from text
+        const mentions = text.match(/@([a-zA-Z0-9_]+)/g) || [];
+        for (const m of mentions) {
+          const handle = m.slice(1).toLowerCase();
+          if (handle === author || existingHandles.includes(handle)) continue;
+          if (!mentionCounts[handle]) mentionCounts[handle] = { count: 0, mentionedBy: new Set(), context: '' };
+          mentionCounts[handle].count++;
+          mentionCounts[handle].mentionedBy.add(author);
+          if (!mentionCounts[handle].context) mentionCounts[handle].context = text.slice(0, 150);
+        }
+
+        // Extract quoted user if present
+        const quotedUser = (tweet.quoted_status?.user?.screen_name || tweet.quotedTweet?.author?.userName || '').toLowerCase();
+        if (quotedUser && quotedUser !== author && !existingHandles.includes(quotedUser)) {
+          if (!mentionCounts[quotedUser]) mentionCounts[quotedUser] = { count: 0, mentionedBy: new Set(), context: '' };
+          mentionCounts[quotedUser].count++;
+          mentionCounts[quotedUser].mentionedBy.add(author);
+        }
+
+        // Extract reply-to user
+        const replyTo = (tweet.in_reply_to_screen_name || '').toLowerCase();
+        if (replyTo && replyTo !== author && !existingHandles.includes(replyTo)) {
+          if (!mentionCounts[replyTo]) mentionCounts[replyTo] = { count: 0, mentionedBy: new Set(), context: '' };
+          mentionCounts[replyTo].count++;
+          mentionCounts[replyTo].mentionedBy.add(author);
+        }
+      }
+
+      // Sort by mention count, return top 20
+      const discovered = Object.entries(mentionCounts)
+        .map(([handle, data]) => ({
+          handle,
+          mentions: data.count,
+          mentionedBy: Array.from(data.mentionedBy).slice(0, 5),
+          context: data.context,
+        }))
+        .sort((a, b) => b.mentions - a.mentions)
+        .slice(0, 20);
+
+      return new Response(JSON.stringify({
+        ok: true, discovered,
+        message: `${discovered.length} nuevas cuentas encontradas`,
       }), { status: 200, headers: CORS_HEADERS });
     }
 

@@ -106,6 +106,11 @@ export default function TwitterPage() {
   const [xUser, setXUser] = useState<{ name: string; username: string; avatar: string; followers: number; following: number; tweets: number } | null>(null);
   const [xConnecting, setXConnecting] = useState(false);
 
+  // Discover state
+  const [discovered, setDiscovered] = useState<{ handle: string; mentions: number; mentionedBy: string[]; context: string }[]>([]);
+  const [discovering, setDiscovering] = useState(false);
+  const [following, setFollowing] = useState(false);
+
   const checkXConnection = async () => {
     setXConnecting(true);
     try {
@@ -319,22 +324,63 @@ export default function TwitterPage() {
     }
   };
 
-  const followCreators = async () => {
+  const followCreators = async (handles?: string[]) => {
+    setFollowing(true);
     setPostError(null);
-    const activeHandles = creators.filter(c => c.active).map(c => c.handle);
-    if (activeHandles.length === 0) return;
+    const targetHandles = handles || creators.filter(c => c.active).map(c => c.handle);
+    if (targetHandles.length === 0) { setFollowing(false); return; }
     try {
       const res = await fetch(`${FUNCTION_URL}?action=follow`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ handles: activeHandles }),
+        body: JSON.stringify({ handles: targetHandles }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
-      setScrapeStatus(`Followed ${data.followed}/${data.total} creators`);
+      setProcessStatus(`Followed ${data.followed}/${data.total} cuentas`);
     } catch (e: any) {
       setPostError(e.message);
     }
+    setFollowing(false);
+  };
+
+  const discoverAccounts = async () => {
+    if (!scrapeDatasetId) return;
+    setDiscovering(true);
+    setPostError(null);
+    try {
+      const existingHandles = creators.map(c => c.handle);
+      const res = await fetch(`${FUNCTION_URL}?action=discover`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ datasetId: scrapeDatasetId, existingHandles }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      setDiscovered(data.discovered || []);
+    } catch (e: any) {
+      setPostError(e.message);
+    }
+    setDiscovering(false);
+  };
+
+  const addAndFollow = async (handle: string) => {
+    await createXCreator({ handle, name: '', category: 'Discovered', notes: 'Auto-discovered', active: true });
+    setDiscovered(prev => prev.filter(d => d.handle !== handle));
+    await followCreators([handle]);
+    loadAll();
+  };
+
+  const addAllDiscovered = async () => {
+    setFollowing(true);
+    const handles = discovered.map(d => d.handle);
+    for (const handle of handles) {
+      await createXCreator({ handle, name: '', category: 'Discovered', notes: 'Auto-discovered', active: true }).catch(() => {});
+    }
+    await followCreators(handles);
+    setDiscovered([]);
+    loadAll();
+    setFollowing(false);
   };
 
   const postTweetToX = async (post: XPost & { id: string }) => {
@@ -613,7 +659,7 @@ export default function TwitterPage() {
             </div>
 
             {/* Step 4: Publish */}
-            <div className={`p-5 ${approvedReplies === 0 ? 'opacity-50' : ''}`}>
+            <div className={`p-5 border-b border-slate-100 ${approvedReplies === 0 ? 'opacity-50' : ''}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full ${approvedReplies > 0 ? 'bg-green-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>4</div>
@@ -644,28 +690,71 @@ export default function TwitterPage() {
                 )}
               </div>
             </div>
+
+            {/* Step 5: Discover & Follow */}
+            <div className={`p-5 ${!scrapeDatasetId ? 'opacity-50' : ''}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full ${discovered.length > 0 ? 'bg-pink-500' : scrapeDatasetId ? 'bg-pink-400' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>5</div>
+                  <div>
+                    <p className="font-semibold text-[#032149]">Descubrir y seguir cuentas</p>
+                    <p className="text-xs text-slate-400">
+                      {discovered.length > 0 ? `${discovered.length} cuentas nuevas encontradas` :
+                       'Encuentra cuentas mencionadas por tus creators'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {discovered.length === 0 && (
+                    <button onClick={discoverAccounts} disabled={!scrapeDatasetId || discovering} className="flex items-center gap-2 px-5 py-2.5 bg-pink-500 text-white rounded-lg hover:bg-pink-600 font-medium disabled:opacity-50 text-sm">
+                      {discovering ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                      {discovering ? 'Buscando...' : 'Descubrir'}
+                    </button>
+                  )}
+                  {discovered.length > 0 && (
+                    <button onClick={addAllDiscovered} disabled={following} className="flex items-center gap-2 px-5 py-2.5 bg-pink-500 text-white rounded-lg hover:bg-pink-600 font-medium disabled:opacity-50 text-sm">
+                      {following ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      {following ? 'Siguiendo...' : `Seguir todos (${discovered.length})`}
+                    </button>
+                  )}
+                  <button onClick={() => followCreators()} disabled={following || creators.length === 0} className="flex items-center gap-2 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium disabled:opacity-50 text-sm" title="Follow creators existentes">
+                    {following ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Discovered accounts list */}
+              {discovered.length > 0 && (
+                <div className="mt-4 ml-11 space-y-2 max-h-64 overflow-y-auto">
+                  {discovered.map(d => (
+                    <div key={d.handle} className="flex items-center justify-between p-3 bg-pink-50 rounded-lg">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-[#032149]">@{d.handle}</span>
+                          <span className="text-xs text-pink-600 bg-pink-100 px-1.5 py-0.5 rounded">{d.mentions}x mencionado</span>
+                        </div>
+                        <p className="text-xs text-slate-400 truncate mt-0.5">
+                          por {d.mentionedBy.map(h => `@${h}`).join(', ')}
+                        </p>
+                      </div>
+                      <button onClick={() => addAndFollow(d.handle)} className="flex items-center gap-1 px-3 py-1.5 bg-pink-500 text-white rounded-lg text-xs font-medium hover:bg-pink-600 ml-2 flex-shrink-0">
+                        <Plus className="w-3 h-3" /> Follow
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Secondary actions */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-[#032149] text-sm">Follow creators</p>
-                <button onClick={followCreators} disabled={creators.length === 0} className="flex items-center gap-2 px-4 py-2 bg-pink-50 text-pink-600 rounded-lg hover:bg-pink-100 font-medium disabled:opacity-50 text-sm">
-                  <Users className="w-4 h-4" /> Follow todos
-                </button>
-              </div>
-              <p className="text-xs text-slate-400">Sigue a los {activeCreators} creators activos para que te vean y te sigan de vuelta</p>
-            </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-[#032149] text-sm">Resumen</p>
-                <span className="text-xs text-slate-400">{postedReplies} quotes publicados</span>
-              </div>
-              <div className="flex gap-4 text-xs text-slate-500">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> {pendingReplies} pendientes</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" /> {approvedReplies} aprobados</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400" /> {postedReplies} publicados</span>
+          {/* Stats summary */}
+          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-6 text-xs text-slate-500">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> {pendingReplies} pendientes</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400" /> {approvedReplies} aprobados</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400" /> {postedReplies} publicados</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-400" /> {activeCreators} creators</span>
               </div>
             </div>
           </div>
