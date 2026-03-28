@@ -456,6 +456,21 @@ export default async (req: Request, _context: Context) => {
       let errors = 0;
       const errorDetails: string[] = [];
 
+      // Dedup: fetch existing tweet URLs to avoid duplicate quotes
+      const existingUrls = new Set<string>();
+      if (offset === 0) {
+        try {
+          const existingRes = await fetch(`${FIREBASE_BASE}/x_replies?pageSize=500`);
+          if (existingRes.ok) {
+            const existingData = await existingRes.json();
+            for (const doc of existingData.documents || []) {
+              const url = doc.fields?.tweetUrl?.stringValue || '';
+              if (url) existingUrls.add(url);
+            }
+          }
+        } catch {}
+      }
+
       for (const tweet of batch) {
         try {
           const content = tweet.full_text || tweet.text || '';
@@ -466,6 +481,8 @@ export default async (req: Request, _context: Context) => {
           const tweetUrl = handle && tweet.id_str
             ? `https://x.com/${handle}/status/${tweet.id_str}`
             : tweet.url || '';
+
+          if (tweetUrl && existingUrls.has(tweetUrl)) { skipped++; continue; }
 
           if (!handle) { skipped++; continue; }
 
@@ -556,15 +573,36 @@ export default async (req: Request, _context: Context) => {
         return new Response(JSON.stringify({ ok: false, error: 'Failed to parse ideas JSON', raw: rawIdeas }), { status: 500, headers: CORS_HEADERS });
       }
 
+      // Dedup: fetch existing post topics to avoid duplicates
+      const existingTopics = new Set<string>();
+      try {
+        const existingRes = await fetch(`${FIREBASE_BASE}/x_posts?pageSize=200`);
+        if (existingRes.ok) {
+          const existingData = await existingRes.json();
+          for (const doc of existingData.documents || []) {
+            const topic = doc.fields?.topic?.stringValue || '';
+            const draft = doc.fields?.draft?.stringValue || '';
+            if (topic) existingTopics.add(topic.toLowerCase().trim());
+            if (draft) existingTopics.add(draft.toLowerCase().trim().slice(0, 80));
+          }
+        }
+      } catch {}
+
       let saved = 0;
+      let dupes = 0;
       for (const idea of ideas) {
+        const topicKey = (idea.topic || '').toLowerCase().trim();
+        const draftKey = (idea.draft || '').toLowerCase().trim().slice(0, 80);
+        if (existingTopics.has(topicKey) || existingTopics.has(draftKey)) { dupes++; continue; }
+        existingTopics.add(topicKey);
+        existingTopics.add(draftKey);
         const ok = await savePostIdea(idea);
         if (ok) saved++;
       }
 
       return new Response(JSON.stringify({
-        ok: true, phase: 'ideas', ideas: ideas.length, saved,
-        message: `${saved} ideas de post generadas`,
+        ok: true, phase: 'ideas', ideas: ideas.length, saved, dupes,
+        message: `${saved} posts generados${dupes ? `, ${dupes} duplicados omitidos` : ''}`,
       }), { status: 200, headers: CORS_HEADERS });
     }
 

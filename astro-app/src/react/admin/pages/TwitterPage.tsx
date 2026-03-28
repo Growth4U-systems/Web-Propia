@@ -81,7 +81,7 @@ export default function TwitterPage() {
   const [scraping, setScraping] = useState(false);
   const [scrapeStatus, setScrapeStatus] = useState('');
   const [scrapeRunId, setScrapeRunId] = useState('');
-  const [scrapeDatasetId, setScrapeDatasetId] = useState('');
+  const [scrapeDatasetId, setScrapeDatasetId] = useState(() => localStorage.getItem('x_scrape_datasetId') || '');
   const [processing, setProcessing] = useState(false);
   const [processStatus, setProcessStatus] = useState('');
 
@@ -162,6 +162,7 @@ export default function TwitterPage() {
       }
       setScrapeRunId(data.runId);
       setScrapeDatasetId(data.datasetId);
+      localStorage.setItem('x_scrape_datasetId', data.datasetId);
       setScrapeStatus(`Scraping ${data.creators} perfiles...`);
       pollStatus(data.runId);
     } catch (e: any) {
@@ -179,6 +180,7 @@ export default function TwitterPage() {
           if (data.status === 'SUCCEEDED') {
             setScrapeStatus('Scraping completado. Listo para procesar.');
             setScrapeDatasetId(data.datasetId);
+            localStorage.setItem('x_scrape_datasetId', data.datasetId);
           } else {
             setScrapeStatus(`Scraping ${data.status}`);
           }
