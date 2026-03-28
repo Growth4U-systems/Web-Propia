@@ -202,7 +202,7 @@ async function savePostIdea(idea: {
     draft: { stringValue: idea.draft },
     inspiration: { stringValue: idea.inspiration },
     language: { stringValue: idea.language || 'es' },
-    status: { stringValue: 'idea' },
+    status: { stringValue: 'draft' },
     createdAt: { timestampValue: new Date().toISOString() },
     updatedAt: { timestampValue: new Date().toISOString() },
   };

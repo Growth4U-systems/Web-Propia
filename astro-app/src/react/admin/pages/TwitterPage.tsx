@@ -475,6 +475,9 @@ export default function TwitterPage() {
   const postedReplies = replies.filter(r => r.status === 'posted').length;
   const ideaPosts = posts.filter(p => p.status === 'idea').length;
   const draftPosts = posts.filter(p => p.status === 'draft').length;
+  const approvedPosts = posts.filter(p => p.status === 'approved').length;
+  const postedPosts = posts.filter(p => p.status === 'posted').length;
+  const pendingPosts = ideaPosts + draftPosts;
   const activeCreators = creators.filter(c => c.active).length;
 
   // ---- Filtered data ----
@@ -606,78 +609,73 @@ export default function TwitterPage() {
               {scrapeStatus && <p className="text-xs text-slate-500 mt-2 ml-11">{scrapeStatus}</p>}
             </div>
 
-            {/* Step 2: Generate quotes */}
+            {/* Step 2: Generate posts */}
             <div className={`p-5 border-b border-slate-100 ${processing ? 'bg-blue-50' : !scrapeDatasetId ? 'opacity-50' : ''}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full ${scrapeDatasetId ? 'bg-[#032149]' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>2</div>
                   <div>
-                    <p className="font-semibold text-[#032149]">Generar quote tweets</p>
-                    <p className="text-xs text-slate-400">IA genera quotes para tweets con +20K views</p>
+                    <p className="font-semibold text-[#032149]">Generar tweets propios</p>
+                    <p className="text-xs text-slate-400">IA crea posts originales inspirados en los tweets scrapeados</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={processReplies} disabled={!scrapeDatasetId || processing || scraping} className="flex items-center gap-2 px-5 py-2.5 bg-[#032149] text-white rounded-lg hover:bg-[#043264] font-medium disabled:opacity-50 text-sm">
-                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    {processing ? 'Generando...' : 'Generar'}
-                  </button>
-                  <button onClick={generateIdeas} disabled={!scrapeDatasetId || processing || scraping} className="flex items-center gap-2 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium disabled:opacity-50 text-sm" title="También genera ideas de posts propios">
-                    <Lightbulb className="w-4 h-4" />
-                  </button>
-                </div>
+                <button onClick={generateIdeas} disabled={!scrapeDatasetId || processing || scraping} className="flex items-center gap-2 px-5 py-2.5 bg-[#032149] text-white rounded-lg hover:bg-[#043264] font-medium disabled:opacity-50 text-sm">
+                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {processing ? 'Generando...' : 'Generar'}
+                </button>
               </div>
               {processStatus && <p className="text-xs text-slate-500 mt-2 ml-11">{processStatus}</p>}
             </div>
 
             {/* Step 3: Review & Approve */}
-            <div className={`p-5 border-b border-slate-100 ${pendingReplies === 0 && approvedReplies === 0 ? 'opacity-50' : ''}`}>
+            <div className={`p-5 border-b border-slate-100 ${pendingPosts === 0 && approvedPosts === 0 ? 'opacity-50' : ''}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full ${pendingReplies > 0 ? 'bg-amber-500' : approvedReplies > 0 ? 'bg-blue-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>3</div>
+                  <div className={`w-8 h-8 rounded-full ${pendingPosts > 0 ? 'bg-amber-500' : approvedPosts > 0 ? 'bg-blue-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>3</div>
                   <div>
                     <p className="font-semibold text-[#032149]">Revisar y aprobar</p>
                     <p className="text-xs text-slate-400">
-                      {pendingReplies > 0 ? `${pendingReplies} quotes esperando revisión` :
-                       approvedReplies > 0 ? `${approvedReplies} quotes aprobados, listos para publicar` :
-                       'No hay quotes pendientes'}
+                      {pendingPosts > 0 ? `${pendingPosts} posts esperando revisión` :
+                       approvedPosts > 0 ? `${approvedPosts} posts aprobados, listos para publicar` :
+                       'No hay posts pendientes'}
                     </p>
                   </div>
                 </div>
-                {pendingReplies > 0 && (
-                  <button onClick={() => setTab('replies')} className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium text-sm">
+                {pendingPosts > 0 && (
+                  <button onClick={() => setTab('posts')} className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium text-sm">
                     <Check className="w-4 h-4" />
-                    Revisar ({pendingReplies})
+                    Revisar ({pendingPosts})
                   </button>
                 )}
-                {pendingReplies === 0 && approvedReplies > 0 && (
-                  <button onClick={() => setTab('replies')} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium text-sm">
+                {pendingPosts === 0 && approvedPosts > 0 && (
+                  <button onClick={() => setTab('posts')} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium text-sm">
                     <CheckCircle2 className="w-4 h-4" />
-                    Ver aprobados ({approvedReplies})
+                    Ver aprobados ({approvedPosts})
                   </button>
                 )}
               </div>
             </div>
 
             {/* Step 4: Publish */}
-            <div className={`p-5 border-b border-slate-100 ${approvedReplies === 0 ? 'opacity-50' : ''}`}>
+            <div className={`p-5 border-b border-slate-100 ${approvedPosts === 0 ? 'opacity-50' : ''}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full ${approvedReplies > 0 ? 'bg-green-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>4</div>
+                  <div className={`w-8 h-8 rounded-full ${approvedPosts > 0 ? 'bg-green-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>4</div>
                   <div>
                     <p className="font-semibold text-[#032149]">Publicar en X</p>
                     <p className="text-xs text-slate-400">
-                      {approvedReplies > 0 ? `${approvedReplies} quotes listos para publicar como quote tweets` :
-                       postedReplies > 0 ? `${postedReplies} quotes ya publicados` :
-                       'Aprueba quotes en el paso 3 primero'}
+                      {approvedPosts > 0 ? `${approvedPosts} posts listos para publicar` :
+                       postedPosts > 0 ? `${postedPosts} posts ya publicados` :
+                       'Aprueba posts en el paso 3 primero'}
                     </p>
                   </div>
                 </div>
-                {approvedReplies > 0 && (
+                {approvedPosts > 0 && (
                   <button
                     onClick={async () => {
-                      const approved = replies.filter(r => r.status === 'approved');
-                      for (const r of approved) {
-                        await postQuoteToX(r);
+                      const approved = posts.filter(p => p.status === 'approved');
+                      for (const p of approved) {
+                        await postTweetToX(p);
                         await new Promise(res => setTimeout(res, 2000));
                       }
                     }}
@@ -685,7 +683,7 @@ export default function TwitterPage() {
                     className="flex items-center gap-2 px-5 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium disabled:opacity-50 text-sm"
                   >
                     {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {posting ? 'Publicando...' : `Publicar todos (${approvedReplies})`}
+                    {posting ? 'Publicando...' : `Publicar todos (${approvedPosts})`}
                   </button>
                 )}
               </div>
@@ -751,9 +749,9 @@ export default function TwitterPage() {
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
             <div className="flex items-center justify-between">
               <div className="flex gap-6 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> {pendingReplies} pendientes</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400" /> {approvedReplies} aprobados</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400" /> {postedReplies} publicados</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> {pendingPosts} pendientes</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400" /> {approvedPosts} aprobados</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400" /> {postedPosts} publicados</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-400" /> {activeCreators} creators</span>
               </div>
             </div>
