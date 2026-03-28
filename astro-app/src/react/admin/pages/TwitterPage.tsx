@@ -267,36 +267,38 @@ export default function TwitterPage() {
     setPosts(prev => prev.filter(p => p.id !== id));
   };
 
-  const postReplyToX = async (replyId: string) => {
-    setPosting(replyId);
+  const postReplyToX = async (reply: XReply & { id: string }) => {
+    setPosting(reply.id);
     setPostError(null);
     try {
       const res = await fetch(`${FUNCTION_URL}?action=post-reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ replyId }),
+        body: JSON.stringify({ replyId: reply.id, replyText: reply.replyDraft, tweetUrl: reply.tweetUrl }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
-      setReplies(prev => prev.map(r => r.id === replyId ? { ...r, status: 'posted' as const } : r));
+      setReplies(prev => prev.map(r => r.id === reply.id ? { ...r, status: 'posted' as const } : r));
+      await updateXReply(reply.id, { status: 'posted' }).catch(() => {});
     } catch (e: any) {
       setPostError(e.message);
     }
     setPosting(null);
   };
 
-  const postTweetToX = async (postId: string) => {
-    setPosting(postId);
+  const postTweetToX = async (post: XPost & { id: string }) => {
+    setPosting(post.id);
     setPostError(null);
     try {
       const res = await fetch(`${FUNCTION_URL}?action=post-tweet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId }),
+        body: JSON.stringify({ postId: post.id, draft: post.draft, format: post.format, threadSlides: post.threadSlides }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'posted' as const } : p));
+      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, status: 'posted' as const } : p));
+      await updateXPost(post.id, { status: 'posted' }).catch(() => {});
     } catch (e: any) {
       setPostError(e.message);
     }
@@ -670,7 +672,7 @@ export default function TwitterPage() {
                           </>
                         )}
                         {(reply.status === 'approved') && (
-                          <button onClick={() => postReplyToX(reply.id)} disabled={posting === reply.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
+                          <button onClick={() => postReplyToX(reply)} disabled={posting === reply.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
                             {posting === reply.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                             {posting === reply.id ? 'Publicando...' : 'Post to X'}
                           </button>
@@ -820,7 +822,7 @@ export default function TwitterPage() {
                           </button>
                         )}
                         {(post.status === 'approved') && (
-                          <button onClick={() => postTweetToX(post.id)} disabled={posting === post.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
+                          <button onClick={() => postTweetToX(post)} disabled={posting === post.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
                             {posting === post.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                             {posting === post.id ? 'Publicando...' : 'Post to X'}
                           </button>

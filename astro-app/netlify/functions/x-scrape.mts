@@ -530,45 +530,35 @@ export default async (req: Request, _context: Context) => {
 
       const body = await req.json().catch(() => ({}));
       const replyId = (body as any)?.replyId;
-      if (!replyId) {
-        return new Response(JSON.stringify({ error: 'Missing replyId' }), { status: 400, headers: CORS_HEADERS });
-      }
-
-      // Fetch reply from Firebase
-      const replyUrl = `${FIREBASE_BASE}/x_replies/${replyId}`;
-      const docRes = await fetch(replyUrl);
-      if (!docRes.ok) {
-        const errBody = await docRes.text();
-        return new Response(JSON.stringify({ error: 'Reply not found', url: replyUrl, status: docRes.status, details: errBody.slice(0, 300) }), { status: 404, headers: CORS_HEADERS });
-      }
-      const doc = await docRes.json();
-      const replyText = doc.fields?.replyDraft?.stringValue || '';
-      const tweetUrl = doc.fields?.tweetUrl?.stringValue || '';
+      const replyText = (body as any)?.replyText;
+      const tweetUrl = (body as any)?.tweetUrl;
 
       if (!replyText) {
-        return new Response(JSON.stringify({ error: 'Reply has no text' }), { status: 400, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Missing replyText' }), { status: 400, headers: CORS_HEADERS });
       }
 
       // Extract tweet ID from URL (https://x.com/handle/status/123456)
-      const tweetId = tweetUrl.split('/status/')[1]?.split('?')[0];
+      const tweetId = tweetUrl?.split('/status/')[1]?.split('?')[0];
       if (!tweetId) {
         return new Response(JSON.stringify({ error: 'Could not extract tweet ID from URL' }), { status: 400, headers: CORS_HEADERS });
       }
 
       const posted = await postTweet(replyText, tweetId);
 
-      // Update Firebase status
-      await fetch(`${FIREBASE_BASE}/x_replies/${replyId}?updateMask.fieldPaths=status&updateMask.fieldPaths=postedTweetId&updateMask.fieldPaths=postedAt`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: {
-            status: { stringValue: 'posted' },
-            postedTweetId: { stringValue: posted.id },
-            postedAt: { timestampValue: new Date().toISOString() },
-          },
-        }),
-      });
+      // Update Firebase status (best-effort, don't fail if quota exceeded)
+      if (replyId) {
+        await fetch(`${FIREBASE_BASE}/x_replies/${replyId}?updateMask.fieldPaths=status&updateMask.fieldPaths=postedTweetId&updateMask.fieldPaths=postedAt`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fields: {
+              status: { stringValue: 'posted' },
+              postedTweetId: { stringValue: posted.id },
+              postedAt: { timestampValue: new Date().toISOString() },
+            },
+          }),
+        }).catch(() => {});
+      }
 
       return new Response(JSON.stringify({
         ok: true,
@@ -586,35 +576,22 @@ export default async (req: Request, _context: Context) => {
 
       const body = await req.json().catch(() => ({}));
       const postId = (body as any)?.postId;
-      if (!postId) {
-        return new Response(JSON.stringify({ error: 'Missing postId' }), { status: 400, headers: CORS_HEADERS });
-      }
-
-      // Fetch post from Firebase
-      const docRes = await fetch(`${FIREBASE_BASE}/x_posts/${postId}`);
-      if (!docRes.ok) {
-        return new Response(JSON.stringify({ error: 'Post not found' }), { status: 404, headers: CORS_HEADERS });
-      }
-      const doc = await docRes.json();
-      const draft = doc.fields?.draft?.stringValue || '';
-      const format = doc.fields?.format?.stringValue || 'tweet';
+      const draft = (body as any)?.draft;
+      const format = (body as any)?.format || 'tweet';
+      const threadSlides: string[] = (body as any)?.threadSlides || [];
 
       if (!draft) {
-        return new Response(JSON.stringify({ error: 'Post has no text' }), { status: 400, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ error: 'Missing draft text' }), { status: 400, headers: CORS_HEADERS });
       }
 
       const postedIds: string[] = [];
 
       if (format === 'thread') {
-        // Post main tweet first
         const main = await postTweet(draft);
         postedIds.push(main.id);
 
-        // Post thread slides as replies
-        const slides = doc.fields?.threadSlides?.arrayValue?.values || [];
         let lastId = main.id;
-        for (const slide of slides) {
-          const slideText = slide.stringValue;
+        for (const slideText of threadSlides) {
           if (!slideText) continue;
           const reply = await postTweet(slideText, lastId);
           postedIds.push(reply.id);
@@ -625,18 +602,20 @@ export default async (req: Request, _context: Context) => {
         postedIds.push(posted.id);
       }
 
-      // Update Firebase status
-      await fetch(`${FIREBASE_BASE}/x_posts/${postId}?updateMask.fieldPaths=status&updateMask.fieldPaths=postedTweetId&updateMask.fieldPaths=postedAt`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: {
-            status: { stringValue: 'posted' },
-            postedTweetId: { stringValue: postedIds[0] },
-            postedAt: { timestampValue: new Date().toISOString() },
-          },
-        }),
-      });
+      // Update Firebase status (best-effort)
+      if (postId) {
+        await fetch(`${FIREBASE_BASE}/x_posts/${postId}?updateMask.fieldPaths=status&updateMask.fieldPaths=postedTweetId&updateMask.fieldPaths=postedAt`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fields: {
+              status: { stringValue: 'posted' },
+              postedTweetId: { stringValue: postedIds[0] },
+              postedAt: { timestampValue: new Date().toISOString() },
+            },
+          }),
+        }).catch(() => {});
+      }
 
       return new Response(JSON.stringify({
         ok: true,
