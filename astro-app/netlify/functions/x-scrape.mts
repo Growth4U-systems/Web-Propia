@@ -4,7 +4,7 @@ const APIFY_TOKEN = process.env.APIFY_API_TOKEN || '';
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
 const FIREBASE_PROJECT = 'landing-growth4u';
 const FIREBASE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/artifacts/growth4u-public-app/public/data`;
-const ACTOR_ID = 'apidojo/tweet-scraper';
+const ACTOR_ID = 'apidojo~tweet-scraper';
 
 // Hardcoded fallback creators (used when Firebase collection is empty)
 const FALLBACK_HANDLES = [
