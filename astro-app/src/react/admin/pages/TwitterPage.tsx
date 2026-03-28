@@ -886,13 +886,15 @@ export default function TwitterPage() {
                           </>
                         )}
                         {(reply.status === 'approved') && (
-                          <button onClick={() => postQuoteToX(reply)} disabled={posting === reply.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
-                            {posting === reply.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                            {posting === reply.id ? 'Publicando...' : 'Quote Tweet'}
-                          </button>
-                          <button onClick={() => likeOnX(reply.tweetUrl)} className="flex items-center gap-1 px-2 py-1.5 bg-pink-50 text-pink-500 rounded-lg text-xs font-medium hover:bg-pink-100">
-                            ♥ Like
-                          </button>
+                          <>
+                            <button onClick={() => postQuoteToX(reply)} disabled={posting === reply.id} className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 disabled:opacity-50">
+                              {posting === reply.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                              {posting === reply.id ? 'Publicando...' : 'Quote Tweet'}
+                            </button>
+                            <button onClick={() => likeOnX(reply.tweetUrl)} className="flex items-center gap-1 px-2 py-1.5 bg-pink-50 text-pink-500 rounded-lg text-xs font-medium hover:bg-pink-100">
+                              ♥ Like
+                            </button>
+                          </>
                         )}
                         <button
                           onClick={() => copyToClipboard(reply.replyDraft, reply.id)}
