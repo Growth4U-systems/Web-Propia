@@ -591,171 +591,207 @@ export default function TwitterPage() {
             </div>
           )}
 
-          {/* Pipeline — 4 steps */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            {/* Step 1: Scrape */}
-            <div className={`p-5 border-b border-slate-100 ${scraping ? 'bg-teal-50' : ''}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#3ecda5] text-white flex items-center justify-center text-sm font-bold">1</div>
-                  <div>
-                    <p className="font-semibold text-[#032149]">Scraping de tweets</p>
-                    <p className="text-xs text-slate-400">Busca tweets recientes de tus {activeCreators} creators</p>
-                  </div>
+          {/* Scraping — shared step */}
+          <div className={`bg-white rounded-xl border border-slate-200 p-5 ${scraping ? 'bg-teal-50' : ''}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#3ecda5] text-white flex items-center justify-center text-sm font-bold">
+                  <Play className="w-4 h-4" />
                 </div>
-                <button onClick={startScrape} disabled={scraping || processing || creators.length === 0} className="flex items-center gap-2 px-5 py-2.5 bg-[#3ecda5] text-white rounded-lg hover:bg-[#35b892] font-medium disabled:opacity-50 text-sm">
-                  {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                  {scraping ? 'Scraping...' : 'Ejecutar'}
-                </button>
+                <div>
+                  <p className="font-semibold text-[#032149]">Scraping de tweets</p>
+                  <p className="text-xs text-slate-400">Busca tweets recientes de tus {activeCreators} creators</p>
+                </div>
               </div>
-              {scrapeStatus && <p className="text-xs text-slate-500 mt-2 ml-11">{scrapeStatus}</p>}
+              <button onClick={startScrape} disabled={scraping || processing || creators.length === 0} className="flex items-center gap-2 px-5 py-2.5 bg-[#3ecda5] text-white rounded-lg hover:bg-[#35b892] font-medium disabled:opacity-50 text-sm">
+                {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                {scraping ? 'Scraping...' : scrapeDatasetId ? 'Re-scrapear' : 'Ejecutar'}
+              </button>
             </div>
+            {scrapeStatus && <p className="text-xs text-slate-500 mt-2 ml-11">{scrapeStatus}</p>}
+            {!scrapeStatus && scrapeDatasetId && <p className="text-xs text-green-600 mt-2 ml-11">Scraping previo disponible — podés usar los datos sin re-scrapear</p>}
+          </div>
 
-            {/* Step 2: Generate posts */}
-            <div className={`p-5 border-b border-slate-100 ${processing ? 'bg-blue-50' : !scrapeDatasetId ? 'opacity-50' : ''}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full ${scrapeDatasetId ? 'bg-[#032149]' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>2</div>
-                  <div>
-                    <p className="font-semibold text-[#032149]">Generar tweets propios</p>
-                    <p className="text-xs text-slate-400">IA crea posts originales inspirados en los tweets scrapeados</p>
-                  </div>
-                </div>
-                <button onClick={generateIdeas} disabled={!scrapeDatasetId || processing || scraping} className="flex items-center gap-2 px-5 py-2.5 bg-[#032149] text-white rounded-lg hover:bg-[#043264] font-medium disabled:opacity-50 text-sm">
-                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {processing ? 'Generando...' : 'Generar'}
-                </button>
+          {/* Two columns: Posts + Engagement */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+            {/* COLUMN 1: Posts propios */}
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-3 bg-[#032149] text-white">
+                <p className="font-semibold text-sm">Publicar tweets propios</p>
+                <p className="text-xs text-slate-300">Genera → Revisá → Publicá</p>
               </div>
-              {processStatus && <p className="text-xs text-slate-500 mt-2 ml-11">{processStatus}</p>}
-            </div>
 
-            {/* Step 3: Review & Approve */}
-            <div className={`p-5 border-b border-slate-100 ${pendingPosts === 0 && approvedPosts === 0 ? 'opacity-50' : ''}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full ${pendingPosts > 0 ? 'bg-amber-500' : approvedPosts > 0 ? 'bg-blue-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>3</div>
-                  <div>
-                    <p className="font-semibold text-[#032149]">Revisar y aprobar</p>
-                    <p className="text-xs text-slate-400">
-                      {pendingPosts > 0 ? `${pendingPosts} posts esperando revisión` :
-                       approvedPosts > 0 ? `${approvedPosts} posts aprobados, listos para publicar` :
-                       'No hay posts pendientes'}
-                    </p>
+              {/* Generate */}
+              <div className={`p-4 border-b border-slate-100 ${processing ? 'bg-blue-50' : ''}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#032149]" />
+                    <span className="text-sm font-medium text-[#032149]">Generar</span>
+                    <span className="text-xs text-slate-400">IA crea posts inspirados en lo scrapeado</span>
                   </div>
-                </div>
-                {pendingPosts > 0 && (
-                  <button onClick={() => setTab('posts')} className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium text-sm">
-                    <Check className="w-4 h-4" />
-                    Revisar ({pendingPosts})
+                  <button onClick={generateIdeas} disabled={!scrapeDatasetId || processing || scraping} className="flex items-center gap-2 px-4 py-2 bg-[#032149] text-white rounded-lg hover:bg-[#043264] font-medium disabled:opacity-50 text-xs">
+                    {processing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    {processing ? 'Generando...' : 'Generar'}
                   </button>
-                )}
-                {pendingPosts === 0 && approvedPosts > 0 && (
-                  <button onClick={() => setTab('posts')} className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium text-sm">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Ver aprobados ({approvedPosts})
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Step 4: Publish */}
-            <div className={`p-5 border-b border-slate-100 ${approvedPosts === 0 ? 'opacity-50' : ''}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full ${approvedPosts > 0 ? 'bg-green-500' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>4</div>
-                  <div>
-                    <p className="font-semibold text-[#032149]">Publicar en X</p>
-                    <p className="text-xs text-slate-400">
-                      {approvedPosts > 0 ? `${approvedPosts} posts listos para publicar` :
-                       postedPosts > 0 ? `${postedPosts} posts ya publicados` :
-                       'Aprueba posts en el paso 3 primero'}
-                    </p>
-                  </div>
                 </div>
-                {approvedPosts > 0 && (
-                  <button
-                    onClick={async () => {
-                      const approved = posts.filter(p => p.status === 'approved');
-                      for (const p of approved) {
-                        await postTweetToX(p);
-                        await new Promise(res => setTimeout(res, 2000));
-                      }
-                    }}
-                    disabled={posting !== null}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium disabled:opacity-50 text-sm"
-                  >
-                    {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {posting ? 'Publicando...' : `Publicar todos (${approvedPosts})`}
-                  </button>
-                )}
+                {processStatus && <p className="text-xs text-slate-500 mt-2">{processStatus}</p>}
               </div>
-            </div>
 
-            {/* Step 5: Discover & Follow */}
-            <div className={`p-5 ${!scrapeDatasetId ? 'opacity-50' : ''}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full ${discovered.length > 0 ? 'bg-pink-500' : scrapeDatasetId ? 'bg-pink-400' : 'bg-slate-300'} text-white flex items-center justify-center text-sm font-bold`}>5</div>
-                  <div>
-                    <p className="font-semibold text-[#032149]">Descubrir y seguir cuentas</p>
-                    <p className="text-xs text-slate-400">
-                      {discovered.length > 0 ? `${discovered.length} cuentas nuevas encontradas` :
-                       'Encuentra cuentas mencionadas por tus creators'}
-                    </p>
+              {/* Review */}
+              <div className={`p-4 border-b border-slate-100 ${pendingPosts === 0 && approvedPosts === 0 ? 'opacity-50' : ''}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-amber-500" />
+                    <span className="text-sm font-medium text-[#032149]">Revisar</span>
+                    <span className="text-xs text-slate-400">
+                      {pendingPosts > 0 ? `${pendingPosts} pendientes` :
+                       approvedPosts > 0 ? `${approvedPosts} aprobados` :
+                       'Sin posts'}
+                    </span>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {discovered.length === 0 && (
-                    <button onClick={discoverAccounts} disabled={!scrapeDatasetId || discovering} className="flex items-center gap-2 px-5 py-2.5 bg-pink-500 text-white rounded-lg hover:bg-pink-600 font-medium disabled:opacity-50 text-sm">
-                      {discovering ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-                      {discovering ? 'Buscando...' : 'Descubrir'}
+                  {pendingPosts > 0 && (
+                    <button onClick={() => setTab('posts')} className="flex items-center gap-1 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium text-xs">
+                      Revisar ({pendingPosts})
                     </button>
                   )}
-                  {discovered.length > 0 && (
-                    <button onClick={addAllDiscovered} disabled={following} className="flex items-center gap-2 px-5 py-2.5 bg-pink-500 text-white rounded-lg hover:bg-pink-600 font-medium disabled:opacity-50 text-sm">
-                      {following ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                      {following ? 'Siguiendo...' : `Seguir todos (${discovered.length})`}
+                  {pendingPosts === 0 && approvedPosts > 0 && (
+                    <button onClick={() => setTab('posts')} className="flex items-center gap-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium text-xs">
+                      Ver ({approvedPosts})
                     </button>
                   )}
-                  <button onClick={() => followCreators()} disabled={following || creators.length === 0} className="flex items-center gap-2 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium disabled:opacity-50 text-sm" title="Follow creators existentes">
-                    {following ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-                  </button>
                 </div>
               </div>
 
-              {/* Discovered accounts list */}
-              {discovered.length > 0 && (
-                <div className="mt-4 ml-11 space-y-2 max-h-64 overflow-y-auto">
-                  {discovered.map(d => (
-                    <div key={d.handle} className="flex items-center justify-between p-3 bg-pink-50 rounded-lg">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm text-[#032149]">@{d.handle}</span>
-                          <span className="text-xs text-pink-600 bg-pink-100 px-1.5 py-0.5 rounded">{d.mentions}x mencionado</span>
-                        </div>
-                        <p className="text-xs text-slate-400 truncate mt-0.5">
-                          por {d.mentionedBy.map(h => `@${h}`).join(', ')}
-                        </p>
-                      </div>
-                      <button onClick={() => addAndFollow(d.handle)} className="flex items-center gap-1 px-3 py-1.5 bg-pink-500 text-white rounded-lg text-xs font-medium hover:bg-pink-600 ml-2 flex-shrink-0">
-                        <Plus className="w-3 h-3" /> Follow
+              {/* Publish */}
+              <div className={`p-4 ${approvedPosts === 0 ? 'opacity-50' : ''}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Send className="w-4 h-4 text-green-500" />
+                    <span className="text-sm font-medium text-[#032149]">Publicar</span>
+                    <span className="text-xs text-slate-400">
+                      {approvedPosts > 0 ? `${approvedPosts} listos` :
+                       postedPosts > 0 ? `${postedPosts} publicados` :
+                       'Aprobá primero'}
+                    </span>
+                  </div>
+                  {approvedPosts > 0 && (
+                    <button
+                      onClick={async () => {
+                        const approved = posts.filter(p => p.status === 'approved');
+                        for (const p of approved) {
+                          await postTweetToX(p);
+                          await new Promise(res => setTimeout(res, 2000));
+                        }
+                      }}
+                      disabled={posting !== null}
+                      className="flex items-center gap-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium disabled:opacity-50 text-xs"
+                    >
+                      {posting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                      {posting ? 'Publicando...' : `Publicar (${approvedPosts})`}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* COLUMN 2: Engagement */}
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-3 bg-pink-600 text-white">
+                <p className="font-semibold text-sm">Engagement</p>
+                <p className="text-xs text-pink-200">Comentá, descubrí y seguí cuentas</p>
+              </div>
+
+              {/* Quotes / Comments */}
+              <div className={`p-4 border-b border-slate-100`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-medium text-[#032149]">Quotes</span>
+                    <span className="text-xs text-slate-400">
+                      {pendingReplies > 0 ? `${pendingReplies} pendientes` :
+                       approvedReplies > 0 ? `${approvedReplies} aprobados` :
+                       `${replies.length} totales`}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={processReplies} disabled={!scrapeDatasetId || processing || scraping} className="flex items-center gap-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 text-xs">
+                      {processing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                      Generar
+                    </button>
+                    {(pendingReplies > 0 || approvedReplies > 0) && (
+                      <button onClick={() => setTab('replies')} className="flex items-center gap-1 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium text-xs">
+                        Revisar ({pendingReplies + approvedReplies})
                       </button>
-                    </div>
-                  ))}
+                    )}
+                  </div>
                 </div>
-              )}
+                <p className="text-xs text-amber-600 mt-2">X restringe quotes/replies en cuentas nuevas — usá "Copiar" para postear manual</p>
+              </div>
+
+              {/* Discover & Follow */}
+              <div className={`p-4 ${!scrapeDatasetId ? 'opacity-50' : ''}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-pink-500" />
+                    <span className="text-sm font-medium text-[#032149]">Descubrir y seguir</span>
+                    <span className="text-xs text-slate-400">
+                      {discovered.length > 0 ? `${discovered.length} encontradas` : 'Cuentas mencionadas'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {discovered.length === 0 && (
+                      <button onClick={discoverAccounts} disabled={!scrapeDatasetId || discovering} className="flex items-center gap-1 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 font-medium disabled:opacity-50 text-xs">
+                        {discovering ? <Loader2 className="w-3 h-3 animate-spin" /> : <Users className="w-3 h-3" />}
+                        {discovering ? 'Buscando...' : 'Descubrir'}
+                      </button>
+                    )}
+                    {discovered.length > 0 && (
+                      <button onClick={addAllDiscovered} disabled={following} className="flex items-center gap-1 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 font-medium disabled:opacity-50 text-xs">
+                        {following ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                        {following ? 'Siguiendo...' : `Seguir todos (${discovered.length})`}
+                      </button>
+                    )}
+                    <button onClick={() => followCreators()} disabled={following || creators.length === 0} className="flex items-center gap-1 px-3 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium disabled:opacity-50 text-xs" title="Follow creators existentes">
+                      <Users className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Discovered accounts list */}
+                {discovered.length > 0 && (
+                  <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
+                    {discovered.map(d => (
+                      <div key={d.handle} className="flex items-center justify-between p-2.5 bg-pink-50 rounded-lg">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-xs text-[#032149]">@{d.handle}</span>
+                            <span className="text-xs text-pink-600 bg-pink-100 px-1.5 py-0.5 rounded">{d.mentions}x</span>
+                          </div>
+                          <p className="text-xs text-slate-400 truncate">
+                            por {d.mentionedBy.map(h => `@${h}`).join(', ')}
+                          </p>
+                        </div>
+                        <button onClick={() => addAndFollow(d.handle)} className="flex items-center gap-1 px-2.5 py-1 bg-pink-500 text-white rounded-lg text-xs font-medium hover:bg-pink-600 ml-2 flex-shrink-0">
+                          <Plus className="w-3 h-3" /> Follow
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+
           </div>
 
           {/* Stats summary */}
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex gap-6 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> {pendingPosts} pendientes</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400" /> {approvedPosts} aprobados</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400" /> {postedPosts} publicados</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-400" /> {activeCreators} creators</span>
-              </div>
+            <div className="flex gap-6 text-xs text-slate-500 flex-wrap">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> {pendingPosts} drafts</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400" /> {approvedPosts} aprobados</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400" /> {postedPosts} publicados</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-pink-400" /> {replies.length} quotes</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-400" /> {activeCreators} creators</span>
             </div>
           </div>
         </div>
