@@ -3,10 +3,10 @@ import crypto from 'crypto';
 
 const APIFY_TOKEN = process.env.APIFY_API_TOKEN || '';
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
-const X_API_KEY = process.env.X_API_KEY || '';
-const X_API_SECRET = process.env.X_API_SECRET || '';
-const X_ACCESS_TOKEN = process.env.X_ACCESS_TOKEN || '';
-const X_ACCESS_SECRET = process.env.X_ACCESS_SECRET || '';
+const X_API_KEY = '4XyeTSZC5R9oNxrz4qOF4VPC7';
+const X_API_SECRET = 'NF70gJUqskz2IxWGnmQH8GUfluugAd6lKx0eVpP2KTwMteImy4';
+const X_ACCESS_TOKEN = '1946182743441731584-g054fWmDDo6ciLmRbH40N6e642Gcl3';
+const X_ACCESS_SECRET = '5Kbpd3GmkYtF2Cn8orWCibLgzC5nBHdpuzzr5q2yrV46f';
 const FIREBASE_PROJECT = 'landing-growth4u';
 const FIREBASE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/artifacts/growth4u-public-app/public/data`;
 const ACTOR_ID = 'apidojo~tweet-scraper';
