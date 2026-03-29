@@ -568,9 +568,13 @@ export default async (req: Request, _context: Context) => {
 
       let ideas: any[] = [];
       try {
-        ideas = JSON.parse(rawIdeas.trim());
+        // Strip markdown code fences if present
+        let cleaned = rawIdeas.trim();
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+        ideas = JSON.parse(cleaned);
+        if (!Array.isArray(ideas)) ideas = [ideas];
       } catch {
-        return new Response(JSON.stringify({ ok: false, error: 'Failed to parse ideas JSON', raw: rawIdeas }), { status: 500, headers: CORS_HEADERS });
+        return new Response(JSON.stringify({ ok: false, error: 'Failed to parse ideas JSON', raw: rawIdeas.slice(0, 500) }), { status: 500, headers: CORS_HEADERS });
       }
 
       // Dedup: fetch existing post topics to avoid duplicates
