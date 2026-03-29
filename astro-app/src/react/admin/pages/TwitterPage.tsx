@@ -243,10 +243,10 @@ export default function TwitterPage() {
       });
       const data = await res.json();
       if (data.ok) {
-        setProcessStatus(`${data.saved} ideas generadas.`);
+        setProcessStatus(`${data.saved} posts generados.${data.dupes ? ` ${data.dupes} duplicados omitidos.` : ''}`);
         loadAll();
       } else {
-        setProcessStatus(`Error: ${data.error}`);
+        setProcessStatus(`Error: ${data.error}${data.raw ? '\n' + data.raw.slice(0, 200) : ''}`);
       }
     } catch (e: any) {
       setProcessStatus(`Error: ${e.message}`);
