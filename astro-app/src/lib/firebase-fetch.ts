@@ -96,16 +96,48 @@ function parseDocument(doc: any): Record<string, any> {
   return result;
 }
 
-// Fetch all blog posts — tries Firestore REST API first, falls back to local JSON cache
+// Fetch from Firestore with retry on 429 (quota exceeded)
+async function fetchWithRetry(url: string, retries = 3, delayMs = 5000): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const response = await fetch(url);
+    if (response.status !== 429 || attempt === retries) return response;
+    console.warn(`Firestore 429, retrying in ${delayMs / 1000}s (attempt ${attempt + 1}/${retries})...`);
+    await new Promise((r) => setTimeout(r, delayMs));
+    delayMs *= 2; // exponential backoff
+  }
+  return fetch(url); // unreachable, but satisfies TS
+}
+
+// Parse Firestore documents into BlogPost array
+function parseFirestorePosts(documents: any[]): BlogPost[] {
+  return documents.map((doc: any) => {
+    const d = parseDocument(doc);
+    return {
+      id: d._id,
+      title: d.title || '',
+      slug: d.slug || createSlug(d.title || ''),
+      category: d.category || 'Estrategia',
+      excerpt: d.excerpt || '',
+      content: d.content || '',
+      image: d.image || '',
+      readTime: d.readTime || '5 min lectura',
+      author: d.author || 'Equipo Growth4U',
+      createdAt: d.createdAt || null,
+      updatedAt: d.updatedAt || null,
+    };
+  }).filter((post: BlogPost) => post.slug && post.title);
+}
+
+// Fetch all blog posts — tries Firestore with retries, merges with local cache
 export async function getAllPosts(): Promise<BlogPost[]> {
   const cachedPosts = Array.isArray(postsCache) && postsCache.length > 0
     ? (postsCache as BlogPost[]).filter((p) => p.slug && p.title)
     : [];
 
-  // Try Firestore REST API first (gets fresh data including admin-created posts)
+  // Try Firestore REST API with retry on 429
   try {
     const url = `${FIRESTORE_BASE}/${COLLECTION_BASE}/blog_posts?pageSize=300`;
-    const response = await fetch(url);
+    const response = await fetchWithRetry(url);
 
     if (!response.ok) {
       console.warn('Firestore API error, falling back to cache:', response.status);
@@ -114,28 +146,16 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 
     const data = await response.json();
     const documents = data.documents || [];
+    const firestorePosts = parseFirestorePosts(documents);
 
-    const firestorePosts = documents.map((doc: any) => {
-      const d = parseDocument(doc);
-      return {
-        id: d._id,
-        title: d.title || '',
-        slug: d.slug || createSlug(d.title || ''),
-        category: d.category || 'Estrategia',
-        excerpt: d.excerpt || '',
-        content: d.content || '',
-        image: d.image || '',
-        readTime: d.readTime || '5 min lectura',
-        author: d.author || 'Equipo Growth4U',
-        createdAt: d.createdAt || null,
-        updatedAt: d.updatedAt || null,
-      };
-    }).filter((post: BlogPost) => post.slug && post.title);
-
-    // If Firestore returned posts, use them; otherwise fall back to cache
     if (firestorePosts.length > 0) {
-      console.log(`Fetched ${firestorePosts.length} posts from Firestore`);
-      return firestorePosts;
+      // Merge: Firebase wins on duplicates, cache fills gaps
+      const slugMap = new Map<string, BlogPost>();
+      for (const post of cachedPosts) slugMap.set(post.slug, post);
+      for (const post of firestorePosts) slugMap.set(post.slug, post);
+      const merged = Array.from(slugMap.values());
+      console.log(`Fetched ${firestorePosts.length} from Firestore + ${cachedPosts.length} cached = ${merged.length} total posts`);
+      return merged;
     }
 
     console.warn('Firestore returned 0 posts, falling back to cache');
