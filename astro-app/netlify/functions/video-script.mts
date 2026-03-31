@@ -1,6 +1,6 @@
 import type { Context } from "@netlify/functions";
 
-const ANTHROPIC_API_KEY = "sk-ant-api03-2iDJLWkYa2cSm-W7HJ1kfgt2V0E0sPTB8HafNsAPY6bYEbNwMdZoQyMSBTx_dU8S8w_SV4H25bSHoxPJKUjlzw-8SV6OQAA";
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +26,10 @@ export default async (req: Request, _context: Context) => {
   }
 
   try {
+    if (!ANTHROPIC_API_KEY) {
+      return Response.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500, headers: CORS_HEADERS });
+    }
+
     const body = await req.json() as { blogUrl?: string; blogContent?: string; blogTitle?: string };
     const { blogUrl, blogContent: directContent, blogTitle: directTitle } = body;
 
