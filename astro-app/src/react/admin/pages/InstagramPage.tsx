@@ -20,6 +20,7 @@ import {
   TrendingUp,
   RefreshCw,
   ExternalLink,
+  Video,
 } from 'lucide-react';
 import {
   getAllPosts,
@@ -27,6 +28,7 @@ import {
   createIGScheduledPost,
   deleteIGScheduledPost,
 } from '../../../lib/firebase-client';
+import VideoTab from './VideoTab';
 
 interface BlogPost {
   id: string;
@@ -237,7 +239,7 @@ export default function CameraPage() {
   const [previewItem, setPreviewItem] = useState<ScheduleItem | null>(null);
   const [filter, setFilter] = useState<string>('all');
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [activeTab, setActiveTab] = useState<'publish' | 'metrics'>('publish');
+  const [activeTab, setActiveTab] = useState<'publish' | 'metrics' | 'video'>('publish');
   const [metrics, setMetrics] = useState<{ account: IGAccount; media: IGMedia[] } | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [metricsError, setMetricsError] = useState('');
@@ -583,7 +585,37 @@ export default function CameraPage() {
           <BarChart3 className="w-4 h-4" />
           Métricas
         </button>
+        <button
+          onClick={() => setActiveTab('video')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'video'
+              ? 'bg-white text-[#032149] shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Video className="w-4 h-4" />
+          Video
+        </button>
       </div>
+
+      {/* Video Tab */}
+      {activeTab === 'video' && (
+        <VideoTab
+          blogPosts={posts.map(p => ({ id: p.id, title: p.title, slug: p.slug }))}
+          platform="instagram"
+          onPublish={async (videoUrl, caption) => {
+            const res = await fetch(FUNCTION_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'publish-reel', video_url: videoUrl, caption }),
+            });
+            const text = await res.text();
+            let data: Record<string, unknown>;
+            try { data = JSON.parse(text); } catch { throw new Error(`Error (${res.status}): ${text.slice(0, 200)}`); }
+            if (!res.ok) throw new Error((data.error as string) || `Error ${res.status}`);
+          }}
+        />
+      )}
 
       {/* Metrics Tab */}
       {activeTab === 'metrics' && (

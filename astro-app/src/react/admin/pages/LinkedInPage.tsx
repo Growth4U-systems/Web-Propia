@@ -29,7 +29,9 @@ import {
   Edit3,
   Check,
   ExternalLink,
+  Video,
 } from 'lucide-react';
+import VideoTab from './VideoTab';
 import {
   getAllPosts,
   getLIScheduledPosts,
@@ -1218,7 +1220,7 @@ export default function LinkedInPage() {
   const [publishedSlugs, setPublishedSlugs] = useState<Set<string>>(new Set());
   const [linkedinStatus, setLinkedinStatus] = useState<{ connected: boolean; org?: string } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [activeTab, setActiveTab] = useState<'publish' | 'content' | 'metrics'>('publish');
+  const [activeTab, setActiveTab] = useState<'publish' | 'content' | 'metrics' | 'video'>('publish');
   const [metrics, setMetrics] = useState<LIMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [metricsError, setMetricsError] = useState('');
@@ -1597,7 +1599,41 @@ export default function LinkedInPage() {
           <BarChart3 className="w-4 h-4" />
           Metricas
         </button>
+        <button
+          onClick={() => setActiveTab('video')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'video'
+              ? 'bg-white text-[#032149] shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Video className="w-4 h-4" />
+          Video
+        </button>
       </div>
+
+      {/* Video Tab */}
+      {activeTab === 'video' && (
+        <VideoTab
+          blogPosts={posts.map(p => ({ id: p.id, title: p.title, slug: p.slug }))}
+          platform="linkedin"
+          onPublish={async (videoUrl, caption) => {
+            const res = await fetch('/api/linkedin', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: caption,
+                imageUrl: videoUrl,
+                account: selectedAccount.id,
+              }),
+            });
+            const text = await res.text();
+            let data: Record<string, unknown>;
+            try { data = JSON.parse(text); } catch { throw new Error(`Error (${res.status}): ${text.slice(0, 200)}`); }
+            if (!res.ok) throw new Error((data.error as string) || `Error ${res.status}`);
+          }}
+        />
+      )}
 
       {/* Metrics Tab — shows posts from Firestore */}
       {activeTab === 'metrics' && (

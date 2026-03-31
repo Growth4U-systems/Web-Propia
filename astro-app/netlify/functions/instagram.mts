@@ -5,8 +5,9 @@ const ACCESS_TOKEN = process.env.META_IG_ACCESS_TOKEN;
 const GRAPH_API = "https://graph.instagram.com/v21.0";
 
 interface PublishRequest {
-  action: "publish";
-  image_url: string;
+  action: "publish" | "publish-reel";
+  image_url?: string;
+  video_url?: string;
   caption: string;
 }
 
@@ -45,6 +46,30 @@ async function createMediaContainer(
   if (!res.ok) {
     const err = data as IGErrorResponse;
     throw new Error(err.error?.message || "Failed to create media container");
+  }
+  return data as IGContainerResponse;
+}
+
+async function createReelContainer(
+  videoUrl: string,
+  caption: string,
+): Promise<IGContainerResponse> {
+  const params = new URLSearchParams({
+    media_type: "REELS",
+    video_url: videoUrl,
+    caption: caption,
+    access_token: ACCESS_TOKEN!,
+  });
+
+  const res = await fetch(`${GRAPH_API}/${IG_USER_ID}/media`, {
+    method: "POST",
+    body: params,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    const err = data as IGErrorResponse;
+    throw new Error(err.error?.message || "Failed to create reel container");
   }
   return data as IGContainerResponse;
 }
@@ -336,20 +361,32 @@ export default async (req: Request, _context: Context) => {
 
   try {
     const body = (await req.json()) as PublishRequest;
-    const { image_url, caption } = body;
+    const { action, image_url, video_url, caption } = body;
 
-    if (!image_url || !caption) {
+    if (!caption) {
       return Response.json(
-        { error: "image_url and caption are required" },
-        { status: 400 }
+        { error: "caption is required" },
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
-    // Create media container (always immediate — IG API doesn't support native scheduling)
-    const container = await createMediaContainer(image_url, caption);
+    let container: IGContainerResponse;
 
-    // Poll until container is ready
-    await waitForContainer(container.id);
+    if (action === "publish-reel" && video_url) {
+      // Create Reel container (video)
+      container = await createReelContainer(video_url, caption);
+      // Reels take longer to process — poll up to 60s
+      await waitForContainer(container.id, 20);
+    } else if (image_url) {
+      // Create image container
+      container = await createMediaContainer(image_url, caption);
+      await waitForContainer(container.id);
+    } else {
+      return Response.json(
+        { error: "image_url or video_url is required" },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
 
     const published = await publishMedia(container.id);
 
@@ -357,20 +394,15 @@ export default async (req: Request, _context: Context) => {
       {
         success: true,
         media_id: published.id,
-        scheduled: false,
+        is_reel: action === "publish-reel",
       },
-      {
-        headers: { "Access-Control-Allow-Origin": "*" },
-      }
+      { headers: CORS_HEADERS }
     );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return Response.json(
       { error: message },
-      {
-        status: 500,
-        headers: { "Access-Control-Allow-Origin": "*" },
-      }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 };
