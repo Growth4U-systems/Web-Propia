@@ -36,6 +36,7 @@ interface BlogPost {
   slug: string;
   category: string;
   excerpt: string;
+  content: string;
   image: string;
   createdAt: string | null;
 }
@@ -601,7 +602,7 @@ export default function CameraPage() {
       {/* Video Tab */}
       {activeTab === 'video' && (
         <VideoTab
-          blogPosts={posts.map(p => ({ id: p.id, title: p.title, slug: p.slug }))}
+          blogPosts={posts.map(p => ({ id: p.id, title: p.title, slug: p.slug, content: p.content, excerpt: p.excerpt }))}
           platform="instagram"
           onPublish={async (videoUrl, caption) => {
             const res = await fetch(FUNCTION_URL, {

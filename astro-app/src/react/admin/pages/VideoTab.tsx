@@ -43,7 +43,7 @@ const CLOUDINARY_CLOUD = 'dsc0jsbkz';
 const CLOUDINARY_PRESET = 'blog_uploads';
 
 interface VideoTabProps {
-  blogPosts: Array<{ id: string; title: string; slug: string }>;
+  blogPosts: Array<{ id: string; title: string; slug: string; content?: string; excerpt?: string }>;
   platform: 'instagram' | 'linkedin';
   onPublish: (videoUrl: string, caption: string) => Promise<void>;
 }
@@ -66,14 +66,23 @@ export default function VideoTab({ blogPosts, platform, onPublish }: VideoTabPro
   const blogUrl = customUrl || selectedUrl;
 
   const generateScript = async () => {
-    if (!blogUrl) return;
+    if (!blogUrl && !selectedUrl) return;
     setGenerating(true);
     setPublishResult(null);
     try {
+      // Find the selected post to send content directly (avoids Netlify self-fetch issues)
+      const selectedPost = selectedUrl
+        ? blogPosts.find(p => selectedUrl.includes(p.slug))
+        : null;
+
+      const payload = selectedPost?.content
+        ? { blogContent: selectedPost.content, blogTitle: selectedPost.title, blogUrl: blogUrl || `https://growth4u.io/blog/${selectedPost.slug}/` }
+        : { blogUrl: blogUrl || selectedUrl };
+
       const res = await fetch('/.netlify/functions/video-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blogUrl }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();

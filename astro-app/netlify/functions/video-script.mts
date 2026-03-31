@@ -26,33 +26,38 @@ export default async (req: Request, _context: Context) => {
   }
 
   try {
-    const { blogUrl } = await req.json() as { blogUrl: string };
-    if (!blogUrl) {
-      return Response.json({ error: "blogUrl is required" }, { status: 400, headers: CORS_HEADERS });
+    const body = await req.json() as { blogUrl?: string; blogContent?: string; blogTitle?: string };
+    const { blogUrl, blogContent: directContent, blogTitle: directTitle } = body;
+
+    let textContent: string;
+    let blogTitle: string;
+
+    if (directContent && directTitle) {
+      // Content passed directly from frontend (preferred — avoids self-fetch issues)
+      textContent = directContent.slice(0, 8000);
+      blogTitle = directTitle;
+    } else if (blogUrl) {
+      // Fallback: fetch from URL
+      const blogRes = await fetch(blogUrl);
+      if (!blogRes.ok) throw new Error(`Failed to fetch blog: ${blogRes.status}`);
+      const html = await blogRes.text();
+
+      textContent = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, "")
+        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, "")
+        .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 8000);
+
+      const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/i) || html.match(/<title[^>]*>(.*?)<\/title>/i);
+      blogTitle = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").trim() : "Blog Post";
+    } else {
+      return Response.json({ error: "blogUrl or blogContent+blogTitle is required" }, { status: 400, headers: CORS_HEADERS });
     }
-
-    // Fetch blog content
-    const blogRes = await fetch(blogUrl);
-    if (!blogRes.ok) throw new Error(`Failed to fetch blog: ${blogRes.status}`);
-    const html = await blogRes.text();
-
-    // Extract text content from HTML (simple approach)
-    const textContent = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-      .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, "")
-      .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, "")
-      .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 8000);
-
-    // Extract title from HTML
-    const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/i) || html.match(/<title[^>]*>(.*?)<\/title>/i);
-    const blogTitle = titleMatch
-      ? titleMatch[1].replace(/<[^>]+>/g, "").trim()
-      : "Blog Post";
 
     // Call Claude to generate video scenes
     const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
