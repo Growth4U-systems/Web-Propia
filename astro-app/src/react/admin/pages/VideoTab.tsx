@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Video,
   Loader2,
@@ -12,6 +12,8 @@ import {
   Upload,
   Send,
   AlertCircle,
+  Film,
+  Download,
 } from 'lucide-react';
 
 interface Scene {
@@ -41,6 +43,7 @@ const SCENE_TYPES: { value: Scene['type']; label: string; color: string }[] = [
 
 const CLOUDINARY_CLOUD = 'dsc0jsbkz';
 const CLOUDINARY_PRESET = 'blog_uploads';
+const RENDER_SERVER = 'http://localhost:3001';
 
 interface VideoTabProps {
   blogPosts: Array<{ id: string; title: string; slug: string; content?: string; excerpt?: string }>;
@@ -55,7 +58,12 @@ export default function VideoTab({ blogPosts, platform, onPublish }: VideoTabPro
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [editingScene, setEditingScene] = useState<number | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
+  // Render state
+  const [renderStatus, setRenderStatus] = useState<'idle' | 'generating-voiceover' | 'rendering' | 'done' | 'error' | 'server-offline'>('idle');
+  const [renderProgress, setRenderProgress] = useState(0);
+  const [renderError, setRenderError] = useState('');
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Upload & publish
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -65,12 +73,21 @@ export default function VideoTab({ blogPosts, platform, onPublish }: VideoTabPro
 
   const blogUrl = customUrl || selectedUrl;
 
+  // Check render server status on mount
+  useEffect(() => {
+    fetch(`${RENDER_SERVER}/status`).then(() => {
+      setRenderStatus('idle');
+    }).catch(() => {
+      setRenderStatus('server-offline');
+    });
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
+
   const generateScript = async () => {
     if (!blogUrl && !selectedUrl) return;
     setGenerating(true);
     setPublishResult(null);
     try {
-      // Find the selected post to send content directly (avoids Netlify self-fetch issues)
       const selectedPost = selectedUrl
         ? blogPosts.find(p => selectedUrl.includes(p.slug))
         : null;
@@ -87,7 +104,6 @@ export default function VideoTab({ blogPosts, platform, onPublish }: VideoTabPro
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setProject(data);
-      // Auto-generate caption from scenes
       const scenesText = data.scenes
         .filter((s: Scene) => s.type !== 'cta')
         .map((s: Scene) => s.title)
@@ -126,41 +142,69 @@ export default function VideoTab({ blogPosts, platform, onPublish }: VideoTabPro
     setEditingScene(newId);
   };
 
-  const copyVoiceoverScript = () => {
-    if (!project) return;
-    const pythonScenes = project.scenes.map(s => `    "${s.voiceover}",`).join('\n');
-    const script = `SCENES = [\n${pythonScenes}\n]`;
-    navigator.clipboard.writeText(script);
-    setCopied('script');
-    setTimeout(() => setCopied(null), 2000);
-  };
+  // ─── Render Video ──────────────────────────────────────────────────────
 
-  const copyClaudePrompt = () => {
+  const startRender = async () => {
     if (!project) return;
-    const scenesText = project.scenes.map((s, i) =>
-      `${i + 1}. [${s.type.toUpperCase()}] ${s.title}\n   Voz: "${s.voiceover}"\n   Visual: ${s.visualNotes}`
-    ).join('\n\n');
-    const prompt = `/video\n\nBlog: ${project.blogUrl}\nTítulo: ${project.blogTitle}\n\nEscenas:\n${scenesText}`;
-    navigator.clipboard.writeText(prompt);
-    setCopied('prompt');
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setVideoFile(file);
-    setVideoPreviewUrl(URL.createObjectURL(file));
+    setRenderStatus('generating-voiceover');
+    setRenderProgress(0);
+    setRenderError('');
+    setVideoPreviewUrl(null);
     setUploadedVideoUrl(null);
-    setPublishResult(null);
+
+    try {
+      const res = await fetch(`${RENDER_SERVER}/render`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenes: project.scenes,
+          blogTitle: project.blogTitle,
+          blogUrl: project.blogUrl,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: `Server error ${res.status}` }));
+        throw new Error(data.error || `Server error ${res.status}`);
+      }
+
+      // Start polling for status
+      pollRef.current = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`${RENDER_SERVER}/status`);
+          const status = await statusRes.json();
+          setRenderStatus(status.status);
+          setRenderProgress(status.progress || 0);
+
+          if (status.status === 'done') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setVideoPreviewUrl(`${RENDER_SERVER}/video/latest?t=${Date.now()}`);
+          } else if (status.status === 'error') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setRenderError(status.error || 'Error desconocido');
+          }
+        } catch {
+          // Server might be busy, keep polling
+        }
+      }, 2000);
+    } catch (err: any) {
+      setRenderStatus('error');
+      setRenderError(err.message);
+    }
   };
 
-  const uploadToCloudinary = async () => {
-    if (!videoFile) return;
+  const uploadRenderedVideo = async () => {
     setUploading(true);
     try {
+      // Download video from local server
+      const videoRes = await fetch(`${RENDER_SERVER}/video/latest`);
+      if (!videoRes.ok) throw new Error('No se pudo descargar el video');
+      const blob = await videoRes.blob();
+      const file = new File([blob], 'video.mp4', { type: 'video/mp4' });
+
+      // Upload to Cloudinary
       const formData = new FormData();
-      formData.append('file', videoFile);
+      formData.append('file', file);
       formData.append('upload_preset', CLOUDINARY_PRESET);
       formData.append('resource_type', 'video');
 
@@ -198,8 +242,18 @@ export default function VideoTab({ blogPosts, platform, onPublish }: VideoTabPro
     return acc + Math.max(words / 2.5, 2);
   }, 0) : 0;
 
+  const isRendering = renderStatus === 'generating-voiceover' || renderStatus === 'rendering';
+
   return (
     <div className="space-y-6">
+      {/* Server status banner */}
+      {renderStatus === 'server-offline' && (
+        <div className="flex items-center gap-2 text-sm bg-amber-50 text-amber-700 border border-amber-200 rounded-xl px-4 py-3">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>Servidor de render offline. Ejecuta <code className="bg-amber-100 px-1.5 py-0.5 rounded text-xs font-mono">cd growth4u-video && npm run server</code> para activarlo.</span>
+        </div>
+      )}
+
       {/* Step 1: Select blog */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <div className="flex items-center gap-2 mb-4">
@@ -318,65 +372,76 @@ export default function VideoTab({ blogPosts, platform, onPublish }: VideoTabPro
             })}
           </div>
 
-          {/* Export buttons */}
-          <div className="flex gap-2 mt-4">
-            <button onClick={copyVoiceoverScript} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50">
-              {copied === 'script' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-              SCENES[]
+          {/* Render button */}
+          <div className="mt-4">
+            <button
+              onClick={startRender}
+              disabled={isRendering || renderStatus === 'server-offline'}
+              className="w-full flex items-center justify-center gap-2 bg-[#0faec1] text-white rounded-lg px-6 py-3 text-sm font-bold hover:bg-[#0a9aab] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isRendering ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> {renderStatus === 'generating-voiceover' ? 'Generando voz...' : `Renderizando ${renderProgress}%`}</>
+              ) : (
+                <><Film className="w-4 h-4" /> Renderizar Video</>
+              )}
             </button>
-            <button onClick={copyClaudePrompt} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50">
-              {copied === 'prompt' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-              Prompt /video
-            </button>
+
+            {/* Progress bar */}
+            {isRendering && (
+              <div className="mt-2 w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#0faec1] transition-all duration-500 rounded-full"
+                  style={{ width: `${renderProgress}%` }}
+                />
+              </div>
+            )}
+
+            {renderStatus === 'error' && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                <AlertCircle className="w-4 h-4" />
+                {renderError}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Step 3: Upload & Publish */}
-      {project && (
+      {/* Step 3: Preview & Publish */}
+      {videoPreviewUrl && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
           <h3 className="text-base font-semibold text-[#032149] mb-4">
-            3. Subir video y publicar en {platform === 'instagram' ? 'Instagram Reels' : 'LinkedIn'}
+            3. Preview y publicar en {platform === 'instagram' ? 'Instagram Reels' : 'LinkedIn'}
           </h3>
 
-          {/* Video upload */}
+          {/* Video preview */}
           <div className="mb-4">
-            {!videoPreviewUrl ? (
-              <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-[#0faec1] hover:bg-[#0faec1]/5 transition-colors">
-                <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                <span className="text-sm text-slate-500">Subir video renderizado (.mp4)</span>
-                <span className="text-xs text-slate-400 mt-1">Renderizado con /video en Claude Code</span>
-                <input type="file" accept="video/mp4,video/*" onChange={handleVideoSelect} className="hidden" />
-              </label>
-            ) : (
-              <div className="relative">
-                <video src={videoPreviewUrl} controls className="w-full max-h-[400px] rounded-xl bg-black" />
-                <button
-                  onClick={() => { setVideoFile(null); setVideoPreviewUrl(null); setUploadedVideoUrl(null); }}
-                  className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full hover:bg-black/70"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                {!uploadedVideoUrl && (
-                  <button
-                    onClick={uploadToCloudinary}
-                    disabled={uploading}
-                    className="mt-3 w-full flex items-center justify-center gap-2 bg-[#0faec1] text-white rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-[#0a9aab] disabled:opacity-50 transition-colors"
-                  >
-                    {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo a Cloudinary...</> : <><Upload className="w-4 h-4" /> Subir video</>}
-                  </button>
+            <video src={videoPreviewUrl} controls className="w-full max-h-[400px] rounded-xl bg-black" />
+
+            <div className="flex gap-2 mt-3">
+              <a
+                href={`${RENDER_SERVER}/video/download`}
+                download="video.mp4"
+                className="flex-1 flex items-center justify-center gap-2 border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <Download className="w-4 h-4" /> Descargar
+              </a>
+              <button
+                onClick={uploadRenderedVideo}
+                disabled={uploading || !!uploadedVideoUrl}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#0faec1] text-white rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-[#0a9aab] disabled:opacity-50 transition-colors"
+              >
+                {uploading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo...</>
+                ) : uploadedVideoUrl ? (
+                  <><Check className="w-4 h-4" /> Subido</>
+                ) : (
+                  <><Upload className="w-4 h-4" /> Subir a Cloudinary</>
                 )}
-                {uploadedVideoUrl && (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2">
-                    <Check className="w-4 h-4" />
-                    Video subido a Cloudinary
-                  </div>
-                )}
-              </div>
-            )}
+              </button>
+            </div>
           </div>
 
-          {/* Caption */}
+          {/* Caption & Publish */}
           {uploadedVideoUrl && (
             <div className="space-y-3">
               <div>
