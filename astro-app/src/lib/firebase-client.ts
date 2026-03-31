@@ -19,6 +19,7 @@ import {
   setDoc,
   limit,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import {
   getAuth,
@@ -1413,6 +1414,22 @@ export async function updateXReply(id: string, updates: Partial<XReply>): Promis
 export async function deleteXReply(id: string): Promise<void> {
   const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'x_replies', id);
   await deleteDoc(ref);
+}
+
+export async function deleteAllXReplies(): Promise<number> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'x_replies');
+  const snapshot = await getDocs(ref);
+  let deleted = 0;
+  // Firestore batches support max 500 ops
+  const docs = snapshot.docs;
+  for (let i = 0; i < docs.length; i += 500) {
+    const batch = writeBatch(db);
+    const chunk = docs.slice(i, i + 500);
+    chunk.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    deleted += chunk.length;
+  }
+  return deleted;
 }
 
 // =====================================================

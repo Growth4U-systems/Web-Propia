@@ -33,6 +33,7 @@ import {
   getAllXReplies,
   updateXReply,
   deleteXReply,
+  deleteAllXReplies,
   getAllXPosts,
   updateXPost,
   deleteXPost,
@@ -726,7 +727,30 @@ export default function TwitterPage() {
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-amber-600 mt-2">X restringe quotes/replies en cuentas nuevas — usá "Copiar" para postear manual</p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-amber-600">X restringe quotes/replies en cuentas nuevas — usá "Copiar" para postear manual</p>
+                  {replies.length > 0 && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`¿Borrar los ${replies.length} quotes? Esta acción no se puede deshacer.`)) return;
+                        setProcessing(true);
+                        setProcessStatus('Borrando quotes...');
+                        try {
+                          const deleted = await deleteAllXReplies();
+                          setProcessStatus(`${deleted} quotes eliminados.`);
+                          setReplies([]);
+                        } catch (e: any) {
+                          setProcessStatus(`Error: ${e.message}`);
+                        }
+                        setProcessing(false);
+                      }}
+                      disabled={processing}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 flex-shrink-0"
+                    >
+                      <Trash2 className="w-3 h-3" /> Limpiar ({replies.length})
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Discover & Follow */}
