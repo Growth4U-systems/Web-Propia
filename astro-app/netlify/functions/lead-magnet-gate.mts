@@ -128,6 +128,18 @@ export default async (req: Request, context: Context) => {
   const firstName = nombre.trim().split(/\s+/)[0] || "Hola";
   const calendarUrl = "https://api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN";
 
+  // Detect if this is a pack (contentUrl points to Google Drive) or a single doc (points to web)
+  const isDrivePack = contentUrl.includes("drive.google.com/drive/folders");
+  const isPack = isDrivePack || magnetSlug.includes("pack-") || magnetSlug.includes("atribucion") || magnetSlug.includes("foros-nichos");
+
+  // For packs: CTA is "Descargar Pack", link goes to Drive folder
+  // For single docs: CTA is "Leer contenido completo", link goes to web page
+  const ctaText = isPack ? "Descargar Pack" : "Leer contenido completo";
+  const ctaIcon = isPack ? "📦" : "📖";
+  const ctaDescription = isPack
+    ? `Aquí tienes tu <strong style="color:#032149;">${magnetTitle}</strong>. Es una carpeta con varios documentos que puedes descargar.`
+    : `Has desbloqueado <strong style="color:#032149;">${magnetTitle}</strong>. Haz clic en el botón de abajo para acceder al contenido completo.`;
+
   const htmlBody = `
 <!DOCTYPE html>
 <html lang="es">
@@ -142,16 +154,15 @@ export default async (req: Request, context: Context) => {
         ${firstName}, tu recurso está listo.
       </p>
       <p style="font-size:14px;color:#6b7280;margin:0 0 24px;line-height:1.6;">
-        Has desbloqueado <strong style="color:#032149;">${magnetTitle}</strong>.
-        Haz clic en el botón de abajo para acceder al contenido completo.
+        ${ctaDescription}
       </p>
       <div style="background:#f5f3ff;border:1px solid #e0ddf7;border-radius:12px;padding:20px;text-align:center;margin:0 0 24px;">
-        <div style="font-size:28px;margin:0 0 8px;">📖</div>
+        <div style="font-size:28px;margin:0 0 8px;">${ctaIcon}</div>
         <div style="font-size:14px;font-weight:600;color:#6351d5;">${magnetTitle}</div>
       </div>
       <div style="text-align:center;margin:0 0 24px;">
         <a href="${contentUrl}" style="display:inline-block;background:#6351d5;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:600;">
-          Leer contenido completo
+          ${ctaText}
         </a>
       </div>
       <p style="font-size:13px;color:#9ca3af;text-align:center;margin:0 0 24px;">
