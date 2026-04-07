@@ -81,7 +81,7 @@ async function createGhlContact(
 
 async function sendMailgun(apiKey: string, to: string, subject: string, html: string): Promise<boolean> {
   const form = new URLSearchParams();
-  form.append("from", `Growth4U <noreply@${MG_DOMAIN}>`);
+  form.append("from", `Alfonso de Growth4U <alfonso@growth4u.io>`);
   form.append("to", to);
   form.append("subject", subject);
   form.append("html", html);
