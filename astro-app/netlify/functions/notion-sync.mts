@@ -248,6 +248,37 @@ export default async function handler() {
   }
 
   if (published > 0) {
+    // Sync all posts to Netlify Blobs cache before triggering build
+    try {
+      const allPostsUrl = `${FIREBASE_BASE}/${COLLECTION}?pageSize=300`;
+      const allRes = await fetch(allPostsUrl);
+      if (allRes.ok) {
+        const allData = await allRes.json();
+        const docs = allData.documents || [];
+        const posts = docs.map((doc: any) => {
+          const fields = doc.fields || {};
+          const val = (f: string) => fields[f]?.stringValue || '';
+          const id = (doc.name || '').split('/').pop();
+          return {
+            id, title: val('title'), slug: val('slug') || createSlug(val('title')),
+            category: val('category') || 'Estrategia', excerpt: val('excerpt'),
+            content: val('content'), image: val('image'),
+            readTime: val('readTime') || '5 min lectura',
+            author: val('author') || 'Equipo Growth4U',
+            createdAt: fields.createdAt?.timestampValue || null,
+            updatedAt: fields.updatedAt?.timestampValue || null,
+          };
+        }).filter((p: any) => p.title && p.slug);
+
+        const { getStore } = await import('@netlify/blobs');
+        const store = getStore('build-cache');
+        await store.set('posts', JSON.stringify(posts));
+        console.log(`[notion-sync] ${posts.length} posts guardados en Blobs cache`);
+      }
+    } catch (e) {
+      console.warn('[notion-sync] No se pudo actualizar Blobs cache:', e);
+    }
+
     await fetch(NETLIFY_HOOK, { method: 'POST' });
     console.log(`[notion-sync] Deploy disparado. ${published} post(s) publicado(s).`);
   } else {

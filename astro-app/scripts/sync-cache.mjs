@@ -1,9 +1,12 @@
 /**
- * Pre-build cache sync: fetches all posts and lead magnets from Firebase
- * and writes them to local JSON cache files. Runs before `astro build`
- * so the build never depends on Firebase availability at page-generation time.
+ * Pre-build cache sync — runs before `astro build`.
  *
- * If Firebase is unreachable, the existing cache is preserved (build still works).
+ * Priority chain (first success wins):
+ *   1. Netlify Blobs  — written by admin panel via update-posts-cache function
+ *   2. Firebase REST   — direct fetch with retry/backoff
+ *   3. Local JSON cache — committed in the repo (always available)
+ *
+ * The build NEVER fails due to external service issues.
  */
 
 import { writeFileSync, readFileSync } from 'fs';
@@ -17,6 +20,8 @@ const PROJECT_ID = 'landing-growth4u';
 const APP_ID = 'growth4u-public-app';
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 const COLLECTION_BASE = `artifacts/${APP_ID}/public/data`;
+
+const IS_NETLIFY = !!process.env.NETLIFY;
 
 // ── Helpers ──────────────────────────────────────────────
 
@@ -78,7 +83,7 @@ async function fetchWithRetry(url, retries = 3, delayMs = 3000) {
   return fetch(url);
 }
 
-function readExistingCache(filename) {
+function readLocalCache(filename) {
   try {
     const raw = readFileSync(join(DATA_DIR, filename), 'utf-8');
     const data = JSON.parse(raw);
@@ -88,20 +93,34 @@ function readExistingCache(filename) {
   }
 }
 
-// ── Sync functions ───────────────────────────────────────
+// ── Netlify Blobs reader ─────────────────────────────────
 
-async function syncPosts() {
-  const cacheFile = 'posts.json';
-  const existing = readExistingCache(cacheFile);
-  console.log(`📦 Cache actual: ${existing.length} posts`);
+async function readFromBlobs(key) {
+  if (!IS_NETLIFY) return null;
 
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    const store = getStore('build-cache');
+    const raw = await store.get(key);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data) && data.length > 0) {
+      console.log(`  ☁️  Netlify Blobs: ${data.length} ${key} encontrados`);
+      return data;
+    }
+    return null;
+  } catch (err) {
+    console.warn(`  ⚠ Error leyendo Blobs (${key}):`, err.message);
+    return null;
+  }
+}
+
+// ── Firebase reader ──────────────────────────────────────
+
+async function fetchPostsFromFirebase() {
   const url = `${FIRESTORE_BASE}/${COLLECTION_BASE}/blog_posts?pageSize=300`;
   const response = await fetchWithRetry(url);
-
-  if (!response.ok) {
-    console.warn(`  ⚠ Firebase respondió ${response.status}, manteniendo cache existente`);
-    return existing.length;
-  }
+  if (!response.ok) return null;
 
   const data = await response.json();
   const documents = data.documents || [];
@@ -125,34 +144,13 @@ async function syncPosts() {
     })
     .filter((p) => p.slug && p.title);
 
-  if (posts.length === 0) {
-    console.warn('  ⚠ Firebase devolvió 0 posts, manteniendo cache existente');
-    return existing.length;
-  }
-
-  // Merge: Firebase wins for duplicates, keep cache-only posts
-  const slugMap = new Map();
-  for (const p of existing) slugMap.set(p.slug, p);
-  for (const p of posts) slugMap.set(p.slug, p);
-  const merged = Array.from(slugMap.values());
-
-  writeFileSync(join(DATA_DIR, cacheFile), JSON.stringify(merged, null, 2));
-  console.log(`  ✅ ${posts.length} de Firebase + ${existing.length} en cache → ${merged.length} posts sincronizados`);
-  return merged.length;
+  return posts.length > 0 ? posts : null;
 }
 
-async function syncLeadMagnets() {
-  const cacheFile = 'lead_magnets.json';
-  const existing = readExistingCache(cacheFile);
-  console.log(`📦 Cache actual: ${existing.length} lead magnets`);
-
+async function fetchLeadMagnetsFromFirebase() {
   const url = `${FIRESTORE_BASE}/${COLLECTION_BASE}/lead_magnets?pageSize=100`;
   const response = await fetchWithRetry(url);
-
-  if (!response.ok) {
-    console.warn(`  ⚠ Firebase respondió ${response.status}, manteniendo cache existente`);
-    return existing.length;
-  }
+  if (!response.ok) return null;
 
   const data = await response.json();
   const documents = data.documents || [];
@@ -173,29 +171,88 @@ async function syncLeadMagnets() {
     })
     .filter((m) => m.published && m.slug && m.title);
 
-  if (magnets.length === 0) {
-    console.warn('  ⚠ Firebase devolvió 0 lead magnets, manteniendo cache existente');
-    return existing.length;
+  return magnets.length > 0 ? magnets : null;
+}
+
+// ── Merge + write ────────────────────────────────────────
+
+function mergeAndWrite(fresh, local, filename) {
+  const slugMap = new Map();
+  for (const item of local) slugMap.set(item.slug, item);
+  for (const item of fresh) slugMap.set(item.slug, item);
+  const merged = Array.from(slugMap.values());
+  writeFileSync(join(DATA_DIR, filename), JSON.stringify(merged, null, 2));
+  return merged.length;
+}
+
+// ── Sync with priority chain ─────────────────────────────
+
+async function syncPosts() {
+  const local = readLocalCache('posts.json');
+  console.log(`📦 Cache local: ${local.length} posts`);
+
+  // 1. Try Netlify Blobs (fastest, most reliable in build)
+  const fromBlobs = await readFromBlobs('posts');
+  if (fromBlobs) {
+    const total = mergeAndWrite(fromBlobs, local, 'posts.json');
+    console.log(`  ✅ Blobs + local → ${total} posts`);
+    return total;
   }
 
-  const slugMap = new Map();
-  for (const m of existing) slugMap.set(m.slug, m);
-  for (const m of magnets) slugMap.set(m.slug, m);
-  const merged = Array.from(slugMap.values());
+  // 2. Try Firebase REST
+  try {
+    const fromFirebase = await fetchPostsFromFirebase();
+    if (fromFirebase) {
+      const total = mergeAndWrite(fromFirebase, local, 'posts.json');
+      console.log(`  ✅ Firebase (${fromFirebase.length}) + local → ${total} posts`);
+      return total;
+    }
+  } catch (err) {
+    console.warn('  ⚠ Firebase error:', err.message);
+  }
 
-  writeFileSync(join(DATA_DIR, cacheFile), JSON.stringify(merged, null, 2));
-  console.log(`  ✅ ${magnets.length} de Firebase + ${existing.length} en cache → ${merged.length} lead magnets sincronizados`);
-  return merged.length;
+  // 3. Fallback: local cache (always works)
+  console.log('  📄 Usando cache local existente');
+  return local.length;
+}
+
+async function syncLeadMagnets() {
+  const local = readLocalCache('lead_magnets.json');
+  console.log(`📦 Cache local: ${local.length} lead magnets`);
+
+  // 1. Try Netlify Blobs
+  const fromBlobs = await readFromBlobs('lead_magnets');
+  if (fromBlobs) {
+    const total = mergeAndWrite(fromBlobs, local, 'lead_magnets.json');
+    console.log(`  ✅ Blobs + local → ${total} lead magnets`);
+    return total;
+  }
+
+  // 2. Try Firebase REST
+  try {
+    const fromFirebase = await fetchLeadMagnetsFromFirebase();
+    if (fromFirebase) {
+      const total = mergeAndWrite(fromFirebase, local, 'lead_magnets.json');
+      console.log(`  ✅ Firebase (${fromFirebase.length}) + local → ${total} lead magnets`);
+      return total;
+    }
+  } catch (err) {
+    console.warn('  ⚠ Firebase error:', err.message);
+  }
+
+  // 3. Fallback: local cache
+  console.log('  📄 Usando cache local existente');
+  return local.length;
 }
 
 // ── Main ─────────────────────────────────────────────────
 
-console.log('\n🔄 Sincronizando cache desde Firebase...\n');
+console.log('\n🔄 Sincronizando cache...');
+console.log(`   Entorno: ${IS_NETLIFY ? 'Netlify Build' : 'Local'}\n`);
 
 try {
   const [posts, magnets] = await Promise.all([syncPosts(), syncLeadMagnets()]);
-  console.log(`\n✅ Cache sincronizado: ${posts} posts, ${magnets} lead magnets\n`);
+  console.log(`\n✅ Cache listo: ${posts} posts, ${magnets} lead magnets\n`);
 } catch (err) {
-  console.error('\n⚠ Error sincronizando cache (el build usará cache existente):', err.message, '\n');
-  // Don't exit with error — build should proceed with existing cache
+  console.error('\n⚠ Error sincronizando (el build usará cache existente):', err.message, '\n');
 }

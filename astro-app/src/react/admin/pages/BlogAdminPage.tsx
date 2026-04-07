@@ -228,11 +228,35 @@ export default function BlogAdminPage() {
     setDeploying(true);
     setDeploySuccess(false);
     try {
-      await fetch(NETLIFY_BUILD_HOOK, { method: 'POST' });
+      // Sync posts to Netlify Blobs cache, then trigger build.
+      // This ensures the build never depends on Firebase availability.
+      const allPosts = await getAllPosts();
+      const postsForCache = allPosts.map((p) => ({
+        id: p.id,
+        title: p.title,
+        slug: p.slug || createSlug(p.title),
+        category: p.category,
+        excerpt: p.excerpt,
+        content: p.content,
+        image: p.image,
+        readTime: p.readTime,
+        author: p.author,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      }));
+
+      await fetch('/.netlify/functions/update-posts-cache', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ posts: postsForCache }),
+      });
+
       setDeploySuccess(true);
       setTimeout(() => setDeploySuccess(false), 5000);
     } catch (error) {
       console.error('Error triggering deploy:', error);
+      // Fallback: trigger build hook directly
+      try { await fetch(NETLIFY_BUILD_HOOK, { method: 'POST' }); } catch {}
     } finally {
       setDeploying(false);
     }
