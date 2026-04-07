@@ -125,8 +125,20 @@ const allNonPillar = uniquePosts
     </div>
   </header>
 
+  <!-- ── Mobile category nav ──────────────────────────────────────── -->
+  <div class="md:hidden fixed top-16 inset-x-0 z-40 bg-[#032149]/95 backdrop-blur-sm border-b border-white/10">
+    <div class="flex items-center gap-1.5 overflow-x-auto px-3 py-2" style="scrollbar-width:none;-ms-overflow-style:none;">
+      {NAV_SECTIONS.map((s) => (
+        <a href={`/blog/categoria/${s.key}/`}
+           class="whitespace-nowrap px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200 flex-shrink-0">
+          {s.label}
+        </a>
+      ))}
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════════════════════ -->
-  <main class="pt-20 sm:pt-32 pb-16 sm:pb-24 px-3 sm:px-4 bg-white">
+  <main class="pt-28 sm:pt-32 pb-16 sm:pb-24 px-3 sm:px-4 bg-white">
     <div class="max-w-6xl mx-auto">
 
       <!-- Búsqueda resultados -->
@@ -321,6 +333,7 @@ const allNonPillar = uniquePosts
 
   <style>
     .blog-header-gradient-sub div::-webkit-scrollbar { display: none; }
+    .md\:hidden [style*="scrollbar-width"]::-webkit-scrollbar { display: none; }
     .blog-header-gradient {
       background: linear-gradient(135deg, #3ecda5 0%, #2ab89a 40%, #45b6f7 75%, #0faec1 100%);
     }
