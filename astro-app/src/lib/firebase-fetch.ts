@@ -12,6 +12,10 @@ import leadMagnetsCache from '../data/lead_magnets.json';
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 const COLLECTION_BASE = `artifacts/${FIREBASE_APP_ID}/public/data`;
 
+// In-memory build cache — fetch once from Firebase, reuse for all pages
+let _postsPromise: Promise<BlogPost[]> | null = null;
+let _leadMagnetsPromise: Promise<LeadMagnet[]> | null = null;
+
 // Types matching the existing Next.js interfaces
 export interface BlogPost {
   id: string;
@@ -129,13 +133,12 @@ function parseFirestorePosts(documents: any[]): BlogPost[] {
   }).filter((post: BlogPost) => post.slug && post.title);
 }
 
-// Fetch all blog posts — tries Firestore with retries, merges with local cache
-export async function getAllPosts(): Promise<BlogPost[]> {
+// Internal fetch — called once, result shared via _postsPromise
+async function _fetchAllPosts(): Promise<BlogPost[]> {
   const cachedPosts = Array.isArray(postsCache) && postsCache.length > 0
     ? (postsCache as BlogPost[]).filter((p) => p.slug && p.title)
     : [];
 
-  // Try Firestore REST API with retry on 429
   try {
     const url = `${FIRESTORE_BASE}/${COLLECTION_BASE}/blog_posts?pageSize=300`;
     const response = await fetchWithRetry(url);
@@ -150,7 +153,6 @@ export async function getAllPosts(): Promise<BlogPost[]> {
     const firestorePosts = parseFirestorePosts(documents);
 
     if (firestorePosts.length > 0) {
-      // Merge: Firebase wins on duplicates, cache fills gaps
       const slugMap = new Map<string, BlogPost>();
       for (const post of cachedPosts) slugMap.set(post.slug, post);
       for (const post of firestorePosts) slugMap.set(post.slug, post);
@@ -165,6 +167,12 @@ export async function getAllPosts(): Promise<BlogPost[]> {
     console.warn('Error fetching posts from Firestore, falling back to cache:', error);
     return cachedPosts;
   }
+}
+
+// Fetch all blog posts — singleton: fetches once, reuses for entire build
+export function getAllPosts(): Promise<BlogPost[]> {
+  if (!_postsPromise) _postsPromise = _fetchAllPosts();
+  return _postsPromise;
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
@@ -299,7 +307,8 @@ export interface LeadMagnet {
   published: boolean;
 }
 
-export async function getAllLeadMagnets(): Promise<LeadMagnet[]> {
+// Internal fetch — called once, result shared via _leadMagnetsPromise
+async function _fetchAllLeadMagnets(): Promise<LeadMagnet[]> {
   const cached = Array.isArray(leadMagnetsCache) && leadMagnetsCache.length > 0
     ? (leadMagnetsCache as LeadMagnet[]).filter((m) => m.slug && m.title && m.published !== false)
     : [];
@@ -332,7 +341,6 @@ export async function getAllLeadMagnets(): Promise<LeadMagnet[]> {
       .filter((m: LeadMagnet) => m.published);
 
     if (firestoreMagnets.length > 0) {
-      // Merge: Firebase wins on duplicates, cache fills gaps
       const slugMap = new Map<string, LeadMagnet>();
       for (const m of cached) slugMap.set(m.slug, m);
       for (const m of firestoreMagnets) slugMap.set(m.slug, m);
@@ -347,6 +355,12 @@ export async function getAllLeadMagnets(): Promise<LeadMagnet[]> {
     console.warn('Error fetching lead magnets from Firestore, falling back to cache:', error);
     return cached;
   }
+}
+
+// Fetch all lead magnets — singleton: fetches once, reuses for entire build
+export function getAllLeadMagnets(): Promise<LeadMagnet[]> {
+  if (!_leadMagnetsPromise) _leadMagnetsPromise = _fetchAllLeadMagnets();
+  return _leadMagnetsPromise;
 }
 
 export async function getLeadMagnetBySlug(slug: string): Promise<LeadMagnet | null> {
