@@ -88,7 +88,7 @@ const allNonPillar = uniquePosts
         <a href="/" class="flex items-center cursor-pointer group flex-shrink-0">
           <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="160" height="24" class="h-5 md:h-6 w-auto object-contain brightness-0 invert transition-opacity group-hover:opacity-80" />
         </a>
-        <div class="hidden md:flex items-center gap-1.5 overflow-x-auto" style="scrollbar-width:none;-ms-overflow-style:none;">
+        <div class="hidden md:flex items-center gap-1.5 overflow-x-auto flex-shrink" style="scrollbar-width:none;-ms-overflow-style:none;">
           {NAV_SECTIONS.map((s) => (
             <a href={`/blog/categoria/${s.key}/`}
                class="whitespace-nowrap px-3 py-1.5 text-xs md:text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200">
@@ -126,7 +126,7 @@ const allNonPillar = uniquePosts
   </header>
 
   <!-- ══════════════════════════════════════════════════════════════ -->
-  <main class="pt-32 pb-24 px-4 bg-white">
+  <main class="pt-20 sm:pt-32 pb-16 sm:pb-24 px-3 sm:px-4 bg-white">
     <div class="max-w-6xl mx-auto">
 
       <!-- Búsqueda resultados -->
@@ -136,7 +136,7 @@ const allNonPillar = uniquePosts
           <span id="search-count" class="text-sm text-slate-400"></span>
           <button id="clear-search" class="ml-auto text-sm text-[#3ecda5] hover:underline">Limpiar búsqueda</button>
         </div>
-        <div id="search-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <div id="search-grid" class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6"></div>
       </div>
 
       <!-- ─────────────────────────────────────────────────────────── -->
@@ -145,41 +145,41 @@ const allNonPillar = uniquePosts
       <!-- ─────────────────────────────────────────────────────────── -->
       {heroPost && (
         <section class="mb-14" id="section-novedades">
-          <h2 class="text-2xl font-extrabold text-[#032149] mb-6">NOVEDADES</h2>
+          <h2 class="text-lg sm:text-2xl font-extrabold text-[#032149] mb-4 sm:mb-6">NOVEDADES</h2>
 
           <!-- Hero card: imagen izquierda + texto derecha -->
           <a href={`/blog/${heroPost.slug}/`}
-             class="group/hero flex flex-col md:flex-row bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 mb-6">
-            <div class="md:w-1/2 aspect-[4/3] md:aspect-auto bg-slate-100 overflow-hidden">
+             class="group/hero flex flex-col md:flex-row bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 mb-4 sm:mb-6">
+            <div class="md:w-1/2 aspect-[16/9] md:aspect-auto bg-slate-100 overflow-hidden">
               {heroPost.image ? (
                 <img src={heroPost.image} alt={heroPost.title} class="object-cover w-full h-full group-hover/hero:scale-105 transition-transform duration-500" />
               ) : (
                 <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
               )}
             </div>
-            <div class="md:w-1/2 p-6 md:p-8 flex flex-col justify-center">
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{heroPost.category}</span>
-              <h3 class="text-xl md:text-2xl font-extrabold text-[#032149] group-hover/hero:text-[#3ecda5] transition-colors leading-tight mt-2 mb-4">{heroPost.title}</h3>
-              <div class="w-16 h-0.5 bg-[#032149] mb-4"></div>
-              <p class="text-slate-500 text-sm leading-relaxed line-clamp-4">{heroPost.excerpt}</p>
+            <div class="md:w-1/2 p-4 sm:p-6 md:p-8 flex flex-col justify-center">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">{heroPost.category}</span>
+              <h3 class="text-base sm:text-xl md:text-2xl font-extrabold text-[#032149] group-hover/hero:text-[#3ecda5] transition-colors leading-tight mt-1 sm:mt-2 mb-2 sm:mb-4">{heroPost.title}</h3>
+              <div class="hidden sm:block w-16 h-0.5 bg-[#032149] mb-4"></div>
+              <p class="hidden sm:block text-slate-500 text-sm leading-relaxed line-clamp-4">{heroPost.excerpt}</p>
             </div>
           </a>
 
           <!-- 3 sub-cards en fila -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
             {subPosts.map((post) => (
               <a href={`/blog/${post.slug}/`}
-                 class="group/sub bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300">
-                <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
+                 class="group/sub bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300">
+                <div class="aspect-[4/3] sm:aspect-[16/10] bg-slate-100 overflow-hidden">
                   {post.image ? (
                     <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/sub:scale-105 transition-transform duration-500" loading="lazy" />
                   ) : (
                     <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
                   )}
                 </div>
-                <div class="p-4">
-                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
-                  <h3 class="font-extrabold text-[#032149] group-hover/sub:text-[#3ecda5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
+                <div class="p-2.5 sm:p-4">
+                  <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
+                  <h3 class="text-xs sm:text-base font-extrabold text-[#032149] group-hover/sub:text-[#3ecda5] transition-colors leading-snug mt-0.5 sm:mt-1 line-clamp-2">{post.title}</h3>
                 </div>
               </a>
             ))}
@@ -194,23 +194,23 @@ const allNonPillar = uniquePosts
 
         <!-- Columna principal: grid 2 col mezclado -->
         <div>
-          <h2 class="text-2xl font-extrabold text-[#032149] mb-6">DESTACADOS</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <h2 class="text-lg sm:text-2xl font-extrabold text-[#032149] mb-4 sm:mb-6">DESTACADOS</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-5">
             {allNonPillar.slice(4, 16).map((post) => (
               <a href={`/blog/${post.slug}/`}
                  data-title={post.title.toLowerCase()}
                  data-excerpt={(post.excerpt || '').toLowerCase()}
-                 class="post-card bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group/card">
-                <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
+                 class="post-card bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group/card">
+                <div class="aspect-[4/3] sm:aspect-[16/10] bg-slate-100 overflow-hidden">
                   {post.image ? (
                     <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
                   ) : (
                     <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
                   )}
                 </div>
-                <div class="p-4">
-                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
-                  <h3 class="font-extrabold text-[#032149] group-hover/card:text-[#3ecda5] transition-colors leading-snug mt-1 line-clamp-2">{post.title}</h3>
+                <div class="p-2.5 sm:p-4">
+                  <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
+                  <h3 class="text-xs sm:text-base font-extrabold text-[#032149] group-hover/card:text-[#3ecda5] transition-colors leading-snug mt-0.5 sm:mt-1 line-clamp-2">{post.title}</h3>
                 </div>
               </a>
             ))}
