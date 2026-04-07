@@ -542,6 +542,18 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
     }
   }, [previewSlides, previewIdx, genTemplate]);
 
+  // Auto-trigger preview when starting to edit a carousel
+  const editingId = editing?.id ?? null;
+  const editingFormat = editing?.format ?? null;
+  useEffect(() => {
+    if (editingFormat === 'carousel' && editing && editing.slides.length > 0) {
+      setPreviewSlides(editing.slides as any);
+      setPreviewIdx(0);
+    }
+    // Only run when we start editing a different post
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingId, editingFormat]);
+
   async function loadContent() {
     setLoading(true);
     const data = await getAllLIContentPosts();
@@ -691,18 +703,6 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
       </div>
     );
   }
-
-  // Auto-trigger preview when starting to edit a carousel
-  const editingId = editing?.id ?? null;
-  const editingFormat = editing?.format ?? null;
-  useEffect(() => {
-    if (editingFormat === 'carousel' && editing && editing.slides.length > 0) {
-      setPreviewSlides(editing.slides as any);
-      setPreviewIdx(0);
-    }
-    // Only run when we start editing a different post
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingId, editingFormat]);
 
   // Editor view
   if (editing) {
