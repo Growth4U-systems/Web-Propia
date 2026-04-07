@@ -7,6 +7,7 @@
 
 import { FIREBASE_PROJECT_ID, FIREBASE_APP_ID } from './constants';
 import postsCache from '../data/posts.json';
+import leadMagnetsCache from '../data/lead_magnets.json';
 
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 const COLLECTION_BASE = `artifacts/${FIREBASE_APP_ID}/public/data`;
@@ -299,13 +300,22 @@ export interface LeadMagnet {
 }
 
 export async function getAllLeadMagnets(): Promise<LeadMagnet[]> {
+  const cached = Array.isArray(leadMagnetsCache) && leadMagnetsCache.length > 0
+    ? (leadMagnetsCache as LeadMagnet[]).filter((m) => m.slug && m.title && m.published !== false)
+    : [];
+
   try {
-    const url = `${FIRESTORE_BASE}/${COLLECTION_BASE}/lead_magnets`;
-    const response = await fetch(url);
-    if (!response.ok) return [];
+    const url = `${FIRESTORE_BASE}/${COLLECTION_BASE}/lead_magnets?pageSize=100`;
+    const response = await fetchWithRetry(url);
+
+    if (!response.ok) {
+      console.warn('Firestore API error for lead_magnets, falling back to cache:', response.status);
+      return cached;
+    }
+
     const data = await response.json();
     const documents = data.documents || [];
-    return documents
+    const firestoreMagnets: LeadMagnet[] = documents
       .map((doc: any) => {
         const d = parseDocument(doc);
         return {
@@ -320,9 +330,22 @@ export async function getAllLeadMagnets(): Promise<LeadMagnet[]> {
         };
       })
       .filter((m: LeadMagnet) => m.published);
+
+    if (firestoreMagnets.length > 0) {
+      // Merge: Firebase wins on duplicates, cache fills gaps
+      const slugMap = new Map<string, LeadMagnet>();
+      for (const m of cached) slugMap.set(m.slug, m);
+      for (const m of firestoreMagnets) slugMap.set(m.slug, m);
+      const merged = Array.from(slugMap.values());
+      console.log(`Fetched ${firestoreMagnets.length} lead magnets from Firestore + ${cached.length} cached = ${merged.length} total`);
+      return merged;
+    }
+
+    console.warn('Firestore returned 0 lead magnets, falling back to cache');
+    return cached;
   } catch (error) {
-    console.error('Error fetching lead magnets:', error);
-    return [];
+    console.warn('Error fetching lead magnets from Firestore, falling back to cache:', error);
+    return cached;
   }
 }
 
