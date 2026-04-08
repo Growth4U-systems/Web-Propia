@@ -188,5 +188,16 @@
     "excerpt": "# Auditor de Tareas Automatizables > 🎯 **Tiempo de uso:** 20 minutos > **Lo que obtienes:** Un mapa completo de las tareas de un rol, clasificadas por potencial de automatización con IA, para decidir si contratar o construir agentes primero. > --- ## 1. El problema: contratar por defecto Cuando el equipo está sobrecargado, la reacción instintiva es: > \"Necesitamos otra persona.\" Pero antes de abrir esa posición, deberías hacerte otra pregunta: > **\"¿Qué parte de este trabajo podría hacer un agente bien diseñado?\"** > 💰 **El cálculo:** Un agente bien pensado equivale a **0.5 FTE de output** en tareas repetitivas. 5 agentes = media persona de capacidad extra... sin otra silla en la oficina. --- ## 2. Cómo funciona este auditor ### El proceso en 4 pasos: ```javascript ┌─────────────────────────────────────┐ │ PASO 1: Define el rol │ │ → Título + responsabilidades clave │ └─────────────────────────────────────┘ ↓ ┌─────────────────────────────────────┐ │ PASO 2: Lista todas las tareas │ │ → Desglosa en tareas atómicas │ └─────────────────────────────────────┘ ↓ ┌─────────────────────────────────────┐ │ PASO 3: Clasifica cada tarea │ │ → Alta / Media / Baja / Nula │ └─────────────────────────────────────┘ ↓ ┌─────────────────────────────────────┐ │ PASO 4: Decide │ │ → Contratar vs Automatizar primero │ └─────────────────────────────────────┘ ``` ---...",
     "contentUrl": "",
     "published": true
+  },
+  {
+    "id": "43uz0f7o6jFoUmdbu2fh",
+    "slug": "bibliography-savant",
+    "title": "Bibliography Savant: Tu sistema de gestión de conocimiento con IA",
+    "description": "Sistema que ingesta, enriquece y conecta todas tus fuentes, con IA que puede buscar y sintetizar tu biblioteca personal.",
+    "excerpt": "Guardan artículos, papers y fuentes que nunca vuelven a encontrar. El conocimiento que no puedes recuperar es conocimiento perdido.",
+    "content": "",
+    "contentUrl": "",
+    "image": "https://i.imgur.com/imHxGWI.png",
+    "published": true
   }
 ]
