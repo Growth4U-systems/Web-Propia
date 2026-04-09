@@ -315,8 +315,9 @@ async function generateCaption(post: BlogPost): Promise<string> {
 // --- Content formats ---
 
 const FORMAT_OPTIONS: { value: LIContentFormat; label: string; icon: any; description: string }[] = [
-  { value: 'text', label: 'Post de texto', icon: FileText, description: 'Post estándar de LinkedIn' },
-  { value: 'carousel', label: 'Carrusel', icon: Layers, description: 'Documento con varias slides' },
+  { value: 'text', label: 'Solo texto', icon: FileText, description: 'Post sin imagen' },
+  { value: 'image' as any, label: 'Imagen', icon: ImageIcon, description: 'Texto + imagen single' },
+  { value: 'carousel', label: 'Carrusel', icon: Layers, description: 'Documento con slides' },
 ];
 
 const CONTENT_STATUS_OPTIONS: { value: LIContentStatus; label: string; color: string }[] = [
@@ -795,10 +796,17 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
             <label className="text-xs font-medium text-slate-500 mb-2 block">Formato del post</label>
             <div className="flex gap-3">
               {[
-                { value: 'text' as const, label: 'Solo texto', icon: FileText, desc: 'Post estándar sin imagen' },
-                { value: 'carousel' as const, label: 'Carrusel', icon: Layers, desc: 'Documento con slides' },
+                { value: 'text', label: 'Solo texto', icon: FileText, desc: 'Post sin imagen' },
+                { value: 'image', label: 'Imagen', icon: ImageIcon, desc: 'Texto + imagen single' },
+                { value: 'carousel', label: 'Carrusel', icon: Layers, desc: 'Documento con slides' },
               ].map(f => (
-                <button key={f.value} onClick={() => setEditing({ ...editing, format: f.value, slides: f.value === 'carousel' && editing.slides.length === 0 ? [{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }] : editing.slides })}
+                <button key={f.value} onClick={() => setEditing({
+                  ...editing,
+                  format: f.value as LIContentFormat,
+                  slides: f.value === 'carousel' && editing.slides.length === 0
+                    ? [{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }]
+                    : f.value !== 'carousel' ? [] : editing.slides,
+                })}
                   className={`flex-1 flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${editing.format === f.value ? 'border-[#0077B5] bg-[#0077B5]/5' : 'border-slate-200 hover:border-slate-300'}`}>
                   <f.icon className={`w-5 h-5 ${editing.format === f.value ? 'text-[#0077B5]' : 'text-slate-400'}`} />
                   <div>
@@ -878,11 +886,13 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
                   const res = await fetch('/api/generate-caption', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ platform: 'linkedin', title: editing.title, excerpt: editing.body || editing.title }),
+                    body: JSON.stringify({ platform: 'linkedin', title: editing.title, excerpt: editing.body || editing.title, slug: '', category: 'Growth' }),
                   });
                   const data = await res.json();
                   if (data.caption) {
-                    setEditing({ ...editing, body: data.caption, hook: data.caption.split('\n')[0] || editing.hook });
+                    // Remove any undefined blog links
+                    const cleanCaption = data.caption.replace(/growth4u\.io\/blog\/undefined\/?/g, 'growth4u.io').replace(/growth4u\.io\/blog\/\//g, 'growth4u.io');
+                    setEditing({ ...editing, body: cleanCaption, hook: cleanCaption.split('\n')[0] || editing.hook });
                   }
                 } catch (err) {
                   console.error('Error generating caption:', err);
@@ -1463,10 +1473,10 @@ function ReadyContentList({ onAddToQueue, selectedAccount }: {
             <div className="flex items-center gap-2 mb-2">
               {post.format === 'carousel' ? (
                 <Layers className="w-4 h-4 text-[#0077B5]" />
-              ) : post.format === 'text' ? (
-                <FileText className="w-4 h-4 text-slate-400" />
-              ) : (
+              ) : (post.format as string) === 'image' ? (
                 <ImageIcon className="w-4 h-4 text-amber-500" />
+              ) : (
+                <FileText className="w-4 h-4 text-slate-400" />
               )}
               <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">Listo</span>
               <span className="text-xs text-slate-400">{post.format}</span>
@@ -2256,49 +2266,63 @@ export default function LinkedInPage() {
           const tomorrow = new Date();
           tomorrow.setDate(tomorrow.getDate() + 1);
           const account = selectedAccount;
+          const fakePost = { id: contentPost.id, title: contentPost.title, slug: contentPost.id, category: '', excerpt: '', content: '', image: '', createdAt: null };
 
           if (contentPost.format === 'text') {
-            // Text-only: no image needed, add directly to queue
+            // Text-only: no image needed
+            setQueue(prev => [...prev, {
+              post: fakePost, caption: contentPost.body, liImageUrl: '', status: 'draft' as const,
+              scheduledDate: tomorrow.toISOString().split('T')[0], scheduledTime: '10:00', account: account.id,
+            }]);
+          } else if (contentPost.format === 'image' || (contentPost.format as string) === 'image') {
+            // Single image: generate Tech Warm image with title
             const newItem: QueueItem = {
-              post: { id: contentPost.id, title: contentPost.title, slug: contentPost.id, category: '', excerpt: '', content: '', image: '', createdAt: null },
-              caption: contentPost.body,
-              liImageUrl: '',
-              status: 'draft',
-              scheduledDate: tomorrow.toISOString().split('T')[0],
-              scheduledTime: '10:00',
-              account: account.id,
-            };
-            setQueue(prev => [...prev, newItem]);
-          } else {
-            // Image/carousel: generate image first
-            const newItem: QueueItem = {
-              post: { id: contentPost.id, title: contentPost.title, slug: contentPost.id, category: '', excerpt: '', content: '', image: '', createdAt: null },
-              caption: contentPost.body,
-              liImageUrl: '',
-              status: 'generating',
-              scheduledDate: tomorrow.toISOString().split('T')[0],
-              scheduledTime: '10:00',
-              account: account.id,
+              post: fakePost, caption: contentPost.body, liImageUrl: '', status: 'generating',
+              scheduledDate: tomorrow.toISOString().split('T')[0], scheduledTime: '10:00', account: account.id,
             };
             setQueue(prev => [...prev, newItem]);
             const idx = queue.length;
             try {
               const blob = await generateLIImage(contentPost.title, account.template);
               const url = await uploadToCloudinary(blob, contentPost.id);
-              setQueue(prev => {
-                const updated = [...prev];
-                if (updated[idx]) updated[idx] = { ...updated[idx], liImageUrl: url, status: 'draft' };
-                return updated;
-              });
+              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], liImageUrl: url, status: 'draft' }; return u; });
             } catch (err) {
-              setQueue(prev => {
-                const updated = [...prev];
-                if (updated[idx]) updated[idx] = { ...updated[idx], status: 'error', error: String(err) };
-                return updated;
-              });
+              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], status: 'error', error: String(err) }; return u; });
+            }
+          } else if (contentPost.format === 'carousel' && contentPost.slides?.length > 0) {
+            // Carousel: generate each slide as image, upload first slide as preview
+            const newItem: QueueItem = {
+              post: fakePost, caption: contentPost.body, liImageUrl: '', status: 'generating',
+              scheduledDate: tomorrow.toISOString().split('T')[0], scheduledTime: '10:00', account: account.id,
+            };
+            setQueue(prev => [...prev, newItem]);
+            const idx = queue.length;
+            try {
+              // Generate cover slide image
+              const canvas = document.createElement('canvas');
+              renderSlideToCanvas(canvas, contentPost.slides[0] as any, CAROUSEL_TEMPLATES[0], 0, contentPost.slides.length, true);
+              const blob = await new Promise<Blob>((resolve) => canvas.toBlob(b => resolve(b!), 'image/png'));
+              const url = await uploadToCloudinary(blob, `${contentPost.id}-cover`);
+              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], liImageUrl: url, status: 'draft' }; return u; });
+            } catch (err) {
+              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], status: 'error', error: String(err) }; return u; });
+            }
+          } else {
+            // Fallback: generate image
+            const newItem: QueueItem = {
+              post: fakePost, caption: contentPost.body, liImageUrl: '', status: 'generating',
+              scheduledDate: tomorrow.toISOString().split('T')[0], scheduledTime: '10:00', account: account.id,
+            };
+            setQueue(prev => [...prev, newItem]);
+            const idx = queue.length;
+            try {
+              const blob = await generateLIImage(contentPost.title, account.template);
+              const url = await uploadToCloudinary(blob, contentPost.id);
+              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], liImageUrl: url, status: 'draft' }; return u; });
+            } catch (err) {
+              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], status: 'error', error: String(err) }; return u; });
             }
           }
-          // Mark as published in content
           await updateLIContentPost(contentPost.id, { status: 'published' });
         }}
         selectedAccount={selectedAccount}

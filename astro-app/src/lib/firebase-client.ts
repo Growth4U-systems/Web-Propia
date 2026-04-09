@@ -605,7 +605,7 @@ export async function deleteLIScheduledPost(id: string): Promise<void> {
 }
 
 // LinkedIn Content Posts (text, carousel, etc.)
-export type LIContentFormat = 'text' | 'carousel';
+export type LIContentFormat = 'text' | 'image' | 'carousel';
 export type LIContentStatus = 'draft' | 'ready' | 'published';
 
 export interface LICarouselSlide {
