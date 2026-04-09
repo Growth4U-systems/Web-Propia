@@ -1496,13 +1496,14 @@ export async function deleteXPost(id: string): Promise<void> {
 export interface ContentIdea {
   topic: string;
   angle: string;
-  platforms: ('linkedin' | 'twitter' | 'newsletter' | 'blog')[];
+  platforms: ('linkedin' | 'twitter' | 'instagram' | 'newsletter' | 'blog')[];
   format: 'post' | 'thread' | 'carousel' | 'article' | 'newsletter-section';
   priority: 'high' | 'medium' | 'low';
   status: 'idea' | 'draft' | 'assigned' | 'done';
   assignedTo?: string;
   sourceType: 'x_creator' | 'li_creator' | 'news' | 'mixed';
   sourceInspiration: string;
+  sourceUrl?: string;
   generatedBy: 'ai' | 'manual';
   batchId?: string;
   notes: string;
@@ -1527,6 +1528,7 @@ export async function getAllContentIdeas() {
       assignedTo: data.assignedTo || '',
       sourceType: data.sourceType || 'mixed',
       sourceInspiration: data.sourceInspiration || '',
+      sourceUrl: data.sourceUrl || '',
       generatedBy: data.generatedBy || 'ai',
       batchId: data.batchId || '',
       notes: data.notes || '',

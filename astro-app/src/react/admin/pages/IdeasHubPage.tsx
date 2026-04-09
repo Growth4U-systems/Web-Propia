@@ -125,6 +125,7 @@ export default function IdeasHubPage() {
           topic: idea.topic || '', angle: idea.angle || '', platforms: idea.platforms || [],
           format: idea.format || 'post', priority: idea.priority || 'medium', status: 'idea',
           sourceType: idea.sourceType || 'mixed', sourceInspiration: idea.sourceInspiration || '',
+          sourceUrl: idea.sourceUrl || '',
           generatedBy: 'ai', batchId, notes: '',
         });
       }
@@ -134,37 +135,78 @@ export default function IdeasHubPage() {
     setGenerating(false);
   }
 
-  // ---- Idea → Content (create draft in target platform and redirect) ----
-  async function sendToChannel(idea: ContentIdea & { id: string }, channel: string) {
-    try {
-      if (channel === 'linkedin') {
-        await createLIContentPost({
-          format: idea.format === 'carousel' ? 'carousel' : 'text',
-          title: idea.topic, body: `${idea.angle}\n\nInspiración: ${idea.sourceInspiration}`,
-          slides: idea.format === 'carousel' ? [{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }] : [],
-          author: 'philippe', status: 'draft', hook: '', cta: '', tags: ['ideas-hub'],
-        });
-      } else if (channel === 'twitter') {
-        await createXPost({
-          topic: idea.topic, angle: idea.angle,
-          format: idea.format === 'thread' ? 'thread' : 'tweet',
-          draft: '', threadSlides: [], inspiration: idea.sourceInspiration,
-          language: 'es', status: 'idea', scheduledDate: '', scheduledTime: '',
-        });
-      }
-      // For instagram, newsletter, blog — just mark assigned (content created in their own sections)
-      await updateContentIdea(idea.id, { status: 'assigned', assignedTo: channel });
-      setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, status: 'assigned', assignedTo: channel } : i));
+  // ---- Idea → Content (create drafts in selected channels) ----
+  const [sendingIdea, setSendingIdea] = useState<string | null>(null);
+  const [selectedChannels, setSelectedChannels] = useState<Record<string, Set<string>>>({});
 
-      // Redirect to the target section
+  function toggleChannel(ideaId: string, channel: string) {
+    setSelectedChannels(prev => {
+      const current = new Set(prev[ideaId] || []);
+      current.has(channel) ? current.delete(channel) : current.add(channel);
+      return { ...prev, [ideaId]: current };
+    });
+  }
+
+  async function sendToChannels(idea: ContentIdea & { id: string }) {
+    const channels = selectedChannels[idea.id];
+    if (!channels || channels.size === 0) return;
+    setSendingIdea(idea.id);
+    const channelList = Array.from(channels);
+
+    try {
+      for (const channel of channelList) {
+        if (channel === 'linkedin') {
+          // Generate caption via existing API
+          let body = idea.angle;
+          try {
+            const res = await fetch('/api/generate-caption', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: idea.topic, excerpt: idea.angle, platform: 'linkedin' }),
+            });
+            const data = await res.json();
+            if (data.caption) body = data.caption;
+          } catch {}
+          await createLIContentPost({
+            format: idea.format === 'carousel' ? 'carousel' : 'text',
+            title: idea.topic, body,
+            slides: idea.format === 'carousel' ? [{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }] : [],
+            author: 'philippe', status: 'draft', hook: '', cta: '', tags: ['ideas-hub'],
+          });
+        } else if (channel === 'twitter') {
+          // Generate tweet via existing API
+          let draft = '';
+          try {
+            const res = await fetch('/api/generate-caption', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: idea.topic, excerpt: idea.angle, platform: 'twitter' }),
+            });
+            const data = await res.json();
+            if (data.caption) draft = data.caption;
+          } catch {}
+          await createXPost({
+            topic: idea.topic, angle: idea.angle,
+            format: idea.format === 'thread' ? 'thread' : 'tweet',
+            draft, threadSlides: [], inspiration: idea.sourceInspiration,
+            language: 'es', status: 'draft', scheduledDate: '', scheduledTime: '',
+          });
+        }
+        // instagram, newsletter, blog — just mark assigned, content created in their sections
+      }
+
+      await updateContentIdea(idea.id, { status: 'assigned', assignedTo: channelList.join(', ') });
+      setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, status: 'assigned', assignedTo: channelList.join(', ') } : i));
+      setSelectedChannels(prev => ({ ...prev, [idea.id]: new Set() }));
+
+      // Navigate to first channel
       const routes: Record<string, string> = {
         linkedin: '/admin/linkedin/', twitter: '/admin/twitter/',
         instagram: '/admin/instagram/', newsletter: '/admin/newsletter/', blog: '/admin/blog/',
       };
-      if (routes[channel]) navigate(routes[channel]);
+      if (routes[channelList[0]]) navigate(routes[channelList[0]]);
     } catch (err) {
-      console.error(`Error sending to ${channel}:`, err);
+      console.error('Error sending to channels:', err);
     }
+    setSendingIdea(null);
   }
 
   async function handleStatusChange(id: string, status: ContentIdea['status']) {
@@ -378,7 +420,16 @@ export default function IdeasHubPage() {
                           <div className="bg-slate-50 rounded-lg px-4 py-3">
                             <p className="text-xs font-medium text-slate-500 mb-1">Inspiración</p>
                             <p className="text-sm text-slate-600">{idea.sourceInspiration}</p>
+                            {idea.sourceUrl && (
+                              <a href={idea.sourceUrl} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-[#6351d5] hover:text-[#4a3db8] mt-2 font-medium">
+                                <ExternalLink className="w-3 h-3" /> Ver fuente original
+                              </a>
+                            )}
                           </div>
+                        )}
+                        {idea.createdAt && (
+                          <p className="text-xs text-slate-400">{new Date(idea.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                         )}
                         <div>
                           <div className="flex items-center justify-between mb-1">
@@ -395,38 +446,62 @@ export default function IdeasHubPage() {
                             </div>
                           ) : <p className="text-sm text-slate-500">{idea.notes || '(sin notas)'}</p>}
                         </div>
-                        {/* Actions — Send to channel */}
-                        <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
-                          {idea.status === 'idea' && (
-                            <button onClick={() => handleStatusChange(idea.id, 'draft')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100">
-                              <ArrowRight className="w-3 h-3" /> Draft
-                            </button>
-                          )}
+                        {/* Actions — Multiselect channels + create content */}
+                        <div className="space-y-3 pt-3 border-t border-slate-100">
                           {(idea.status === 'idea' || idea.status === 'draft') && (
                             <>
-                              <span className="text-[10px] text-slate-400 self-center">Enviar a:</span>
-                              {[
-                                { ch: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'bg-[#0077B5]/10 text-[#0077B5] hover:bg-[#0077B5]/20' },
-                                { ch: 'twitter', label: 'X', icon: Twitter, color: 'bg-[#1DA1F2]/10 text-[#1DA1F2] hover:bg-[#1DA1F2]/20' },
-                                { ch: 'instagram', label: 'Instagram', icon: Camera, color: 'bg-[#E4405F]/10 text-[#E4405F] hover:bg-[#E4405F]/20' },
-                                { ch: 'newsletter', label: 'Newsletter', icon: Mail, color: 'bg-[#6351d5]/10 text-[#6351d5] hover:bg-[#6351d5]/20' },
-                                { ch: 'blog', label: 'Blog', icon: FileText, color: 'bg-[#3ecda5]/10 text-[#3ecda5] hover:bg-[#3ecda5]/20' },
-                              ].map(({ ch, label, icon: Icon, color }) => (
-                                <button key={ch} onClick={() => sendToChannel(idea, ch)}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg ${color}`}>
-                                  <Icon className="w-3 h-3" /> {label}
+                              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Crear contenido en:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {[
+                                  { ch: 'linkedin', label: 'LinkedIn', icon: Linkedin, bg: '#0077B5' },
+                                  { ch: 'twitter', label: 'X / Twitter', icon: Twitter, bg: '#1DA1F2' },
+                                  { ch: 'instagram', label: 'Instagram', icon: Camera, bg: '#E4405F' },
+                                  { ch: 'newsletter', label: 'Newsletter', icon: Mail, bg: '#6351d5' },
+                                  { ch: 'blog', label: 'Blog', icon: FileText, bg: '#3ecda5' },
+                                ].map(({ ch, label, icon: Icon, bg }) => {
+                                  const selected = selectedChannels[idea.id]?.has(ch);
+                                  return (
+                                    <button key={ch} onClick={() => toggleChannel(idea.id, ch)}
+                                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border-2 transition-all ${
+                                        selected
+                                          ? 'text-white border-transparent'
+                                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                                      }`}
+                                      style={selected ? { backgroundColor: bg, borderColor: bg } : undefined}
+                                    >
+                                      <Icon className="w-3.5 h-3.5" /> {label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="flex gap-2">
+                                <button onClick={() => sendToChannels(idea)}
+                                  disabled={!selectedChannels[idea.id]?.size || sendingIdea === idea.id}
+                                  className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-[#6351d5] to-[#45b6f7] text-white rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity">
+                                  {sendingIdea === idea.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                  {sendingIdea === idea.id ? 'Creando...' : `Crear contenido (${selectedChannels[idea.id]?.size || 0})`}
                                 </button>
-                              ))}
+                                <button onClick={() => handleDelete(idea.id)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 ml-auto">
+                                  <Trash2 className="w-3 h-3" /> Eliminar
+                                </button>
+                              </div>
                             </>
                           )}
                           {idea.status === 'assigned' && (
-                            <button onClick={() => handleStatusChange(idea.id, 'done')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100">
-                              <Check className="w-3 h-3" /> Marcar hecha
+                            <div className="flex gap-2">
+                              <button onClick={() => handleStatusChange(idea.id, 'done')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700 hover:bg-green-100">
+                                <Check className="w-3 h-3" /> Marcar hecha
+                              </button>
+                              <button onClick={() => handleDelete(idea.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 ml-auto">
+                                <Trash2 className="w-3 h-3" /> Eliminar
+                              </button>
+                            </div>
+                          )}
+                          {idea.status === 'done' && (
+                            <button onClick={() => handleDelete(idea.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50">
+                              <Trash2 className="w-3 h-3" /> Eliminar
                             </button>
                           )}
-                          <button onClick={() => handleDelete(idea.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 ml-auto">
-                            <Trash2 className="w-3 h-3" /> Eliminar
-                          </button>
                         </div>
                       </div>
                     )}

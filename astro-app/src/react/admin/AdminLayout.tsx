@@ -70,10 +70,10 @@ export default function AdminLayout() {
   type NavItem = { name: string; href: string; icon: any; badge?: number; children?: NavItem[] };
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/admin/', icon: LayoutDashboard },
-    { name: 'Blog', href: '/admin/blog/', icon: FileText },
     { name: 'Casos de Éxito', href: '/admin/casos-de-exito/', icon: Trophy },
-    { name: 'Lead Magnets', href: '/admin/lead-magnets/', icon: Download },
     { name: 'Ideas Hub', href: '/admin/ideas/', icon: Lightbulb, children: [
+      { name: 'Blog', href: '/admin/blog/', icon: FileText },
+      { name: 'Lead Magnets', href: '/admin/lead-magnets/', icon: Download },
       { name: 'Instagram', href: '/admin/instagram/', icon: Camera },
       { name: 'IG Bot', href: '/admin/instagram-bot/', icon: Bot },
       { name: 'LinkedIn', href: '/admin/linkedin/', icon: LinkedinIcon },
@@ -88,7 +88,7 @@ export default function AdminLayout() {
   ];
 
   // Auto-expand Ideas Hub if current path is a child
-  const ideasChildPaths = ['/admin/ideas/', '/admin/instagram/', '/admin/instagram-bot/', '/admin/linkedin/', '/admin/linkedin-bot/', '/admin/twitter/', '/admin/newsletter/'];
+  const ideasChildPaths = ['/admin/ideas/', '/admin/blog/', '/admin/lead-magnets/', '/admin/instagram/', '/admin/instagram-bot/', '/admin/linkedin/', '/admin/linkedin-bot/', '/admin/twitter/', '/admin/newsletter/'];
   const isInIdeasGroup = ideasChildPaths.some(p => normalizedPath === p);
   const [ideasExpanded, setIdeasExpanded] = useState(isInIdeasGroup);
 
