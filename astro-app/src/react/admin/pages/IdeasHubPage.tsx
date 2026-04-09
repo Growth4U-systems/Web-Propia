@@ -7,6 +7,9 @@ import {
   ToggleRight, ExternalLink,
 } from 'lucide-react';
 import {
+  Camera,
+} from 'lucide-react';
+import {
   getAllContentIdeas, createContentIdea, updateContentIdea, deleteContentIdea,
   getAllXCreators, createXCreator, deleteXCreator, updateXCreator,
   getAllLICreators, createLICreator, deleteLICreator, updateLICreator,
@@ -32,11 +35,12 @@ const STATUS_COLORS: Record<string, string> = {
   assigned: 'bg-blue-100 text-blue-700', done: 'bg-green-100 text-green-700',
 };
 const PLATFORM_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  linkedin: Linkedin, twitter: Twitter, newsletter: Mail, blog: FileText,
+  linkedin: Linkedin, twitter: Twitter, instagram: Camera, newsletter: Mail, blog: FileText,
 };
 const PLATFORM_COLORS: Record<string, string> = {
   linkedin: 'text-[#0077B5] bg-[#0077B5]/10', twitter: 'text-[#1DA1F2] bg-[#1DA1F2]/10',
-  newsletter: 'text-[#6351d5] bg-[#6351d5]/10', blog: 'text-[#3ecda5] bg-[#3ecda5]/10',
+  instagram: 'text-[#E4405F] bg-[#E4405F]/10', newsletter: 'text-[#6351d5] bg-[#6351d5]/10',
+  blog: 'text-[#3ecda5] bg-[#3ecda5]/10',
 };
 const FORMAT_LABELS: Record<string, string> = {
   post: 'Post', thread: 'Thread', carousel: 'Carrusel', article: 'Artículo', 'newsletter-section': 'Newsletter',
@@ -130,32 +134,37 @@ export default function IdeasHubPage() {
     setGenerating(false);
   }
 
-  // ---- Idea → Content ----
-  async function createLinkedInPost(idea: ContentIdea & { id: string }) {
-    await createLIContentPost({
-      format: idea.format === 'carousel' ? 'carousel' : 'text',
-      title: idea.topic, body: idea.angle, slides: [],
-      author: 'philippe', status: 'draft', hook: '', cta: '', tags: ['ideas-hub'],
-    });
-    await updateContentIdea(idea.id, { status: 'assigned', assignedTo: 'linkedin' });
-    setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, status: 'assigned', assignedTo: 'linkedin' } : i));
-    navigate('/admin/linkedin/');
-  }
+  // ---- Idea → Content (create draft in target platform and redirect) ----
+  async function sendToChannel(idea: ContentIdea & { id: string }, channel: string) {
+    try {
+      if (channel === 'linkedin') {
+        await createLIContentPost({
+          format: idea.format === 'carousel' ? 'carousel' : 'text',
+          title: idea.topic, body: `${idea.angle}\n\nInspiración: ${idea.sourceInspiration}`,
+          slides: idea.format === 'carousel' ? [{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }] : [],
+          author: 'philippe', status: 'draft', hook: '', cta: '', tags: ['ideas-hub'],
+        });
+      } else if (channel === 'twitter') {
+        await createXPost({
+          topic: idea.topic, angle: idea.angle,
+          format: idea.format === 'thread' ? 'thread' : 'tweet',
+          draft: '', threadSlides: [], inspiration: idea.sourceInspiration,
+          language: 'es', status: 'idea', scheduledDate: '', scheduledTime: '',
+        });
+      }
+      // For instagram, newsletter, blog — just mark assigned (content created in their own sections)
+      await updateContentIdea(idea.id, { status: 'assigned', assignedTo: channel });
+      setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, status: 'assigned', assignedTo: channel } : i));
 
-  async function createXPostFromIdea(idea: ContentIdea & { id: string }) {
-    await createXPost({
-      topic: idea.topic, angle: idea.angle, format: idea.format === 'thread' ? 'thread' : 'tweet',
-      draft: '', threadSlides: [], inspiration: idea.sourceInspiration,
-      language: 'es', status: 'idea', scheduledDate: '', scheduledTime: '',
-    });
-    await updateContentIdea(idea.id, { status: 'assigned', assignedTo: 'twitter' });
-    setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, status: 'assigned', assignedTo: 'twitter' } : i));
-    navigate('/admin/twitter/');
-  }
-
-  async function assignToNewsletter(idea: ContentIdea & { id: string }) {
-    await updateContentIdea(idea.id, { status: 'assigned', assignedTo: 'newsletter' });
-    setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, status: 'assigned', assignedTo: 'newsletter' } : i));
+      // Redirect to the target section
+      const routes: Record<string, string> = {
+        linkedin: '/admin/linkedin/', twitter: '/admin/twitter/',
+        instagram: '/admin/instagram/', newsletter: '/admin/newsletter/', blog: '/admin/blog/',
+      };
+      if (routes[channel]) navigate(routes[channel]);
+    } catch (err) {
+      console.error(`Error sending to ${channel}:`, err);
+    }
   }
 
   async function handleStatusChange(id: string, status: ContentIdea['status']) {
@@ -319,7 +328,7 @@ export default function IdeasHubPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Filter className="w-4 h-4 text-slate-400" />
             <select value={platformFilter} onChange={e => setPlatformFilter(e.target.value as PlatformFilter)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm">
-              <option value="all">Todas plataformas</option><option value="linkedin">LinkedIn</option><option value="twitter">X</option><option value="newsletter">Newsletter</option><option value="blog">Blog</option>
+              <option value="all">Todas plataformas</option><option value="linkedin">LinkedIn</option><option value="twitter">X</option><option value="instagram">Instagram</option><option value="newsletter">Newsletter</option><option value="blog">Blog</option>
             </select>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as StatusFilter)} className="border border-slate-200 rounded-lg px-3 py-2 text-sm">
               <option value="all">Todos estados</option><option value="idea">Idea</option><option value="draft">Draft</option><option value="assigned">Asignada</option><option value="done">Hecha</option>
@@ -386,7 +395,7 @@ export default function IdeasHubPage() {
                             </div>
                           ) : <p className="text-sm text-slate-500">{idea.notes || '(sin notas)'}</p>}
                         </div>
-                        {/* Actions — Idea → Content */}
+                        {/* Actions — Send to channel */}
                         <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
                           {idea.status === 'idea' && (
                             <button onClick={() => handleStatusChange(idea.id, 'draft')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100">
@@ -395,15 +404,19 @@ export default function IdeasHubPage() {
                           )}
                           {(idea.status === 'idea' || idea.status === 'draft') && (
                             <>
-                              <button onClick={() => createLinkedInPost(idea)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#0077B5]/10 text-[#0077B5] hover:bg-[#0077B5]/20">
-                                <Linkedin className="w-3 h-3" /> Crear post LinkedIn
-                              </button>
-                              <button onClick={() => createXPostFromIdea(idea)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#1DA1F2]/10 text-[#1DA1F2] hover:bg-[#1DA1F2]/20">
-                                <Twitter className="w-3 h-3" /> Crear post X
-                              </button>
-                              <button onClick={() => assignToNewsletter(idea)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#6351d5]/10 text-[#6351d5] hover:bg-[#6351d5]/20">
-                                <Mail className="w-3 h-3" /> Para Newsletter
-                              </button>
+                              <span className="text-[10px] text-slate-400 self-center">Enviar a:</span>
+                              {[
+                                { ch: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'bg-[#0077B5]/10 text-[#0077B5] hover:bg-[#0077B5]/20' },
+                                { ch: 'twitter', label: 'X', icon: Twitter, color: 'bg-[#1DA1F2]/10 text-[#1DA1F2] hover:bg-[#1DA1F2]/20' },
+                                { ch: 'instagram', label: 'Instagram', icon: Camera, color: 'bg-[#E4405F]/10 text-[#E4405F] hover:bg-[#E4405F]/20' },
+                                { ch: 'newsletter', label: 'Newsletter', icon: Mail, color: 'bg-[#6351d5]/10 text-[#6351d5] hover:bg-[#6351d5]/20' },
+                                { ch: 'blog', label: 'Blog', icon: FileText, color: 'bg-[#3ecda5]/10 text-[#3ecda5] hover:bg-[#3ecda5]/20' },
+                              ].map(({ ch, label, icon: Icon, color }) => (
+                                <button key={ch} onClick={() => sendToChannel(idea, ch)}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg ${color}`}>
+                                  <Icon className="w-3 h-3" /> {label}
+                                </button>
+                              ))}
                             </>
                           )}
                           {idea.status === 'assigned' && (
