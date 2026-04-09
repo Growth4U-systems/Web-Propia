@@ -30,6 +30,7 @@ import {
   Check,
   ExternalLink,
   Video,
+  Lightbulb,
 } from 'lucide-react';
 import VideoTab from './VideoTab';
 import {
@@ -42,10 +43,12 @@ import {
   createLIContentPost,
   updateLIContentPost,
   deleteLIContentPost,
+  getAllContentIdeas,
   type LIContentPost,
   type LIContentFormat,
   type LIContentStatus,
   type LICarouselSlide,
+  type ContentIdea,
 } from '../../../lib/firebase-client';
 
 interface BlogPost {
@@ -509,6 +512,12 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
   const [saving, setSaving] = useState(false);
   const [filterFormat, setFilterFormat] = useState<LIContentFormat | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<LIContentStatus | 'all'>('all');
+  // Source picker
+  const [showSourcePicker, setShowSourcePicker] = useState(false);
+  const [sourceType, setSourceType] = useState<'ideas' | 'blog' | null>(null);
+  const [ideasList, setIdeasList] = useState<(ContentIdea & { id: string })[]>([]);
+  const [blogList, setBlogList] = useState<BlogPost[]>([]);
+  const [sourceLoading, setSourceLoading] = useState(false);
   // AI generation state
   const [showGenerator, setShowGenerator] = useState(false);
   const [genFormat, setGenFormat] = useState<LIContentFormat>('carousel');
@@ -559,6 +568,37 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
     const data = await getAllLIContentPosts();
     setPosts(data);
     setLoading(false);
+  }
+
+  async function loadSources(type: 'ideas' | 'blog') {
+    setSourceLoading(true);
+    setSourceType(type);
+    if (type === 'ideas') {
+      const all = await getAllContentIdeas();
+      setIdeasList(all.filter(i => (i.status === 'idea' || i.status === 'draft') && i.platforms?.includes('linkedin')));
+    } else {
+      const all = await getAllPosts();
+      setBlogList(all as BlogPost[]);
+    }
+    setSourceLoading(false);
+  }
+
+  function createFromIdea(idea: ContentIdea & { id: string }) {
+    setEditing({
+      id: '', format: 'text', title: idea.topic,
+      body: idea.angle + (idea.sourceInspiration ? `\n\nInspiración: ${idea.sourceInspiration}` : ''),
+      slides: [], author: selectedAccount.id, status: 'draft', hook: '', cta: '', tags: ['ideas-hub'],
+    });
+    setIsNew(true); setShowSourcePicker(false); setSourceType(null);
+  }
+
+  function createFromBlog(blog: BlogPost) {
+    setEditing({
+      id: '', format: 'text', title: blog.title,
+      body: blog.excerpt || '',
+      slides: [], author: selectedAccount.id, status: 'draft', hook: '', cta: '', tags: ['from-blog'],
+    });
+    setIsNew(true); setShowSourcePicker(false); setSourceType(null);
   }
 
   async function handleGenerate() {
@@ -958,7 +998,7 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
           )}
 
           {/* Save */}
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={handleSave}
               disabled={saving || !editing.title.trim()}
@@ -967,6 +1007,22 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {saving ? 'Guardando...' : isNew ? 'Crear' : 'Guardar cambios'}
             </button>
+            {!isNew && editing.status !== 'ready' && editing.status !== 'published' && (
+              <button
+                onClick={async () => {
+                  setSaving(true);
+                  await updateLIContentPost(editing.id, { status: 'ready' });
+                  setSaving(false);
+                  setEditing(null);
+                  loadContent();
+                }}
+                disabled={saving || !editing.title.trim()}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#3ecda5] to-[#0077B5] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                <Send className="w-4 h-4" />
+                Listo para publicar
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1000,7 +1056,15 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
             ))}
           </select>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => { setShowSourcePicker(!showSourcePicker); setSourceType(null); }}
+            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[#6351d5] text-white hover:bg-[#4a3db8] transition-colors font-medium">
+            <Lightbulb className="w-4 h-4" /> Desde Ideas Hub
+          </button>
+          <button onClick={() => loadSources('blog')}
+            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-[#0077B5] text-[#0077B5] hover:bg-[#0077B5] hover:text-white transition-colors">
+            <FileText className="w-4 h-4" /> Desde Blog
+          </button>
           <button
             onClick={() => setShowGenerator(!showGenerator)}
             className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-[#3ecda5] to-[#0077B5] text-white hover:opacity-90 transition-opacity font-medium"
@@ -1012,7 +1076,7 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
             <button
               key={f.value}
               onClick={() => handleNew(f.value)}
-              className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-[#0077B5] text-[#0077B5] hover:bg-[#0077B5] hover:text-white transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
             >
               <f.icon className="w-4 h-4" />
               + {f.label}
@@ -1125,6 +1189,72 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
         </div>
       )}
 
+      {/* Source picker — Ideas Hub */}
+      {showSourcePicker && !sourceType && (
+        <div className="bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-xl p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[#032149] flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-[#6351d5]" /> Crear desde fuente
+            </h3>
+            <button onClick={() => setShowSourcePicker(false)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => loadSources('ideas')}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-4 bg-white border-2 border-[#6351d5] rounded-xl text-[#6351d5] font-medium hover:bg-[#6351d5] hover:text-white transition-colors">
+              <Lightbulb className="w-5 h-5" /> Ideas Hub
+            </button>
+            <button onClick={() => loadSources('blog')}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-4 bg-white border-2 border-[#0077B5] rounded-xl text-[#0077B5] font-medium hover:bg-[#0077B5] hover:text-white transition-colors">
+              <FileText className="w-5 h-5" /> Blog Posts
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Source picker — Ideas list */}
+      {sourceType === 'ideas' && (
+        <div className="bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-xl p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[#032149]">Seleccionar idea para LinkedIn ({ideasList.length})</h3>
+            <button onClick={() => { setSourceType(null); setShowSourcePicker(false); }} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+          </div>
+          {sourceLoading ? <Loader2 className="w-6 h-6 text-[#6351d5] animate-spin mx-auto" /> : (
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {ideasList.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-4">No hay ideas asignadas a LinkedIn en el Ideas Hub</p>
+              ) : ideasList.map(idea => (
+                <button key={idea.id} onClick={() => createFromIdea(idea)}
+                  className="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-[#6351d5] transition-colors">
+                  <p className="text-sm font-medium text-[#032149]">{idea.topic}</p>
+                  <p className="text-xs text-slate-400 mt-1 line-clamp-1">{idea.angle}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Source picker — Blog list */}
+      {sourceType === 'blog' && (
+        <div className="bg-[#0077B5]/5 border border-[#0077B5]/20 rounded-xl p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[#032149]">Seleccionar blog post ({blogList.length})</h3>
+            <button onClick={() => { setSourceType(null); setShowSourcePicker(false); }} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+          </div>
+          {sourceLoading ? <Loader2 className="w-6 h-6 text-[#0077B5] animate-spin mx-auto" /> : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
+              {blogList.map(blog => (
+                <button key={blog.id} onClick={() => createFromBlog(blog)}
+                  className="text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-[#0077B5] transition-colors">
+                  {blog.image && <img src={blog.image} alt="" className="w-full h-20 object-cover rounded mb-2" />}
+                  <p className="text-xs font-medium text-[#032149] line-clamp-2">{blog.title}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Posts list */}
       {filtered.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
@@ -1207,6 +1337,68 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+// --- Ready Content List (for Publish tab) ---
+
+function ReadyContentList({ onAddToQueue, selectedAccount }: {
+  onAddToQueue: (post: LIContentPost & { id: string }) => void;
+  selectedAccount: LinkedInAccount;
+}) {
+  const [readyPosts, setReadyPosts] = useState<(LIContentPost & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const all = await getAllLIContentPosts();
+      setReadyPosts(all.filter(p => p.status === 'ready'));
+      setLoading(false);
+    })();
+  }, []);
+
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-[#0077B5] animate-spin" /></div>;
+
+  if (readyPosts.length === 0) return (
+    <div className="mb-8 text-center py-8 bg-white rounded-xl border border-slate-200">
+      <Layers className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+      <p className="text-slate-400 text-sm">No hay contenido listo para publicar</p>
+      <p className="text-xs text-slate-400 mt-1">Marca posts como &ldquo;Listo para publicar&rdquo; en la pestaña Contenido</p>
+    </div>
+  );
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-lg font-semibold text-[#032149] mb-4">
+        Contenido listo para publicar ({readyPosts.length})
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {readyPosts.map(post => (
+          <div key={post.id}
+            onClick={() => onAddToQueue(post)}
+            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-[#0077B5] hover:shadow-md cursor-pointer transition-all"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              {post.format === 'carousel' ? (
+                <Layers className="w-4 h-4 text-[#0077B5]" />
+              ) : post.format === 'text' ? (
+                <FileText className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ImageIcon className="w-4 h-4 text-amber-500" />
+              )}
+              <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">Listo</span>
+              <span className="text-xs text-slate-400">{post.format}</span>
+            </div>
+            <h3 className="font-semibold text-sm text-[#032149] line-clamp-2">{post.title || '(sin título)'}</h3>
+            {post.body && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{post.body.slice(0, 100)}</p>}
+            {post.format === 'carousel' && post.slides?.length > 0 && (
+              <p className="text-xs text-[#0077B5] mt-1">{post.slides.length} slides</p>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1978,74 +2170,66 @@ export default function LinkedInPage() {
         </div>
       )}
 
-      {/* Blog posts grid */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#032149] mb-4">Seleccionar blog posts</h2>
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 text-[#0077B5] animate-spin" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {posts.map((post) => {
-              const inQueue = queue.some((q) => q.post.slug === post.slug);
-              const isUsed = publishedSlugs.has(post.slug);
-              return (
-                <div
-                  key={post.id}
-                  className={`bg-white rounded-xl border p-4 transition-all ${
-                    isUsed
-                      ? 'border-green-200 bg-green-50/50 opacity-60'
-                      : inQueue
-                      ? 'border-[#0077B5] bg-blue-50 opacity-60'
-                      : 'border-slate-200 hover:border-[#0077B5] hover:shadow-md cursor-pointer'
-                  }`}
-                  onClick={() => !inQueue && !isUsed && addToQueue(post)}
-                >
-                  <div className="flex items-start gap-3">
-                    {post.image ? (
-                      <img src={post.image} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <ImageIcon className="w-6 h-6 text-slate-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm text-[#032149] line-clamp-2">{post.title}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">
-                          {post.category}
-                        </span>
-                        {isUsed && (
-                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
-                            Publicado en LI
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {!isUsed && !inQueue && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); markAsPublished(post); }}
-                        className="p-1 text-slate-300 hover:text-green-500 transition-colors flex-shrink-0"
-                        title="Marcar como ya publicado"
-                      >
-                        <Lock className="w-4 h-4" />
-                      </button>
-                    )}
-                    {inQueue && !isUsed && <CheckCircle2 className="w-5 h-5 text-[#0077B5] flex-shrink-0" />}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      {/* Ready content posts — select to publish */}
+      <ReadyContentList
+        onAddToQueue={async (contentPost) => {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const account = selectedAccount;
+
+          if (contentPost.format === 'text') {
+            // Text-only: no image needed, add directly to queue
+            const newItem: QueueItem = {
+              post: { id: contentPost.id, title: contentPost.title, slug: contentPost.id, category: '', excerpt: '', content: '', image: '', createdAt: null },
+              caption: contentPost.body,
+              liImageUrl: '',
+              status: 'draft',
+              scheduledDate: tomorrow.toISOString().split('T')[0],
+              scheduledTime: '10:00',
+              account: account.id,
+            };
+            setQueue(prev => [...prev, newItem]);
+          } else {
+            // Image/carousel: generate image first
+            const newItem: QueueItem = {
+              post: { id: contentPost.id, title: contentPost.title, slug: contentPost.id, category: '', excerpt: '', content: '', image: '', createdAt: null },
+              caption: contentPost.body,
+              liImageUrl: '',
+              status: 'generating',
+              scheduledDate: tomorrow.toISOString().split('T')[0],
+              scheduledTime: '10:00',
+              account: account.id,
+            };
+            setQueue(prev => [...prev, newItem]);
+            const idx = queue.length;
+            try {
+              const blob = await generateLIImage(contentPost.title, account.template);
+              const url = await uploadToCloudinary(blob, contentPost.id);
+              setQueue(prev => {
+                const updated = [...prev];
+                if (updated[idx]) updated[idx] = { ...updated[idx], liImageUrl: url, status: 'draft' };
+                return updated;
+              });
+            } catch (err) {
+              setQueue(prev => {
+                const updated = [...prev];
+                if (updated[idx]) updated[idx] = { ...updated[idx], status: 'error', error: String(err) };
+                return updated;
+              });
+            }
+          }
+          // Mark as published in content
+          await updateLIContentPost(contentPost.id, { status: 'published' });
+        }}
+        selectedAccount={selectedAccount}
+      />
 
       {/* Empty state */}
       {accountQueue.length === 0 && accountSavedPosts.length === 0 && !loading && (
         <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-          <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">Selecciona blog posts para generar contenido de LinkedIn</p>
+          <Layers className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500">No hay contenido listo para publicar</p>
+          <p className="text-sm text-slate-400 mt-1">Ve a la pestaña Contenido para crear posts y marcarlos como &ldquo;Listo para publicar&rdquo;</p>
         </div>
       )}
 
