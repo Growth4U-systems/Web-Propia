@@ -790,6 +790,26 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+          {/* Format + Post type selector */}
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-2 block">Formato del post</label>
+            <div className="flex gap-3">
+              {[
+                { value: 'text' as const, label: 'Solo texto', icon: FileText, desc: 'Post estándar sin imagen' },
+                { value: 'carousel' as const, label: 'Carrusel', icon: Layers, desc: 'Documento con slides' },
+              ].map(f => (
+                <button key={f.value} onClick={() => setEditing({ ...editing, format: f.value, slides: f.value === 'carousel' && editing.slides.length === 0 ? [{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }] : editing.slides })}
+                  className={`flex-1 flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${editing.format === f.value ? 'border-[#0077B5] bg-[#0077B5]/5' : 'border-slate-200 hover:border-slate-300'}`}>
+                  <f.icon className={`w-5 h-5 ${editing.format === f.value ? 'text-[#0077B5]' : 'text-slate-400'}`} />
+                  <div>
+                    <p className={`text-sm font-medium ${editing.format === f.value ? 'text-[#0077B5]' : 'text-slate-600'}`}>{f.label}</p>
+                    <p className="text-xs text-slate-400">{f.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Meta row */}
           <div className="grid md:grid-cols-3 gap-4">
             <div>
@@ -848,6 +868,34 @@ function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
               placeholder="La frase que engancha al lector"
             />
           </div>
+
+          {/* Generate caption with AI */}
+          {editing.title && (
+            <button
+              onClick={async () => {
+                setGenerating(true);
+                try {
+                  const res = await fetch('/api/generate-caption', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ platform: 'linkedin', title: editing.title, excerpt: editing.body || editing.title }),
+                  });
+                  const data = await res.json();
+                  if (data.caption) {
+                    setEditing({ ...editing, body: data.caption, hook: data.caption.split('\n')[0] || editing.hook });
+                  }
+                } catch (err) {
+                  console.error('Error generating caption:', err);
+                }
+                setGenerating(false);
+              }}
+              disabled={generating}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#3ecda5] to-[#0077B5] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity w-full justify-center"
+            >
+              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {generating ? 'Generando caption...' : 'Generar caption con IA desde el título'}
+            </button>
+          )}
 
           {/* Text post body */}
           {editing.format === 'text' && (
