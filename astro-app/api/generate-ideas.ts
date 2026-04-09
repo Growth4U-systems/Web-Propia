@@ -105,7 +105,7 @@ const SYSTEM_PROMPT = `Eres el estratega de contenido de Growth4U, agencia de Gr
 Tu trabajo: analizar señales de múltiples fuentes (creadores de X/Twitter, creadores de LinkedIn, noticias del sector) y generar ideas de contenido accionables.
 
 Reglas:
-- Genera entre 8 y 12 ideas
+- Genera entre 6 y 10 ideas
 - Cada idea debe ser específica y accionable, no genérica
 - HIGH priority = temas trending o timely
 - MEDIUM = temas evergreen relevantes
@@ -231,8 +231,8 @@ export default async function handler(req: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 3000,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2500,
         temperature: 0.85,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],
