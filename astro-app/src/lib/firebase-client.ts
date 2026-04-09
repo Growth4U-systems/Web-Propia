@@ -1491,4 +1491,65 @@ export async function deleteXPost(id: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// ===================== Content Ideas (Ideas Hub) =====================
+
+export interface ContentIdea {
+  topic: string;
+  angle: string;
+  platforms: ('linkedin' | 'twitter' | 'newsletter' | 'blog')[];
+  format: 'post' | 'thread' | 'carousel' | 'article' | 'newsletter-section';
+  priority: 'high' | 'medium' | 'low';
+  status: 'idea' | 'draft' | 'assigned' | 'done';
+  assignedTo?: string;
+  sourceType: 'x_creator' | 'li_creator' | 'news' | 'mixed';
+  sourceInspiration: string;
+  generatedBy: 'ai' | 'manual';
+  batchId?: string;
+  notes: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export async function getAllContentIdeas() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'content_ideas');
+  const q = query(ref, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      id: d.id,
+      topic: data.topic || '',
+      angle: data.angle || '',
+      platforms: data.platforms || [],
+      format: data.format || 'post',
+      priority: data.priority || 'medium',
+      status: data.status || 'idea',
+      assignedTo: data.assignedTo || '',
+      sourceType: data.sourceType || 'mixed',
+      sourceInspiration: data.sourceInspiration || '',
+      generatedBy: data.generatedBy || 'ai',
+      batchId: data.batchId || '',
+      notes: data.notes || '',
+      createdAt: data.createdAt?.toDate() || null,
+      updatedAt: data.updatedAt?.toDate() || null,
+    } as ContentIdea & { id: string };
+  });
+}
+
+export async function createContentIdea(idea: Omit<ContentIdea, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'content_ideas');
+  const docRef = await addDoc(ref, { ...idea, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateContentIdea(id: string, updates: Partial<ContentIdea>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'content_ideas', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteContentIdea(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'content_ideas', id);
+  await deleteDoc(ref);
+}
+
 export { db, auth, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, limit, where, serverTimestamp };

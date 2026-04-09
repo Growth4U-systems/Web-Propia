@@ -16,6 +16,7 @@ import InstagramBotPage from './pages/InstagramBotPage';
 import NewsletterPage from './pages/NewsletterPage';
 import PartnersPage from './pages/PartnersPage';
 import TwitterPage from './pages/TwitterPage';
+import IdeasHubPage from './pages/IdeasHubPage';
 
 export default function AdminApp() {
   return (
@@ -36,6 +37,7 @@ export default function AdminApp() {
           <Route path="/admin/geo/" element={<Navigate to="/admin/visibilidad/" replace />} />
           <Route path="/admin/seo-geo-audit/" element={<Navigate to="/admin/visibilidad/" replace />} />
           <Route path="/admin/keyword-briefs/" element={<Navigate to="/admin/visibilidad/" replace />} />
+          <Route path="/admin/ideas/" element={<IdeasHubPage />} />
           <Route path="/admin/newsletter/" element={<NewsletterPage />} />
           <Route path="/admin/partners/" element={<PartnersPage />} />
           <Route path="/admin/validation/" element={<ValidationPage />} />

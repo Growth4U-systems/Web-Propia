@@ -18,6 +18,7 @@ import {
   Handshake,
   Mail,
   Twitter,
+  Lightbulb,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { signInWithGoogle, signOutUser, onAuthChange, getAllLIComments, getAllLIProspects } from '../../lib/firebase-client';
@@ -73,6 +74,7 @@ export default function AdminLayout() {
     { name: 'LinkedIn Bot', href: '/admin/linkedin-bot/', icon: Bot, badge: liBotBadge },
     { name: 'X / Twitter', href: '/admin/twitter/', icon: Twitter },
     { name: 'Visibilidad', href: '/admin/visibilidad/', icon: Search },
+    { name: 'Ideas Hub', href: '/admin/ideas/', icon: Lightbulb },
     { name: 'Newsletter', href: '/admin/newsletter/', icon: Mail },
     { name: 'Partners', href: '/admin/partners/', icon: Handshake },
     { name: 'Feedback', href: '/admin/feedback/', icon: MessageSquare },
