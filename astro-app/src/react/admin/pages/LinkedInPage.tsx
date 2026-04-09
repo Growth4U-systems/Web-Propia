@@ -190,58 +190,90 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-async function generateLIImage(text: string, template: LinkedInAccount['template']): Promise<Blob> {
+async function generateLIImage(text: string, _template: LinkedInAccount['template']): Promise<Blob> {
+  const W = 1080, H = 1350;
   const canvas = document.createElement('canvas');
-  canvas.width = 1728;
-  canvas.height = 2304;
+  canvas.width = W;
+  canvas.height = H;
   const ctx = canvas.getContext('2d')!;
 
-  // Draw template
-  const templateImg = await loadImage(template.url);
-  ctx.drawImage(templateImg, 0, 0, 1728, 2304);
+  // Background — Tech Warm
+  ctx.fillStyle = '#D4845A';
+  ctx.fillRect(0, 0, W, H);
 
-  // Text area
-  const { textX, textY, textW, textH } = template;
-  const padding = 40;
-  const innerW = textW - padding * 2;
-  const innerH = textH - padding * 2;
+  // Hex pattern
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = '#F5F0EB';
+  ctx.lineWidth = 0.8;
+  for (let row = 0; row < 20; row++) {
+    for (let col = 0; col < 14; col++) {
+      const x = col * 100 + (row % 2 ? 50 : 0);
+      const y = row * 86;
+      drawHexagon(ctx, x, y, 45);
+    }
+  }
+  ctx.globalAlpha = 1;
 
-  // Clip to text area so text never overflows
-  ctx.save();
+  // Card
+  roundRect(ctx, 60, 80, 960, 1190, 24, '#F5F0EB');
+
+  // GROWTH4U watermark
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = 'bold 22px Inter, Helvetica, Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('GROWTH4U', 100, 56);
+
+  // Claude icon (simplified sparkle)
+  const cx = 540, cy = 230;
+  ctx.fillStyle = '#D97757';
+  for (let i = 0; i < 8; i++) {
+    const angle = (Math.PI / 4) * i;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.ellipse(0, -30, 5, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
   ctx.beginPath();
-  ctx.rect(textX, textY, textW, textH);
-  ctx.clip();
+  ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Determine font size (try from large to small) — start big to fill the box
-  const upperText = text.toUpperCase();
-  let fontSize = 120;
-  let lines: string[] = [];
-
-  for (fontSize = 120; fontSize >= 28; fontSize -= 2) {
-    ctx.font = `900 ${fontSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
-    lines = wrapText(ctx, upperText, innerW);
-    const lineHeight = fontSize * 1.15;
-    const totalH = lines.length * lineHeight;
-    if (totalH <= innerH) break;
-  }
-
-  // Draw text centered in the box
-  const lineHeight = fontSize * 1.15;
-  const totalTextH = lines.length * lineHeight;
-  const startY = textY + padding + (innerH - totalTextH) / 2 + fontSize;
-
-  ctx.fillStyle = '#ffffff';
+  // Topic pill
+  const pillText = 'GROWTH AUTOMATION';
+  ctx.font = 'bold 20px Inter, Helvetica, Arial, sans-serif';
+  const pillW = ctx.measureText(pillText).width + 60;
+  roundRect(ctx, 540 - pillW / 2, 310, pillW, 44, 22, 'rgba(217,119,87,0.12)');
+  ctx.fillStyle = '#D97757';
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(pillText, 540, 339);
 
+  // Title — auto-size
+  const upperText = text.toUpperCase();
+  const maxW = 820;
+  let fontSize = 62;
+  let lines: string[] = [];
+  for (fontSize = 62; fontSize >= 28; fontSize -= 2) {
+    ctx.font = `900 ${fontSize}px Inter, Helvetica, Arial, sans-serif`;
+    lines = wrapText(ctx, upperText, maxW);
+    if (lines.length * (fontSize * 1.2) <= 500) break;
+  }
+  ctx.fillStyle = '#1A1A1A';
+  ctx.textAlign = 'center';
+  const lineH = fontSize * 1.2;
+  const startY = 420 + (500 - lines.length * lineH) / 2;
   for (let i = 0; i < lines.length; i++) {
-    ctx.fillText(lines[i], textX + textW / 2, startY + i * lineHeight);
+    ctx.fillText(lines[i], 540, startY + i * lineH);
   }
 
-  ctx.restore();
+  // Slide indicator
+  ctx.fillStyle = '#D4845A';
+  ctx.font = 'bold 20px Inter, Helvetica, Arial, sans-serif';
+  ctx.fillText('1 / 1', 540, 1320);
 
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.92);
+    canvas.toBlob((blob) => resolve(blob!), 'image/png');
   });
 }
 
