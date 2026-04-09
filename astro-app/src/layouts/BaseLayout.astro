@@ -34,9 +34,13 @@ const canonicalUrl = canonical ? new URL(canonical, SITE_URL).href : new URL(Ast
 const lang = locale === 'en' ? 'en' : 'es';
 const ogLocale = locale === 'en' ? 'en_US' : 'es_ES';
 
-// Hreflang: compute alternate URLs using proper route segment translation
+// Hreflang: only emit English alternate for pages that actually have an English version.
+// Currently only the homepage exists in English (/en/).
 const esHref = new URL(getAlternateUrl(Astro.url.pathname, 'es'), SITE_URL).href;
-const enHref = new URL(getAlternateUrl(Astro.url.pathname, 'en'), SITE_URL).href;
+const enPath = getAlternateUrl(Astro.url.pathname, 'en');
+const ENGLISH_PAGES = new Set(['/en/', '/en']);
+const hasEnglishVersion = ENGLISH_PAGES.has(enPath);
+const enHref = hasEnglishVersion ? new URL(enPath, SITE_URL).href : null;
 
 // Organization schema - always present (matches existing Next.js exactly)
 const organizationSchema = {
@@ -74,9 +78,9 @@ const organizationSchema = {
     <!-- Canonical -->
     <link rel="canonical" href={canonicalUrl} />
 
-    <!-- Hreflang (i18n) -->
+    <!-- Hreflang (i18n) — only emit en alternate when the page exists in English -->
     <link rel="alternate" hreflang="es" href={esHref} />
-    <link rel="alternate" hreflang="en" href={enHref} />
+    {enHref && <link rel="alternate" hreflang="en" href={enHref} />}
     <link rel="alternate" hreflang="x-default" href={esHref} />
 
     <!-- Robots -->

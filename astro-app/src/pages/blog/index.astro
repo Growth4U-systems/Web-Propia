@@ -207,6 +207,7 @@ const allNonPillar = uniquePosts
         <!-- Columna principal: grid 2 col mezclado -->
         <div>
           <h2 class="text-lg sm:text-2xl font-extrabold text-[#032149] mb-4 sm:mb-6">DESTACADOS</h2>
+          {/* First 12 posts always visible */}
           <div class="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-5">
             {allNonPillar.slice(4, 16).map((post) => (
               <a href={`/blog/${post.slug}/`}
@@ -227,6 +228,43 @@ const allNonPillar = uniquePosts
               </a>
             ))}
           </div>
+
+          {/* Remaining posts — visible in HTML for crawlers, hidden visually until click */}
+          {allNonPillar.length > 16 && (
+            <>
+              <div id="more-posts" class="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-5 mt-5 hidden">
+                {allNonPillar.slice(16).map((post) => (
+                  <a href={`/blog/${post.slug}/`}
+                     data-title={post.title.toLowerCase()}
+                     data-excerpt={(post.excerpt || '').toLowerCase()}
+                     class="post-card bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 group/card">
+                    <div class="aspect-[4/3] sm:aspect-[16/10] bg-slate-100 overflow-hidden">
+                      {post.image ? (
+                        <img src={post.image} alt={post.title} class="object-cover w-full h-full group-hover/card:scale-105 transition-transform duration-500" loading="lazy" />
+                      ) : (
+                        <div class="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
+                      )}
+                    </div>
+                    <div class="p-2.5 sm:p-4">
+                      <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.category}</span>
+                      <h3 class="text-xs sm:text-base font-extrabold text-[#032149] group-hover/card:text-[#3ecda5] transition-colors leading-snug mt-0.5 sm:mt-1 line-clamp-2">{post.title}</h3>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              <div class="text-center mt-8" id="load-more-wrap">
+                <button id="load-more-btn"
+                  class="inline-flex items-center gap-2 bg-[#032149] text-white font-bold py-3 px-8 rounded-full text-sm hover:bg-[#0a3366] transition-all duration-200">
+                  Ver todos los artículos ({allNonPillar.length - 16} más)
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 9l-7 7-7-7"/></svg>
+                </button>
+              </div>
+              {/* noscript fallback: show all posts for crawlers/no-JS */}
+              <noscript>
+                <style>{'#more-posts { display: grid !important; } #load-more-wrap { display: none; }'}</style>
+              </noscript>
+            </>
+          )}
         </div>
 
         <!-- Sidebar -->
@@ -302,6 +340,17 @@ const allNonPillar = uniquePosts
       if (!searchBar.classList.contains('hidden')) input.focus();
     });
     searchClose.addEventListener('click', () => { searchBar.classList.add('hidden'); clearSearch(); });
+
+    // "Ver más" button
+    const morePosts = document.getElementById('more-posts');
+    const loadMoreWrap = document.getElementById('load-more-wrap');
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn && morePosts && loadMoreWrap) {
+      loadMoreBtn.addEventListener('click', () => {
+        morePosts.classList.remove('hidden');
+        loadMoreWrap.classList.add('hidden');
+      });
+    }
 
     const allCards = Array.from(document.querySelectorAll<HTMLElement>('#sections-container .post-card'));
 
