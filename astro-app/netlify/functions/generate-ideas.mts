@@ -160,44 +160,46 @@ export default async (req: Request, _context: Context) => {
     const sources = body.sources || { x: true, li: true, news: true };
     const customPrompt = body.customPrompt || '';
 
+    // Fetch all sources in parallel
+    const [xData, liData, newsData] = await Promise.all([
+      sources.x ? fetchXData().catch(() => null) : Promise.resolve(null),
+      sources.li ? fetchLIData().catch(() => null) : Promise.resolve(null),
+      sources.news ? fetchNews(body.newsQuery || 'growth marketing B2B startup fintech').catch(() => []) : Promise.resolve([]),
+    ]);
+
     const parts: string[] = [];
 
-    if (sources.x) {
-      const xData = await fetchXData();
+    if (xData) {
       parts.push(`## Señales de X/Twitter (${xData.creators.length} creadores activos)\n`);
       if (xData.replies.length > 0) {
-        parts.push('Últimas interacciones:\n' + xData.replies.map(r =>
+        parts.push('Últimas interacciones:\n' + xData.replies.slice(0, 15).map(r =>
           `- @${r.handle}: "${r.snippet}"`
         ).join('\n'));
       }
       if (xData.posts.length > 0) {
-        parts.push('\nIdeas existentes:\n' + xData.posts.map(p =>
+        parts.push('\nIdeas existentes:\n' + xData.posts.slice(0, 10).map(p =>
           `- [${p.format}] ${p.topic} — ${p.angle}`
         ).join('\n'));
       }
     }
 
-    if (sources.li) {
-      const liData = await fetchLIData();
+    if (liData) {
       parts.push(`\n## Señales de LinkedIn (${liData.creators.length} creadores activos)\n`);
       if (liData.comments.length > 0) {
-        parts.push('Últimos posts de creadores:\n' + liData.comments.map(c =>
+        parts.push('Últimos posts de creadores:\n' + liData.comments.slice(0, 15).map(c =>
           `- ${c.profile}: "${c.postSnippet}"`
         ).join('\n'));
       }
       if (liData.knowledge.length > 0) {
-        parts.push('\nTemas trending en nuestra red:\n' + liData.knowledge.map(k =>
+        parts.push('\nTemas trending en nuestra red:\n' + liData.knowledge.slice(0, 5).map(k =>
           `- ${k.name}: ${k.topics.join(', ')}`
         ).join('\n'));
       }
     }
 
-    if (sources.news) {
-      const news = await fetchNews(body.newsQuery || 'growth marketing B2B startup fintech');
-      if (news.length > 0) {
-        parts.push(`\n## Noticias del sector (${news.length} artículos)\n`);
-        parts.push(news.map(n => `- ${n.title}`).join('\n'));
-      }
+    if (newsData && newsData.length > 0) {
+      parts.push(`\n## Noticias del sector (${newsData.length} artículos)\n`);
+      parts.push(newsData.map(n => `- ${n.title}`).join('\n'));
     }
 
     const userPrompt = `Analiza estas señales y genera ideas de contenido:\n\n${parts.join('\n')}\n${customPrompt ? `\nContexto adicional: ${customPrompt}` : ''}\n\nGenera el array JSON de ideas.`;
@@ -210,8 +212,8 @@ export default async (req: Request, _context: Context) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 3000,
         temperature: 0.85,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],

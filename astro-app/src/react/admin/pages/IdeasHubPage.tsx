@@ -139,7 +139,9 @@ export default function IdeasHubPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'generate', sources: sourceToggles, customPrompt }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data: any;
+      try { data = JSON.parse(text); } catch { throw new Error(`Error del servidor (${res.status}): ${text.slice(0, 150)}`); }
       if (data.error) throw new Error(data.error);
 
       const batchId = Date.now().toString();
