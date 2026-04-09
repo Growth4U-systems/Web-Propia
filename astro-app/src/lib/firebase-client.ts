@@ -1552,4 +1552,43 @@ export async function deleteContentIdea(id: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// ===================== News Sources (Ideas Hub) =====================
+
+export interface NewsSource {
+  name: string;
+  query: string;
+  active: boolean;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export async function getAllNewsSources() {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'news_sources');
+  const snapshot = await getDocs(ref);
+  return snapshot.docs.map((d) => ({
+    id: d.id,
+    name: d.data().name || '',
+    query: d.data().query || '',
+    active: d.data().active !== false,
+    createdAt: d.data().createdAt?.toDate() || null,
+    updatedAt: d.data().updatedAt?.toDate() || null,
+  })) as (NewsSource & { id: string })[];
+}
+
+export async function createNewsSource(source: Omit<NewsSource, 'createdAt' | 'updatedAt'>): Promise<string> {
+  const ref = collection(db, 'artifacts', APP_ID, 'public', 'data', 'news_sources');
+  const docRef = await addDoc(ref, { ...source, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  return docRef.id;
+}
+
+export async function updateNewsSource(id: string, updates: Partial<NewsSource>): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'news_sources', id);
+  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
+}
+
+export async function deleteNewsSource(id: string): Promise<void> {
+  const ref = doc(db, 'artifacts', APP_ID, 'public', 'data', 'news_sources', id);
+  await deleteDoc(ref);
+}
+
 export { db, auth, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, limit, where, serverTimestamp };

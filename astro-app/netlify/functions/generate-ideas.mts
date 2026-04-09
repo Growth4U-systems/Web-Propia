@@ -160,12 +160,29 @@ export default async (req: Request, _context: Context) => {
     const sources = body.sources || { x: true, li: true, news: true };
     const customPrompt = body.customPrompt || '';
 
+    // Fetch news source queries from Firebase
+    let newsQueries = ['growth marketing B2B startup fintech'];
+    if (sources.news) {
+      try {
+        const nsRes = await fetch(`${FIREBASE_BASE}/news_sources?pageSize=20`);
+        if (nsRes.ok) {
+          const nsData = await nsRes.json();
+          const active = (nsData?.documents || []).filter((d: any) => d?.fields?.active?.booleanValue !== false);
+          if (active.length > 0) {
+            newsQueries = active.map((d: any) => d?.fields?.query?.stringValue || '').filter(Boolean);
+          }
+        }
+      } catch {}
+    }
+
     // Fetch all sources in parallel
-    const [xData, liData, newsData] = await Promise.all([
+    const newsPromises = sources.news ? newsQueries.map(q => fetchNews(q).catch(() => [])) : [];
+    const [xData, liData, ...newsArrays] = await Promise.all([
       sources.x ? fetchXData().catch(() => null) : Promise.resolve(null),
       sources.li ? fetchLIData().catch(() => null) : Promise.resolve(null),
-      sources.news ? fetchNews(body.newsQuery || 'growth marketing B2B startup fintech').catch(() => []) : Promise.resolve([]),
+      ...newsPromises,
     ]);
+    const newsData = (newsArrays as any[][]).flat();
 
     const parts: string[] = [];
 

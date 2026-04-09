@@ -19,6 +19,8 @@ import {
   Mail,
   Twitter,
   Lightbulb,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { signInWithGoogle, signOutUser, onAuthChange, getAllLIComments, getAllLIProspects } from '../../lib/firebase-client';
@@ -63,23 +65,32 @@ export default function AdminLayout() {
     await signOutUser();
   };
 
-  const navigation: { name: string; href: string; icon: any; badge?: number }[] = [
+  const normalizedPath = pathname.endsWith('/') ? pathname : pathname + '/';
+
+  type NavItem = { name: string; href: string; icon: any; badge?: number; children?: NavItem[] };
+  const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/admin/', icon: LayoutDashboard },
     { name: 'Blog', href: '/admin/blog/', icon: FileText },
     { name: 'Casos de Éxito', href: '/admin/casos-de-exito/', icon: Trophy },
     { name: 'Lead Magnets', href: '/admin/lead-magnets/', icon: Download },
-    { name: 'Instagram', href: '/admin/instagram/', icon: Camera },
-    { name: 'IG Bot', href: '/admin/instagram-bot/', icon: Bot },
-    { name: 'LinkedIn', href: '/admin/linkedin/', icon: LinkedinIcon },
-    { name: 'LinkedIn Bot', href: '/admin/linkedin-bot/', icon: Bot, badge: liBotBadge },
-    { name: 'X / Twitter', href: '/admin/twitter/', icon: Twitter },
+    { name: 'Ideas Hub', href: '/admin/ideas/', icon: Lightbulb, children: [
+      { name: 'Instagram', href: '/admin/instagram/', icon: Camera },
+      { name: 'IG Bot', href: '/admin/instagram-bot/', icon: Bot },
+      { name: 'LinkedIn', href: '/admin/linkedin/', icon: LinkedinIcon },
+      { name: 'LI Bot', href: '/admin/linkedin-bot/', icon: Bot, badge: liBotBadge },
+      { name: 'X / Twitter', href: '/admin/twitter/', icon: Twitter },
+      { name: 'Newsletter', href: '/admin/newsletter/', icon: Mail },
+    ]},
     { name: 'Visibilidad', href: '/admin/visibilidad/', icon: Search },
-    { name: 'Ideas Hub', href: '/admin/ideas/', icon: Lightbulb },
-    { name: 'Newsletter', href: '/admin/newsletter/', icon: Mail },
     { name: 'Partners', href: '/admin/partners/', icon: Handshake },
     { name: 'Feedback', href: '/admin/feedback/', icon: MessageSquare },
     { name: 'Leads', href: '/admin/leads/', icon: Users },
   ];
+
+  // Auto-expand Ideas Hub if current path is a child
+  const ideasChildPaths = ['/admin/ideas/', '/admin/instagram/', '/admin/instagram-bot/', '/admin/linkedin/', '/admin/linkedin-bot/', '/admin/twitter/', '/admin/newsletter/'];
+  const isInIdeasGroup = ideasChildPaths.some(p => normalizedPath === p);
+  const [ideasExpanded, setIdeasExpanded] = useState(isInIdeasGroup);
 
   if (loading) {
     return (
@@ -131,9 +142,6 @@ export default function AdminLayout() {
     );
   }
 
-  // Normalize pathname for comparison (handle with/without trailing slash)
-  const normalizedPath = pathname.endsWith('/') ? pathname : pathname + '/';
-
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Mobile sidebar toggle */}
@@ -168,18 +176,68 @@ export default function AdminLayout() {
             </div>
           </div>
 
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = normalizedPath === item.href;
+              const hasChildren = item.children && item.children.length > 0;
+              const isGroupActive = hasChildren && item.children!.some(c => normalizedPath === c.href);
+
+              if (hasChildren) {
+                const expanded = item.href === '/admin/ideas/' ? ideasExpanded : false;
+                const toggle = item.href === '/admin/ideas/' ? () => setIdeasExpanded(e => !e) : () => {};
+                return (
+                  <div key={item.name}>
+                    <div className="flex items-center">
+                      <Link
+                        to={item.href}
+                        onClick={() => { setSidebarOpen(false); if (!expanded) toggle(); }}
+                        className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                          isActive ? 'bg-[#3ecda5] text-white' : isGroupActive ? 'bg-[#6351d5]/10 text-[#6351d5] font-medium' : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span className="flex-1">{item.name}</span>
+                      </Link>
+                      <button onClick={toggle} className="p-2 text-slate-400 hover:text-slate-600">
+                        {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {expanded && (
+                      <div className="ml-4 pl-4 border-l border-slate-200 space-y-0.5 mt-0.5">
+                        {item.children!.map(child => {
+                          const childActive = normalizedPath === child.href;
+                          return (
+                            <Link
+                              key={child.name}
+                              to={child.href}
+                              onClick={() => setSidebarOpen(false)}
+                              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                childActive ? 'bg-[#3ecda5] text-white' : 'text-slate-500 hover:bg-slate-100'
+                              }`}
+                            >
+                              <child.icon className="w-4 h-4" />
+                              <span className="flex-1">{child.name}</span>
+                              {child.badge !== undefined && child.badge > 0 && (
+                                <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-medium ${
+                                  childActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'
+                                }`}>{child.badge}</span>
+                              )}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={item.name}
                   to={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-[#3ecda5] text-white'
-                      : 'text-slate-600 hover:bg-slate-100'
+                    isActive ? 'bg-[#3ecda5] text-white' : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -187,9 +245,7 @@ export default function AdminLayout() {
                   {item.badge !== undefined && item.badge > 0 && (
                     <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium ${
                       isActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'
-                    }`}>
-                      {item.badge}
-                    </span>
+                    }`}>{item.badge}</span>
                   )}
                 </Link>
               );
