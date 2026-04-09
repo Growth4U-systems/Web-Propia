@@ -49,7 +49,7 @@ async function fetchXData() {
   const recentReplies = replies.slice(0, 30).map(d => ({
     handle: strVal(d, 'handle'),
     snippet: strVal(d, 'tweetSnippet').slice(0, 200),
-    reply: strVal(d, 'replyDraft').slice(0, 200),
+    url: strVal(d, 'tweetUrl'),
   }));
   const recentPosts = posts.slice(0, 20).map(d => ({
     topic: strVal(d, 'topic'),
@@ -72,7 +72,7 @@ async function fetchLIData() {
   const recentComments = comments.slice(0, 30).map(d => ({
     profile: strVal(d, 'profileName'),
     postSnippet: strVal(d, 'postSnippet').slice(0, 200),
-    comment: strVal(d, 'commentDraft').slice(0, 200),
+    url: strVal(d, 'postUrl'),
   }));
   const knowledgeBases = knowledge.slice(0, 10).map(d => ({
     name: strVal(d, 'name'),
@@ -114,17 +114,19 @@ Reglas:
 - Referencia explícitamente la fuente que inspiró cada idea
 - Todo en español
 - Los temas deben ser relevantes para founders de startups tech, CMOs, y growth teams
+- IMPORTANTE: cada fuente viene con su URL entre [corchetes]. DEBES copiar esa URL exacta en sourceUrl. Si no hay URL, usa "".
 
 Responde SOLO con JSON válido (sin markdown, sin backticks):
 [
   {
     "topic": "título conciso de la idea",
     "angle": "ángulo específico / hook",
-    "platforms": ["linkedin", "twitter"],
+    "platforms": ["linkedin", "twitter", "instagram", "newsletter", "blog"],
     "format": "post|thread|carousel|article|newsletter-section",
     "priority": "high|medium|low",
     "sourceType": "x_creator|li_creator|news|mixed",
-    "sourceInspiration": "qué señal inspiró esta idea"
+    "sourceInspiration": "descripción breve de qué señal inspiró esta idea",
+    "sourceUrl": "URL exacta de la fuente (copiar del input). Obligatorio si la fuente tiene URL."
   }
 ]`;
 
@@ -190,7 +192,7 @@ export default async (req: Request, _context: Context) => {
       parts.push(`## Señales de X/Twitter (${xData.creators.length} creadores activos)\n`);
       if (xData.replies.length > 0) {
         parts.push('Últimas interacciones:\n' + xData.replies.slice(0, 15).map(r =>
-          `- @${r.handle}: "${r.snippet}"`
+          `- @${r.handle}: "${r.snippet}"${r.url ? ` [${r.url}]` : ''}`
         ).join('\n'));
       }
       if (xData.posts.length > 0) {
@@ -204,7 +206,7 @@ export default async (req: Request, _context: Context) => {
       parts.push(`\n## Señales de LinkedIn (${liData.creators.length} creadores activos)\n`);
       if (liData.comments.length > 0) {
         parts.push('Últimos posts de creadores:\n' + liData.comments.slice(0, 15).map(c =>
-          `- ${c.profile}: "${c.postSnippet}"`
+          `- ${c.profile}: "${c.postSnippet}"${c.url ? ` [${c.url}]` : ''}`
         ).join('\n'));
       }
       if (liData.knowledge.length > 0) {
@@ -216,7 +218,7 @@ export default async (req: Request, _context: Context) => {
 
     if (newsData && newsData.length > 0) {
       parts.push(`\n## Noticias del sector (${newsData.length} artículos)\n`);
-      parts.push(newsData.map(n => `- ${n.title}`).join('\n'));
+      parts.push(newsData.map(n => `- ${n.title}${n.url ? ` [${n.url}]` : ''}`).join('\n'));
     }
 
     const userPrompt = `Analiza estas señales y genera ideas de contenido:\n\n${parts.join('\n')}\n${customPrompt ? `\nContexto adicional: ${customPrompt}` : ''}\n\nGenera el array JSON de ideas.`;
@@ -229,7 +231,7 @@ export default async (req: Request, _context: Context) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 3000,
         temperature: 0.85,
         system: SYSTEM_PROMPT,

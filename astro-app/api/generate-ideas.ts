@@ -114,18 +114,19 @@ Reglas:
 - Referencia explícitamente la fuente que inspiró cada idea
 - Todo en español
 - Los temas deben ser relevantes para founders de startups tech, CMOs, y growth teams
+- IMPORTANTE: cada fuente viene con su URL entre [corchetes]. DEBES copiar esa URL exacta en sourceUrl. Si no hay URL, usa "".
 
 Responde SOLO con JSON válido (sin markdown, sin backticks):
 [
   {
     "topic": "título conciso de la idea",
     "angle": "ángulo específico / hook",
-    "platforms": ["linkedin", "twitter"],
+    "platforms": ["linkedin", "twitter", "instagram", "newsletter", "blog"],
     "format": "post|thread|carousel|article|newsletter-section",
     "priority": "high|medium|low",
     "sourceType": "x_creator|li_creator|news|mixed",
-    "sourceInspiration": "qué señal inspiró esta idea",
-    "sourceUrl": "URL de la fuente original (tweet, post LinkedIn o artículo). Déjalo vacío si no hay URL directa."
+    "sourceInspiration": "descripción breve de qué señal inspiró esta idea",
+    "sourceUrl": "URL exacta de la fuente (copiar del input). Obligatorio si la fuente tiene URL."
   }
 ]`;
 
@@ -230,7 +231,7 @@ export default async function handler(req: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 3000,
         temperature: 0.85,
         system: SYSTEM_PROMPT,
