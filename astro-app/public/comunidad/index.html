@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comunidad Growth4U · Construye tu motor de confianza</title>
+  <meta name="description" content="Comunidad Growth4U: construye un motor de adquisición que no depende de paid media ni de vendedores. 6 meses de acompañamiento con los founders.">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #2EC4A0;
+      --green-light: #e8f9f5;
+      --navy: #1a2744;
+      --white: #ffffff;
+      --gray-100: #f7f8fc;
+      --gray-200: #eef0f6;
+      --gray-400: #9099b0;
+      --gray-700: #3d4560;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+      background: var(--white);
+      color: var(--navy);
+      line-height: 1.6;
+    }
+
+    nav {
+      background: var(--navy);
+      padding: 0 40px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+    .nav-logo span { color: var(--green); }
+    .nav-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+
+    /* === HERO === */
+    .hero {
+      background: var(--navy);
+      color: #fff;
+      padding: 88px 40px 96px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(46,196,160,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(46,196,160,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero .eyebrow {
+      display: inline-block;
+      background: rgba(46,196,160,0.15);
+      color: var(--green);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 100px;
+      margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-size: 48px; font-weight: 800;
+      line-height: 1.12; letter-spacing: -0.03em;
+      max-width: 800px; margin: 0 auto 24px;
+    }
+    .hero h1 span { color: var(--green); }
+    .hero .sub {
+      font-size: 18px; color: rgba(255,255,255,0.65);
+      max-width: 580px; margin: 0 auto 36px; font-weight: 400;
+    }
+    .hero .cta-primary {
+      display: inline-block;
+      background: var(--green);
+      color: var(--navy);
+      font-size: 15px; font-weight: 800;
+      padding: 16px 32px;
+      border-radius: 100px;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .hero .cta-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(46,196,160,0.35);
+    }
+    .hero .cta-note {
+      display: block;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 14px;
+      letter-spacing: 0.02em;
+    }
+
+    .page { max-width: 880px; margin: 0 auto; padding: 0 32px 96px; }
+
+    section { padding-top: 72px; margin-bottom: 8px; }
+
+    .section-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--green); margin-bottom: 12px;
+    }
+    h2 {
+      font-size: 32px; font-weight: 800;
+      letter-spacing: -0.02em; margin-bottom: 12px;
+      color: var(--navy);
+      line-height: 1.2;
+    }
+    h2 span { color: var(--green); }
+    .section-intro {
+      font-size: 16px; color: var(--gray-700);
+      margin-bottom: 32px; max-width: 640px;
+      line-height: 1.65;
+    }
+
+    /* === PROBLEMA === */
+    .problem-quote {
+      background: var(--gray-100);
+      border-left: 4px solid var(--green);
+      border-radius: 4px 14px 14px 4px;
+      padding: 28px 32px;
+      font-size: 19px;
+      line-height: 1.55;
+      font-weight: 600;
+      color: var(--navy);
+      letter-spacing: -0.01em;
+    }
+    .problem-quote strong { color: var(--green); }
+
+    /* === GASTO VS ACTIVO === */
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .comp-card {
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid var(--gray-200);
+    }
+    .comp-card.bad {
+      background: var(--gray-100);
+    }
+    .comp-card.good {
+      background: var(--navy);
+      color: #fff;
+      border: 1px solid rgba(46,196,160,0.35);
+    }
+    .comp-card .comp-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .comp-card.bad .comp-label { color: #cc4444; }
+    .comp-card.good .comp-label { color: var(--green); }
+    .comp-card h3 {
+      font-size: 22px; font-weight: 800;
+      letter-spacing: -0.02em; margin-bottom: 10px;
+      line-height: 1.25;
+    }
+    .comp-card p {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .comp-card.bad p { color: var(--gray-700); }
+    .comp-card.good p { color: rgba(255,255,255,0.75); }
+
+    /* === MOTOR DE CONFIANZA === */
+    .engine-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .engine-card {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .engine-card .icon {
+      width: 40px; height: 40px;
+      background: var(--green-light);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+    .engine-card h3 {
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--navy);
+    }
+    .engine-card p {
+      font-size: 13px;
+      color: var(--gray-700);
+      line-height: 1.6;
+    }
+
+    /* === COMUNIDAD / QUÉ INCLUYE === */
+    .community-intro {
+      background: var(--navy);
+      color: #fff;
+      border-radius: 18px;
+      padding: 40px 44px;
+      margin-bottom: 20px;
+    }
+    .community-intro .tag {
+      display: inline-block;
+      background: rgba(46,196,160,0.15);
+      color: var(--green);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 5px 14px; border-radius: 100px;
+      margin-bottom: 18px;
+    }
+    .community-intro h3 {
+      font-size: 26px; font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      margin-bottom: 14px;
+    }
+    .community-intro h3 span { color: var(--green); }
+    .community-intro p {
+      font-size: 15px;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.7;
+      max-width: 680px;
+    }
+
+    .includes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .include-item {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .include-item .check {
+      width: 28px; height: 28px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .include-item h4 {
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--navy);
+    }
+    .include-item p {
+      font-size: 13px;
+      color: var(--gray-700);
+      line-height: 1.6;
+    }
+
+    /* === DIAGRAMA MOTOR + CANALES === */
+    .diagram {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: 16px;
+      padding: 40px 36px;
+    }
+    .diagram-center {
+      background: var(--navy);
+      color: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      text-align: center;
+      margin: 0 auto 8px;
+      max-width: 420px;
+    }
+    .diagram-center .label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+    .diagram-center h3 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+    .diagram-center .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .diagram-center .tag {
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
+    }
+    .diagram-connector {
+      display: flex;
+      justify-content: center;
+      gap: 120px;
+      margin: 0 0 8px;
+    }
+    .connector-line {
+      width: 2px;
+      height: 28px;
+      background: var(--gray-400);
+    }
+    .diagram-branches {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .branch {
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .branch.inbound {
+      background: #f0f7ff;
+      border: 1px solid #c2daf5;
+    }
+    .branch.outbound {
+      background: #f5f0ff;
+      border: 1px solid #d4bdf5;
+    }
+    .branch .branch-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .branch.inbound .branch-label { color: #2266bb; }
+    .branch.outbound .branch-label { color: #7744cc; }
+    .branch ul {
+      list-style: none;
+      font-size: 13.5px;
+      color: var(--gray-700);
+    }
+    .branch ul li {
+      padding: 5px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .branch ul li::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .branch.inbound ul li::before { background: #2266bb; }
+    .branch.outbound ul li::before { background: #7744cc; }
+    .diagram-note {
+      text-align: center;
+      margin-top: 22px;
+      font-size: 13px;
+      color: var(--gray-400);
+      line-height: 1.55;
+    }
+    .diagram-note strong { color: var(--navy); }
+
+    /* === FASES === */
+    .phases {
+      display: flex;
+      flex-direction: column;
+    }
+    .phase {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 28px;
+      padding: 26px 0;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .phase:last-child { border-bottom: none; }
+    .phase-num .num {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--gray-200);
+      line-height: 1;
+    }
+    .phase-num .name {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gray-400);
+      margin-top: 4px;
+    }
+    .phase-content h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--navy);
+    }
+    .phase-content p {
+      font-size: 14px;
+      color: var(--gray-700);
+      line-height: 1.65;
+    }
+
+    /* === VIDEO === */
+    .video-wrap {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: 18px;
+      padding: 28px;
+    }
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      background: var(--navy);
+    }
+    .video-container iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: 0;
+    }
+    .video-caption {
+      font-size: 13px;
+      color: var(--gray-400);
+      text-align: center;
+      margin-top: 14px;
+      font-style: italic;
+    }
+
+    /* === CASOS DE ÉXITO === */
+    .cases-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .case-card {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 26px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .case-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--green);
+    }
+    .case-card .case-name {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 14px;
+    }
+    .case-card .case-metric {
+      font-size: 32px; font-weight: 800;
+      color: var(--green);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .case-card .case-metric-label {
+      font-size: 12px;
+      color: var(--gray-700);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .case-card .case-desc {
+      font-size: 12.5px;
+      color: var(--gray-700);
+      line-height: 1.6;
+      padding-top: 14px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    /* === GARANTÍA === */
+    .guarantee {
+      background: var(--green-light);
+      border: 1px solid rgba(46,196,160,0.35);
+      border-radius: 16px;
+      padding: 32px 36px;
+      display: flex;
+      gap: 22px;
+      align-items: flex-start;
+      margin-top: 20px;
+    }
+    .guarantee-icon {
+      width: 48px; height: 48px;
+      background: var(--green);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 22px;
+    }
+    .guarantee-text h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .guarantee-text p {
+      font-size: 14px;
+      color: var(--gray-700);
+      line-height: 1.65;
+    }
+
+    /* === PRECIO === */
+    .pricing {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: 18px;
+      padding: 44px 40px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 36px;
+      align-items: center;
+    }
+    .pricing .plan-info .plan-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 10px;
+    }
+    .pricing .plan-info h3 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .pricing .plan-info p {
+      font-size: 14px;
+      color: var(--gray-700);
+      line-height: 1.55;
+      max-width: 360px;
+    }
+    .pricing .price-col {
+      text-align: right;
+      border-left: 1px solid var(--gray-200);
+      padding-left: 36px;
+    }
+    .pricing .price {
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+    .pricing .price-period {
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-bottom: 18px;
+    }
+    .pricing .cta-secondary {
+      display: inline-block;
+      background: var(--navy);
+      color: #fff;
+      font-size: 14px; font-weight: 700;
+      padding: 13px 24px;
+      border-radius: 100px;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+      white-space: nowrap;
+    }
+    .pricing .cta-secondary:hover {
+      transform: translateY(-1px);
+      background: #243458;
+    }
+
+    /* === FAQ === */
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .faq-item {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+    .faq-item h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .faq-item p {
+      font-size: 13.5px;
+      color: var(--gray-700);
+      line-height: 1.6;
+    }
+
+    /* === CTA FINAL === */
+    .final-cta {
+      background: var(--navy);
+      border-radius: 18px;
+      padding: 48px 40px;
+      text-align: center;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .final-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(46,196,160,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 70% 80%, rgba(46,196,160,0.08) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .final-cta > * { position: relative; z-index: 1; }
+    .final-cta h3 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 12px;
+      max-width: 540px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .final-cta h3 span { color: var(--green); }
+    .final-cta p {
+      font-size: 15px;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 28px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+    .final-cta .cta-final-btn {
+      display: inline-block;
+      background: var(--green);
+      color: var(--navy);
+      font-size: 15px; font-weight: 800;
+      padding: 16px 36px;
+      border-radius: 100px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .final-cta .cta-final-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(46,196,160,0.35);
+    }
+
+    /* === FOOTER === */
+    footer {
+      background: var(--navy);
+      text-align: center;
+      padding: 44px 24px;
+    }
+    .footer-logo {
+      font-size: 20px; font-weight: 800;
+      color: #fff; letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .footer-logo span { color: var(--green); }
+    footer p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* === MODAL === */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 16, 32, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 44px 40px;
+      max-width: 460px;
+      width: 100%;
+      position: relative;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 32px; height: 32px;
+      background: var(--gray-100);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--gray-400);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .modal-close:hover {
+      background: var(--gray-200);
+      color: var(--navy);
+    }
+    .modal h3 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--navy);
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+    .modal .modal-intro {
+      font-size: 14px;
+      color: var(--gray-700);
+      margin-bottom: 24px;
+      line-height: 1.55;
+    }
+    .modal .field {
+      margin-bottom: 14px;
+    }
+    .modal .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+    .modal .field input {
+      width: 100%;
+      padding: 13px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      background: var(--gray-100);
+      color: var(--navy);
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .modal .field input:focus {
+      outline: none;
+      border-color: var(--green);
+      background: #fff;
+    }
+    .modal .submit-btn {
+      width: 100%;
+      background: var(--green);
+      color: var(--navy);
+      font-size: 15px;
+      font-weight: 800;
+      padding: 16px;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      margin-top: 10px;
+      letter-spacing: -0.01em;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      font-family: inherit;
+    }
+    .modal .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(46,196,160,0.3);
+    }
+    .modal .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .modal .submit-note {
+      font-size: 11px;
+      color: var(--gray-400);
+      text-align: center;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    /* Success state */
+    .modal.success h3 { color: var(--green); }
+    .modal .success-icon {
+      width: 64px; height: 64px;
+      background: var(--green-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 32px;
+    }
+    .modal .success-state {
+      display: none;
+      text-align: center;
+    }
+    .modal .form-state {
+      display: block;
+    }
+    .modal.success .form-state { display: none; }
+    .modal.success .success-state { display: block; }
+    .modal.success h3 { text-align: center; }
+    .modal.success .modal-intro { text-align: center; margin-bottom: 0; }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 720px) {
+      .hero h1 { font-size: 32px; }
+      .hero { padding: 64px 24px 72px; }
+      .page { padding: 0 24px 72px; }
+      h2 { font-size: 26px; }
+      .comparison { grid-template-columns: 1fr; }
+      .engine-grid { grid-template-columns: 1fr; }
+      .includes-grid { grid-template-columns: 1fr; }
+      .community-intro { padding: 32px 28px; }
+      .community-intro h3 { font-size: 22px; }
+      .cases-grid { grid-template-columns: 1fr; }
+      .diagram { padding: 28px 22px; }
+      .diagram-connector { gap: 60px; }
+      .diagram-branches { grid-template-columns: 1fr; }
+      .phase { grid-template-columns: 1fr; gap: 8px; }
+      .pricing {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 32px 28px;
+      }
+      .pricing .price-col {
+        text-align: left;
+        border-left: none;
+        border-top: 1px solid var(--gray-200);
+        padding-left: 0;
+        padding-top: 24px;
+      }
+      .pricing .price { font-size: 36px; }
+      .final-cta { padding: 40px 28px; }
+      .final-cta h3 { font-size: 22px; }
+      .modal { padding: 36px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Growth<span>4U</span></div>
+  <div class="nav-tag">Comunidad</div>
+</nav>
+
+<!-- === HERO === -->
+<div class="hero">
+  <div class="eyebrow">Comunidad Growth4U</div>
+  <h1>Construye tu motor de confianza y deja de depender de <span>ads y vendedores</span> para crecer.</h1>
+  <p class="sub">Un programa de 6 meses donde, junto a los founders, instalas el sistema que baja tu CAC y convierte cada euro en un activo que trabaja para siempre.</p>
+  <button class="cta-primary" onclick="openModal()">Reservá tu lugar en la comunidad</button>
+  <span class="cta-note">Plazas limitadas · Arranque continuo</span>
+</div>
+
+<div class="page">
+
+  <!-- === EL PROBLEMA === -->
+  <section>
+    <div class="section-label">El problema</div>
+    <h2>Todo lo que usas para vender <span>se apaga cuando paras de invertir.</span></h2>
+    <p class="section-intro">Cada euro que metes en ads, cada hora que tu equipo mete en llamadas, cada mensaje outbound, se evapora el día que paras. No queda nada. Y el CAC, mes a mes, sube.</p>
+
+    <div class="problem-quote">
+      Si solo haces paid y cuando la gente te investiga no encuentra nada sobre ti, lo que estás haciendo es <strong>regalarle clientes a la competencia</strong>. Y tener un canal de adquisición no es una estrategia de crecimiento.
+    </div>
+  </section>
+
+  <!-- === GASTO VS ACTIVO === -->
+  <section>
+    <div class="section-label">Gasto vs activo</div>
+    <h2>La diferencia que cambia tu negocio.</h2>
+    <p class="section-intro">Hay dos formas de invertir en adquisición. Una es un gasto recurrente que nunca deja de pedirte más. La otra es un activo que se capitaliza con el tiempo.</p>
+
+    <div class="comparison">
+      <div class="comp-card bad">
+        <div class="comp-label">Gasto</div>
+        <h3>Paid media y vendedores</h3>
+        <p>Inviertes, captas, paras, desaparece. Cada mes empiezas de cero. El CAC sube porque la conversión cae por falta de confianza. No te queda nada cuando el presupuesto baja.</p>
+      </div>
+      <div class="comp-card good">
+        <div class="comp-label">Activo</div>
+        <h3>Motor de confianza</h3>
+        <p>Inviertes una vez y queda. Reviews, artículos, señales en buscadores y LLMs, creadores, posicionamiento. Trabaja para ti mientras duermes, y potencia cada euro que metes en paid.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === VIDEO ALFONSO === -->
+  <section>
+    <div class="section-label">Cómo lo vemos nosotros</div>
+    <h2>Alfonso lo explica en 3 minutos.</h2>
+    <p class="section-intro">El mismo sistema que aplicó como Head of Growth del primer neobanco español (0 a 500K usuarios en 30 meses) y que hoy instalamos para nuestros clientes.</p>
+
+    <div class="video-wrap">
+      <div class="video-container">
+        <iframe src="https://supercut.ai/share/growth4u/Bmz5zTsku270KMkAW0gclp" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+      </div>
+      <p class="video-caption">Alfonso Sainz de Baranda · Cofundador Growth4U</p>
+    </div>
+  </section>
+
+  <!-- === ESTRUCTURA: MOTOR CENTRAL + CANALES === -->
+  <section>
+    <div class="section-label">La estructura</div>
+    <h2>Motor central <span>+ canales.</span></h2>
+    <p class="section-intro">El motor define el nicho, el mensaje y la presencia de tu marca. Los canales distribuyen esa inteligencia. Sin el motor encendido, cada canal trabaja en frío y quema presupuesto.</p>
+
+    <div class="diagram">
+      <div class="diagram-center">
+        <div class="label">Activo permanente</div>
+        <h3>Motor de Confianza</h3>
+        <div class="tags">
+          <span class="tag">Nicho</span>
+          <span class="tag">Reviews</span>
+          <span class="tag">Presencia web</span>
+          <span class="tag">Casos de éxito</span>
+          <span class="tag">Autoridad de marca</span>
+          <span class="tag">Messaging</span>
+        </div>
+      </div>
+
+      <div class="diagram-connector">
+        <div class="connector-line"></div>
+        <div class="connector-line"></div>
+      </div>
+
+      <div class="diagram-branches">
+        <div class="branch inbound">
+          <div class="branch-label">Canales Inbound</div>
+          <ul>
+            <li>Influencers y creadores de nicho</li>
+            <li>Contenido del founder en LinkedIn</li>
+            <li>SEO y posicionamiento en LLMs</li>
+            <li>Lead magnets</li>
+            <li>PR y medios</li>
+          </ul>
+        </div>
+        <div class="branch outbound">
+          <div class="branch-label">Canales Outbound</div>
+          <ul>
+            <li>Signal-based outreach por email</li>
+            <li>LinkedIn outreach</li>
+            <li>Paid media como amplificador</li>
+            <li>Ventas B2B asistidas</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="diagram-note"><strong>Sin el motor, cada canal trabaja en frío.</strong><br>Con el motor encendido, cada acción convierte más.</p>
+    </div>
+  </section>
+
+  <!-- === FASES === -->
+  <section>
+    <div class="section-label">Cómo lo construimos</div>
+    <h2>Resultados desde el mes 1. Motor que crece solo.</h2>
+    <p class="section-intro">El programa dura 6 meses porque cada fase alimenta la siguiente. No te puedes saltar ninguna, pero los primeros resultados llegan rápido.</p>
+
+    <div class="phases">
+      <div class="phase">
+        <div class="phase-num">
+          <div class="num">01</div>
+          <div class="name">Mes 1</div>
+        </div>
+        <div class="phase-content">
+          <h3>Diagnóstico, nicho y primeros movimientos</h3>
+          <p>Mapeo de mercado, ICP real, identificación del hueco, setup de medición. Activamos los primeros influencers o canales. Los primeros resultados llegan este mes.</p>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-num">
+          <div class="num">02</div>
+          <div class="name">Mes 2 a 3</div>
+        </div>
+        <div class="phase-content">
+          <h3>Construcción de la Fortaleza de Confianza</h3>
+          <p>Reviews sistemáticas, artículos de autoridad, presencia en buscadores y LLMs, contenido de founder, casos de éxito. El motor empieza a trabajar solo.</p>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-num">
+          <div class="num">03</div>
+          <div class="name">Mes 4 al 6</div>
+        </div>
+        <div class="phase-content">
+          <h3>Escala, optimización y autonomía</h3>
+          <p>Tráfico a todo volumen, outbound enriquecido, paid media como amplificador. Dashboard con las 4-5 métricas que importan. Tu equipo termina operando el motor sin depender de nosotros.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === CASOS DE ÉXITO === -->
+  <section>
+    <div class="section-label">De dónde sale el método</div>
+    <h2>Lo que ya hicimos con este sistema.</h2>
+    <p class="section-intro">No es teoría. Es lo que Alfonso aplicó como Head of Growth antes de fundar Growth4U, y lo que seguimos aplicando hoy con nuestros clientes.</p>
+
+    <div class="cases-grid">
+      <div class="case-card">
+        <div class="case-name">Bnext · Fintech</div>
+        <div class="case-metric">0 → 500K</div>
+        <div class="case-metric-label">usuarios en menos de 30 meses</div>
+        <div class="case-desc">Motor de confianza + influencers + posicionamiento estratégico. Paid media vino después, a potenciar lo que ya funcionaba.</div>
+      </div>
+      <div class="case-card">
+        <div class="case-name">Bit2Me · Crypto</div>
+        <div class="case-metric">-70%</div>
+        <div class="case-metric-label">reducción de CAC</div>
+        <div class="case-desc">Instalamos el Trust Engine completo: reviews, presencia web, posicionamiento. El CAC bajó mientras la conversión subía.</div>
+      </div>
+      <div class="case-card">
+        <div class="case-name">Criptan · Crypto</div>
+        <div class="case-metric">+160%</div>
+        <div class="case-metric-label">volumen de negocio</div>
+        <div class="case-desc">De 70 reviews con nota 3 a 300+ reviews con nota 4+. El salto de confianza se tradujo directo en conversión y volumen.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === LA COMUNIDAD === -->
+  <section>
+    <div class="section-label">La Comunidad Growth4U</div>
+    <h2>Lo construyes tú, <span>pero no solo.</span></h2>
+    <p class="section-intro">Nosotros ya instalamos este mismo sistema para clientes en formato Done For You por entre 5.000 y 10.000 euros al mes. La Comunidad es el mismo método, pero tú y tu equipo lo construís con nuestro acompañamiento semanal. Todo el conocimiento, toda la metodología, a una fracción del precio.</p>
+
+    <div class="community-intro">
+      <div class="tag">Done With You · 6 meses</div>
+      <h3>Acompañamiento real de los founders, <span>no lo hacemos por ti.</span></h3>
+      <p>Alfonso y Martín le dedican tiempo al programa, semana a semana. El programa entero está disponible desde el primer día, pero te vamos a acompañar durante los 6 meses para asegurarnos de que no te pierdas, de que implementes lo que toca, y de que cuando termines tengas un motor propio que no dependa de nosotros.</p>
+    </div>
+
+    <div class="includes-grid">
+      <div class="include-item">
+        <div class="check">✓</div>
+        <div>
+          <h4>Un encuentro semanal en vivo</h4>
+          <p>Sesión de 45-60 minutos con los founders. Revisión de avance, decisiones, próximos pasos.</p>
+        </div>
+      </div>
+      <div class="include-item">
+        <div class="check">✓</div>
+        <div>
+          <h4>Slack abierto con los founders</h4>
+          <p>Acceso directo a Alfonso y Martín. Preguntas, revisiones y desbloqueos en tiempo real.</p>
+        </div>
+      </div>
+      <div class="include-item">
+        <div class="check">✓</div>
+        <div>
+          <h4>Metodología completa en video y documentos</h4>
+          <p>Todos los playbooks del Trust Engine, paso a paso. Templates, scripts, automatizaciones. Tuyos para siempre.</p>
+        </div>
+      </div>
+      <div class="include-item">
+        <div class="check">✓</div>
+        <div>
+          <h4>Herramientas de IA propias</h4>
+          <p>SanchoCMO, generador de lead magnets, Trust Score Analyzer y el resto del stack que usamos nosotros.</p>
+        </div>
+      </div>
+      <div class="include-item">
+        <div class="check">✓</div>
+        <div>
+          <h4>Negociación con partners externos</h4>
+          <p>Cuando toca cerrar con agencias, influencers o medios, nosotros negociamos. Te ahorramos la gestión.</p>
+        </div>
+      </div>
+      <div class="include-item">
+        <div class="check">✓</div>
+        <div>
+          <h4>Comunidad de founders en tu misma fase</h4>
+          <p>Acceso a otros fundadores construyendo su Trust Engine. Aprendes de sus casos, ellos del tuyo.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="guarantee">
+      <div class="guarantee-icon">🎯</div>
+      <div class="guarantee-text">
+        <h3>La garantía que te damos.</h3>
+        <p>En 6 meses vas a tener el Trust Engine funcionando, con tu CAC bajando, tus registros y activaciones subiendo, y un sistema donde puedes invertir en marketing sin miedo porque sabes exactamente lo que funciona y lo que no. Si no lo conseguimos juntos, no hemos hecho nuestro trabajo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === PRECIO === -->
+  <section>
+    <div class="section-label">Inversión</div>
+    <h2>Un precio, todo incluido.</h2>
+    <p class="section-intro">Pago único por los 6 meses completos del programa. Sin mensualidades, sin fees ocultos, sin costes por separado.</p>
+
+    <div class="pricing">
+      <div class="plan-info">
+        <div class="plan-label">Comunidad Growth4U · 6 meses</div>
+        <h3>Todo el método, todo el acompañamiento.</h3>
+        <p>Encuentros semanales con los founders, Slack directo, playbooks completos, herramientas IA y negociación con partners. Todo lo anterior incluido.</p>
+      </div>
+      <div class="price-col">
+        <div class="price">€7.500</div>
+        <div class="price-period">pago único · 6 meses de programa</div>
+        <button class="cta-secondary" onclick="openModal()">Reservá tu lugar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- === FAQ === -->
+  <section>
+    <div class="section-label">Preguntas frecuentes</div>
+    <h2>Lo que sueles preguntarnos.</h2>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <h4>¿Esto aplica tanto a B2B como a B2C?</h4>
+        <p>Sí. El Trust Engine funciona igual en los dos. Lo que cambia es la mezcla de canales: en B2B pesa más el outbound y LinkedIn, en B2C pesan más los influencers y el SEO de producto. El motor es el mismo.</p>
+      </div>
+      <div class="faq-item">
+        <h4>¿Cuánto tiempo necesito dedicarle por semana?</h4>
+        <p>Entre 4 y 6 horas por semana para ejecutar los playbooks. Una de esas horas es el encuentro en vivo con los founders. El resto es trabajo en tu propio negocio, con nuestras guías.</p>
+      </div>
+      <div class="faq-item">
+        <h4>¿Y si ya tengo agencia de paid o SEO?</h4>
+        <p>No la reemplazamos. El Trust Engine aumenta la conversión de lo que ya inviertes en esos canales. El paid sigue siendo amplificador; nosotros arreglamos el sistema que hay debajo y lo hace rentable.</p>
+      </div>
+      <div class="faq-item">
+        <h4>¿Qué pasa si mi equipo no tiene experiencia en growth?</h4>
+        <p>Precisamente por eso está diseñado como acompañamiento. No necesitas ser experto. Te guiamos semana a semana, y al final del programa tu equipo domina el sistema.</p>
+      </div>
+      <div class="faq-item">
+        <h4>¿Cuándo empiezo a ver resultados?</h4>
+        <p>Los primeros movimientos llegan en el mes 1 (nicho, primeros influencers, medición). La fortaleza de confianza empieza a trabajar sola a partir del mes 2-3. El compound effect se nota fuerte del mes 4 en adelante.</p>
+      </div>
+      <div class="faq-item">
+        <h4>¿Qué pasa cuando terminen los 6 meses?</h4>
+        <p>Te quedas con todo: playbooks, templates, automatizaciones, el motor funcionando, y tu equipo sabiendo operarlo. El objetivo del programa es que no nos necesites después.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === CTA FINAL === -->
+  <section>
+    <div class="final-cta">
+      <h3>Dejá de depender del algoritmo. <span>Construí tu activo.</span></h3>
+      <p>Plazas limitadas. Reservá tu lugar y nos ponemos en contacto para coordinar el arranque.</p>
+      <button class="cta-final-btn" onclick="openModal()">Reservá tu lugar en la comunidad</button>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="footer-logo">Growth<span>4U</span></div>
+  <p>Construimos motores de crecimiento que no se apagan.</p>
+</footer>
+
+<!-- === MODAL === -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="Cerrar">×</button>
+
+    <div class="form-state">
+      <h3>Reservá tu lugar en la Comunidad Growth4U</h3>
+      <p class="modal-intro">Dejanos tus datos y te escribimos para coordinar el pago y el arranque del programa.</p>
+
+      <form id="reserveForm" onsubmit="submitForm(event)">
+        <div class="field">
+          <label for="firstName">Nombre</label>
+          <input type="text" id="firstName" name="firstName" required autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label for="lastName">Apellido</label>
+          <input type="text" id="lastName" name="lastName" required autocomplete="family-name">
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="phone">Teléfono</label>
+          <input type="tel" id="phone" name="phone" required autocomplete="tel" placeholder="+34 600 000 000">
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Quiero sumarme a la comunidad</button>
+        <p class="submit-note">Al enviar, aceptás que nos pongamos en contacto contigo.</p>
+      </form>
+    </div>
+
+    <div class="success-state">
+      <div class="success-icon">✓</div>
+      <h3>¡Ya te has inscripto!</h3>
+      <p class="modal-intro">Recibimos tu solicitud. En las próximas horas te escribimos para coordinar el pago y el arranque del programa. Gracias por confiar en Growth4U.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // === GHL INBOUND WEBHOOK ===
+  // Workflow en GHL: crea/actualiza contacto, aplica tag "comunidad-agendada" y dispara notificación a Slack
+  const GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/BnXWP5dcLVMgUudLv10O/webhook-trigger/54e358c4-1839-46cc-a5ac-7580ed7bc3f5';
+
+  function openModal() {
+    document.getElementById('modalOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('firstName').focus(), 100);
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('modal');
+    document.getElementById('modalOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+    // Reset al cerrar
+    setTimeout(() => {
+      modal.classList.remove('success');
+      document.getElementById('reserveForm').reset();
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitBtn').textContent = 'Quiero sumarme a la comunidad';
+    }, 200);
+  }
+
+  // Cerrar con ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // Cerrar clickeando fuera
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modalOverlay') closeModal();
+  });
+
+  async function submitForm(event) {
+    event.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    const data = {
+      firstName: document.getElementById('firstName').value.trim(),
+      lastName: document.getElementById('lastName').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      source: 'comunidad-landing',
+      tag: 'comunidad-agendada',
+      submittedAt: new Date().toISOString()
+    };
+
+    try {
+      if (GHL_WEBHOOK_URL && !GHL_WEBHOOK_URL.includes('REEMPLAZAR')) {
+        const response = await fetch(GHL_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Webhook failed');
+      } else {
+        // Modo demo: log en consola mientras no hay webhook configurado
+        console.log('[DEMO] Datos del formulario:', data);
+        await new Promise(r => setTimeout(r, 600));
+      }
+
+      document.getElementById('modal').classList.add('success');
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = 'Reintentar';
+      alert('Hubo un problema al enviar el formulario. Por favor, probá de nuevo o escribinos directamente.');
+    }
+  }
+</script>
+
+</body>
+</html>

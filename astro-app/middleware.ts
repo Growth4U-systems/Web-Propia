@@ -1,5 +1,5 @@
 export const config = {
-  matcher: ['/((?!en|admin|_astro|api|trust-score|images|favicon|robots|sitemap|.*\\.\\w+$).*)'],
+  matcher: ['/((?!en|admin|_astro|api|trust-score|comunidad|images|favicon|robots|sitemap|.*\\.\\w+$).*)'],
 };
 
 export default function middleware(request: Request) {
