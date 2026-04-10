@@ -537,961 +537,411 @@ async function generateContent(format: 'text' | 'carousel', prompt: string, numS
   return data.content;
 }
 
-function ContentTab({ selectedAccount }: { selectedAccount: LinkedInAccount }) {
-  const [posts, setPosts] = useState<(LIContentPost & { id: string })[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<(LIContentPost & { id: string }) | null>(null);
-  const [isNew, setIsNew] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [filterFormat, setFilterFormat] = useState<LIContentFormat | 'all'>('all');
-  const [filterStatus, setFilterStatus] = useState<LIContentStatus | 'all'>('all');
+// ============================================================
+// UNIFIED CREATE TAB — Source → Format → Generate → Preview → Publish
+// ============================================================
+
+type CreateStep = 'source' | 'editor' | 'preview';
+type PostFormat = 'text' | 'image' | 'carousel';
+
+function CreateTab({ selectedAccount, onPublish }: {
+  selectedAccount: LinkedInAccount;
+  onPublish: (caption: string, imageUrl: string) => Promise<void>;
+}) {
+  // Step state
+  const [step, setStep] = useState<CreateStep>('source');
+  const [postFormat, setPostFormat] = useState<PostFormat>('text');
+  const [title, setTitle] = useState('');
+  const [caption, setCaption] = useState('');
+  const [slides, setSlides] = useState<{ badge?: string; title: string; body: string }[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<CarouselTemplate>(CAROUSEL_TEMPLATES[0]);
+  const [generating, setGenerating] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState('');
+
   // Source picker
-  const [showSourcePicker, setShowSourcePicker] = useState(false);
-  const [sourceType, setSourceType] = useState<'ideas' | 'blog' | null>(null);
   const [ideasList, setIdeasList] = useState<(ContentIdea & { id: string })[]>([]);
   const [blogList, setBlogList] = useState<BlogPost[]>([]);
-  const [sourceLoading, setSourceLoading] = useState(false);
-  // AI generation state
-  const [showGenerator, setShowGenerator] = useState(false);
-  const [genFormat, setGenFormat] = useState<LIContentFormat>('carousel');
-  const [genPrompt, setGenPrompt] = useState('');
-  const [genTemplate, setGenTemplate] = useState<CarouselTemplate>(CAROUSEL_TEMPLATES[0]);
-  const [genSlideCount, setGenSlideCount] = useState(6);
-  const [generating, setGenerating] = useState(false);
-  const [genError, setGenError] = useState('');
-  // Slide preview
-  const [previewSlides, setPreviewSlides] = useState<{ badge?: string; title: string; body: string }[]>([]);
-  const [previewIdx, setPreviewIdx] = useState(0);
-  const slideCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [sourcesLoaded, setSourcesLoaded] = useState(false);
 
-  useEffect(() => { loadContent(); }, []);
+  // Preview canvas
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Render slide preview when data changes
+  // Load sources
   useEffect(() => {
-    if (previewSlides.length > 0 && slideCanvasRef.current && previewSlides[previewIdx]) {
-      try {
-        renderSlideToCanvas(
-          slideCanvasRef.current,
-          previewSlides[previewIdx],
-          genTemplate,
-          previewIdx,
-          previewSlides.length,
-          previewIdx === 0,
-        );
-      } catch (e) {
-        console.error('Slide render error:', e);
-      }
-    }
-  }, [previewSlides, previewIdx, genTemplate]);
+    Promise.all([
+      getAllContentIdeas().then(all => setIdeasList(all.filter(i => (i.status === 'idea' || i.status === 'draft') && i.platforms?.includes('linkedin')))),
+      getAllPosts().then(all => setBlogList(all as BlogPost[])),
+    ]).then(() => setSourcesLoaded(true)).catch(() => setSourcesLoaded(true));
+  }, []);
 
-  // Auto-trigger preview when starting to edit a carousel
-  const editingId = editing?.id ?? null;
-  const editingFormat = editing?.format ?? null;
+  // Render preview image when on preview step
   useEffect(() => {
-    if (editingFormat === 'carousel' && editing && editing.slides.length > 0) {
-      setPreviewSlides(editing.slides as any);
-      setPreviewIdx(0);
+    if (step !== 'preview' || !previewCanvasRef.current) return;
+    if (postFormat === 'text') return;
+    if (postFormat === 'image') {
+      generateLIImage(title, selectedAccount.template).then(async (blob) => {
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = previewCanvasRef.current!;
+          canvas.width = 1080; canvas.height = 1350;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0);
+          URL.revokeObjectURL(url);
+        };
+        img.src = url;
+      });
+    } else if (postFormat === 'carousel' && slides.length > 0) {
+      renderSlideToCanvas(previewCanvasRef.current, slides[0], selectedTemplate, 0, slides.length, true);
     }
-    // Only run when we start editing a different post
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingId, editingFormat]);
+  }, [step, postFormat, title, selectedTemplate, slides]);
 
-  async function loadContent() {
-    setLoading(true);
-    const data = await getAllLIContentPosts();
-    setPosts(data);
-    setLoading(false);
+  function selectIdea(idea: ContentIdea & { id: string }) {
+    setTitle(idea.topic);
+    setCaption(idea.angle + (idea.sourceInspiration ? `\n\nInspiración: ${idea.sourceInspiration}` : ''));
+    setStep('editor');
   }
 
-  async function loadSources(type: 'ideas' | 'blog') {
-    setSourceLoading(true);
-    setSourceType(type);
-    if (type === 'ideas') {
-      const all = await getAllContentIdeas();
-      setIdeasList(all.filter(i => (i.status === 'idea' || i.status === 'draft') && i.platforms?.includes('linkedin')));
-    } else {
-      const all = await getAllPosts();
-      setBlogList(all as BlogPost[]);
-    }
-    setSourceLoading(false);
+  function selectBlog(blog: BlogPost) {
+    setTitle(blog.title);
+    setCaption(blog.excerpt);
+    setStep('editor');
   }
 
-  function createFromIdea(idea: ContentIdea & { id: string }) {
-    setEditing({
-      id: '', format: 'text', title: idea.topic,
-      body: idea.angle + (idea.sourceInspiration ? `\n\nInspiración: ${idea.sourceInspiration}` : ''),
-      slides: [], author: selectedAccount.id, status: 'draft', hook: '', cta: '', tags: ['ideas-hub'],
-    });
-    setIsNew(true); setShowSourcePicker(false); setSourceType(null);
+  function startManual() {
+    setTitle('');
+    setCaption('');
+    setStep('editor');
   }
 
-  function createFromBlog(blog: BlogPost) {
-    setEditing({
-      id: '', format: 'text', title: blog.title,
-      body: blog.excerpt || '',
-      slides: [], author: selectedAccount.id, status: 'draft', hook: '', cta: '', tags: ['from-blog'],
-    });
-    setIsNew(true); setShowSourcePicker(false); setSourceType(null);
-  }
-
-  async function handleGenerate() {
-    if (!genPrompt.trim()) return;
-    setGenerating(true);
-    setGenError('');
-    setPreviewSlides([]);
+  async function handleGenerateCaption() {
+    if (!title.trim()) return;
+    setGenerating(true); setError('');
     try {
-      const content = await generateContent(genFormat, genPrompt, genFormat === 'carousel' ? genSlideCount : undefined);
-      if (genFormat === 'carousel' && content.slides) {
-        setPreviewSlides(content.slides);
-        setPreviewIdx(0);
-        // Pre-fill editing form
-        setEditing({
-          id: '',
-          format: 'carousel',
-          title: content.title || '',
-          body: content.caption || '',
-          slides: content.slides.map((s: any) => ({ title: s.title || '', body: s.body || '', badge: s.badge })),
-          author: selectedAccount.id,
-          status: 'draft',
-          hook: content.hook || '',
-          cta: content.cta || '',
-          tags: [],
-        });
-        setIsNew(true);
-      } else {
-        // Text post
-        setEditing({
-          id: '',
-          format: 'text',
-          title: content.title || '',
-          body: content.body || '',
-          slides: [],
-          author: selectedAccount.id,
-          status: 'draft',
-          hook: content.hook || '',
-          cta: content.cta || '',
-          tags: [],
-        });
-        setIsNew(true);
+      const res = await fetch('/api/generate-caption', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform: 'linkedin', title, excerpt: caption || title, slug: '', category: 'Growth' }),
+      });
+      const data = await res.json();
+      if (data.caption) {
+        const clean = data.caption.replace(/growth4u\.io\/blog\/undefined\/?/g, 'growth4u.io').replace(/growth4u\.io\/blog\/\//g, 'growth4u.io');
+        setCaption(clean);
       }
-      setShowGenerator(false);
-    } catch (err: unknown) {
-      setGenError(err instanceof Error ? err.message : 'Error generating content');
-    }
+    } catch (err: any) { setError(err.message); }
     setGenerating(false);
   }
 
-  async function handleExportSlides() {
-    if (!editing || editing.format !== 'carousel' || editing.slides.length === 0) return;
-    const canvas = document.createElement('canvas');
-    const images: string[] = [];
-    for (let i = 0; i < editing.slides.length; i++) {
-      renderSlideToCanvas(canvas, editing.slides[i] as any, genTemplate, i, editing.slides.length, i === 0);
-      images.push(canvas.toDataURL('image/png'));
-    }
-    // Download each slide
-    for (let i = 0; i < images.length; i++) {
-      const link = document.createElement('a');
-      link.download = `slide-${i + 1}.png`;
-      link.href = images[i];
-      link.click();
-    }
+  async function handleGenerateCarousel() {
+    if (!title.trim()) return;
+    setGenerating(true); setError('');
+    try {
+      const content = await generateContent('carousel', title, 6);
+      if (content.slides) {
+        setSlides(content.slides);
+        setCaption(content.caption || content.body || '');
+      }
+    } catch (err: any) { setError(err.message); }
+    setGenerating(false);
   }
 
-  const filtered = posts.filter((p) => {
-    if (filterFormat !== 'all' && p.format !== filterFormat) return false;
-    if (filterStatus !== 'all' && p.status !== filterStatus) return false;
-    return true;
-  });
-
-  function handleNew(format: LIContentFormat) {
-    setEditing({
-      id: '',
-      format,
-      title: '',
-      body: '',
-      slides: format === 'carousel'
-        ? [{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }]
-        : [],
-      author: selectedAccount.id,
-      status: 'draft',
-      hook: '',
-      cta: '',
-      tags: [],
-    });
-    setIsNew(true);
+  async function handlePublish() {
+    setPublishing(true); setError('');
+    try {
+      let imageUrl = '';
+      if (postFormat === 'image') {
+        const blob = await generateLIImage(title, selectedAccount.template);
+        imageUrl = await uploadToCloudinary(blob, `li-${Date.now()}`);
+      } else if (postFormat === 'carousel' && slides.length > 0) {
+        // Upload cover slide
+        const canvas = document.createElement('canvas');
+        renderSlideToCanvas(canvas, slides[0], selectedTemplate, 0, slides.length, true);
+        const blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/png'));
+        imageUrl = await uploadToCloudinary(blob, `li-carousel-${Date.now()}`);
+      }
+      await onPublish(caption, imageUrl);
+      // Reset
+      setStep('source'); setTitle(''); setCaption(''); setSlides([]); setGeneratedImageUrl('');
+    } catch (err: any) { setError(err.message); }
+    setPublishing(false);
   }
 
-  async function handleSave() {
-    if (!editing) return;
-    setSaving(true);
-    const { id, createdAt, updatedAt, ...data } = editing as any;
-    if (isNew) {
-      await createLIContentPost(data);
-    } else {
-      await updateLIContentPost(id, data);
-    }
-    setSaving(false);
-    setEditing(null);
-    setIsNew(false);
-    loadContent();
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm('¿Eliminar este contenido?')) return;
-    await deleteLIContentPost(id);
-    loadContent();
-  }
-
-  function updateSlide(index: number, field: keyof LICarouselSlide, value: string) {
-    if (!editing) return;
-    const slides = [...editing.slides];
-    slides[index] = { ...slides[index], [field]: value };
-    setEditing({ ...editing, slides });
-  }
-
-  function addSlide() {
-    if (!editing) return;
-    setEditing({ ...editing, slides: [...editing.slides, { title: '', body: '' }] });
-  }
-
-  function removeSlide(index: number) {
-    if (!editing) return;
-    setEditing({ ...editing, slides: editing.slides.filter((_, i) => i !== index) });
-  }
-
-  function moveSlide(index: number, direction: -1 | 1) {
-    if (!editing) return;
-    const slides = [...editing.slides];
-    const target = index + direction;
-    if (target < 0 || target >= slides.length) return;
-    [slides[index], slides[target]] = [slides[target], slides[index]];
-    setEditing({ ...editing, slides });
-  }
-
-  if (loading) {
+  // ===================== STEP 1: SOURCE =====================
+  if (step === 'source') {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="w-8 h-8 text-[#0077B5] animate-spin" />
+      <div className="space-y-6">
+        {/* Quick create */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button onClick={startManual}
+            className="p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#0077B5] transition-all text-left">
+            <Edit3 className="w-6 h-6 text-[#0077B5] mb-3" />
+            <p className="font-semibold text-[#032149]">Crear manual</p>
+            <p className="text-xs text-slate-400 mt-1">Escribe tu post desde cero</p>
+          </button>
+          <button onClick={handleGenerateCarousel}
+            disabled={generating}
+            className="p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#3ecda5] transition-all text-left">
+            <Sparkles className="w-6 h-6 text-[#3ecda5] mb-3" />
+            <p className="font-semibold text-[#032149]">Generar con IA</p>
+            <p className="text-xs text-slate-400 mt-1">Claude genera el contenido completo</p>
+          </button>
+          <div className="p-6 bg-gradient-to-br from-[#6351d5]/5 to-[#0077B5]/5 border-2 border-[#6351d5]/20 rounded-xl">
+            <Lightbulb className="w-6 h-6 text-[#6351d5] mb-3" />
+            <p className="font-semibold text-[#032149]">Desde Ideas Hub</p>
+            <p className="text-xs text-slate-400 mt-1">{ideasList.length} ideas para LinkedIn</p>
+          </div>
+        </div>
+
+        {/* Ideas from Hub */}
+        {ideasList.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-[#032149] mb-3 flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-[#6351d5]" /> Ideas Hub ({ideasList.length})
+            </h3>
+            <div className="space-y-2 max-h-[250px] overflow-y-auto">
+              {ideasList.map(idea => (
+                <button key={idea.id} onClick={() => selectIdea(idea)}
+                  className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-[#6351d5] hover:bg-[#6351d5]/5 transition-colors">
+                  <p className="text-sm font-medium text-[#032149]">{idea.topic}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{idea.angle}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Blog posts */}
+        {blogList.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-[#032149] mb-3 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-[#0077B5]" /> Blog Posts ({blogList.length})
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[250px] overflow-y-auto">
+              {blogList.slice(0, 12).map(blog => (
+                <button key={blog.id} onClick={() => selectBlog(blog)}
+                  className="text-left p-2 rounded-lg border border-slate-200 hover:border-[#0077B5] transition-colors">
+                  {blog.image && <img src={blog.image} alt="" className="w-full h-16 object-cover rounded mb-1.5" />}
+                  <p className="text-[11px] font-medium text-[#032149] line-clamp-2">{blog.title}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Editor view
-  if (editing) {
+  // ===================== STEP 2: EDITOR =====================
+  if (step === 'editor') {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[#032149]">
-            {isNew ? 'Nuevo' : 'Editar'} {editing.format === 'carousel' ? 'Carrusel' : 'Post de texto'}
-          </h3>
-          <button onClick={() => { setEditing(null); setIsNew(false); }} className="text-sm text-slate-500 hover:text-slate-700">
-            Cancelar
+          <button onClick={() => setStep('source')} className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
+            ← Volver
           </button>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
-          {/* Format + Post type selector */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+          {/* Format selector */}
           <div>
-            <label className="text-xs font-medium text-slate-500 mb-2 block">Formato del post</label>
+            <label className="text-xs font-medium text-slate-500 mb-2 block">Formato</label>
             <div className="flex gap-3">
               {[
-                { value: 'text', label: 'Solo texto', icon: FileText, desc: 'Post sin imagen' },
-                { value: 'image', label: 'Imagen', icon: ImageIcon, desc: 'Texto + imagen single' },
-                { value: 'carousel', label: 'Carrusel', icon: Layers, desc: 'Documento con slides' },
+                { value: 'text' as PostFormat, label: 'Solo texto', icon: FileText, desc: 'Sin imagen' },
+                { value: 'image' as PostFormat, label: 'Imagen', icon: ImageIcon, desc: 'Texto + imagen' },
+                { value: 'carousel' as PostFormat, label: 'Carrusel', icon: Layers, desc: 'Slides' },
               ].map(f => (
-                <button key={f.value} onClick={() => setEditing({
-                  ...editing,
-                  format: f.value as LIContentFormat,
-                  slides: f.value === 'carousel' && editing.slides.length === 0
-                    ? [{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }]
-                    : f.value !== 'carousel' ? [] : editing.slides,
-                })}
-                  className={`flex-1 flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${editing.format === f.value ? 'border-[#0077B5] bg-[#0077B5]/5' : 'border-slate-200 hover:border-slate-300'}`}>
-                  <f.icon className={`w-5 h-5 ${editing.format === f.value ? 'text-[#0077B5]' : 'text-slate-400'}`} />
+                <button key={f.value} onClick={() => {
+                  setPostFormat(f.value);
+                  if (f.value === 'carousel' && slides.length === 0) setSlides([{ title: '', body: '' }, { title: '', body: '' }, { title: '', body: '' }]);
+                }}
+                  className={`flex-1 flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${postFormat === f.value ? 'border-[#0077B5] bg-[#0077B5]/5' : 'border-slate-200 hover:border-slate-300'}`}>
+                  <f.icon className={`w-5 h-5 ${postFormat === f.value ? 'text-[#0077B5]' : 'text-slate-400'}`} />
                   <div>
-                    <p className={`text-sm font-medium ${editing.format === f.value ? 'text-[#0077B5]' : 'text-slate-600'}`}>{f.label}</p>
-                    <p className="text-xs text-slate-400">{f.desc}</p>
+                    <p className={`text-sm font-medium ${postFormat === f.value ? 'text-[#0077B5]' : 'text-slate-600'}`}>{f.label}</p>
+                    <p className="text-[10px] text-slate-400">{f.desc}</p>
                   </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Meta row */}
-          <div className="grid md:grid-cols-3 gap-4">
+          {/* Template selector (for image and carousel) */}
+          {postFormat !== 'text' && (
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-1 block">Autor</label>
-              <select
-                value={editing.author}
-                onChange={(e) => setEditing({ ...editing, author: e.target.value })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-              >
-                {ACCOUNTS.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
+              <label className="text-xs font-medium text-slate-500 mb-2 block">Plantilla visual</label>
+              <div className="flex gap-3">
+                {CAROUSEL_TEMPLATES.map(t => (
+                  <button key={t.id} onClick={() => setSelectedTemplate(t)}
+                    className={`flex flex-col items-center gap-1.5 px-4 py-3 rounded-lg border-2 transition-all ${selectedTemplate.id === t.id ? 'border-[#0077B5] bg-[#0077B5]/5' : 'border-slate-200 hover:border-slate-300'}`}>
+                    <div className="w-10 h-14 rounded" style={{ background: t.bg, position: 'relative', overflow: 'hidden' }}>
+                      <div className="absolute bottom-1 left-1 right-1 top-3 rounded-sm" style={{ background: t.cardBg }} />
+                    </div>
+                    <span className="text-xs font-medium text-slate-600">{t.name}</span>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-slate-500 mb-1 block">Estado</label>
-              <select
-                value={editing.status}
-                onChange={(e) => setEditing({ ...editing, status: e.target.value as LIContentStatus })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-              >
-                {CONTENT_STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-500 mb-1 block">Tags (separados por coma)</label>
-              <input
-                value={editing.tags.join(', ')}
-                onChange={(e) => setEditing({ ...editing, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-                placeholder="growth, fintech, CAC"
-              />
-            </div>
-          </div>
+          )}
 
           {/* Title */}
           <div>
             <label className="text-xs font-medium text-slate-500 mb-1 block">Título / Tema</label>
-            <input
-              value={editing.title}
-              onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+            <input value={title} onChange={e => setTitle(e.target.value)}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-              placeholder="El título del post o tema principal"
-            />
+              placeholder="El tema principal del post" />
           </div>
 
-          {/* Hook */}
-          <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">Hook (primera línea)</label>
-            <input
-              value={editing.hook || ''}
-              onChange={(e) => setEditing({ ...editing, hook: e.target.value })}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-              placeholder="La frase que engancha al lector"
-            />
-          </div>
-
-          {/* Generate caption with AI */}
-          {editing.title && (
-            <button
-              onClick={async () => {
-                setGenerating(true);
-                try {
-                  const res = await fetch('/api/generate-caption', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ platform: 'linkedin', title: editing.title, excerpt: editing.body || editing.title, slug: '', category: 'Growth' }),
-                  });
-                  const data = await res.json();
-                  if (data.caption) {
-                    // Remove any undefined blog links
-                    const cleanCaption = data.caption.replace(/growth4u\.io\/blog\/undefined\/?/g, 'growth4u.io').replace(/growth4u\.io\/blog\/\//g, 'growth4u.io');
-                    setEditing({ ...editing, body: cleanCaption, hook: cleanCaption.split('\n')[0] || editing.hook });
-                  }
-                } catch (err) {
-                  console.error('Error generating caption:', err);
-                }
-                setGenerating(false);
-              }}
+          {/* Generate caption button */}
+          {title.trim() && (
+            <button onClick={postFormat === 'carousel' ? handleGenerateCarousel : handleGenerateCaption}
               disabled={generating}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#3ecda5] to-[#0077B5] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity w-full justify-center"
-            >
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#3ecda5] to-[#0077B5] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 w-full justify-center">
               {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              {generating ? 'Generando caption...' : 'Generar caption con IA desde el título'}
+              {generating ? 'Generando...' : postFormat === 'carousel' ? 'Generar carrusel con IA' : 'Generar caption con IA'}
             </button>
           )}
 
-          {/* Text post body */}
-          {editing.format === 'text' && (
-            <div>
-              <label className="text-xs font-medium text-slate-500 mb-1 block">Cuerpo del post</label>
-              <textarea
-                value={editing.body}
-                onChange={(e) => setEditing({ ...editing, body: e.target.value })}
-                rows={12}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5] font-mono"
-                placeholder="Escribe el contenido del post..."
-              />
-              <p className="text-xs text-slate-400 mt-1">{editing.body.length} / 3,000 caracteres</p>
-            </div>
-          )}
+          {/* Caption / Body */}
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1 block">
+              {postFormat === 'carousel' ? 'Caption (texto que acompaña el carrusel)' : 'Cuerpo del post'}
+            </label>
+            <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={10}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5] font-mono"
+              placeholder="El contenido del post..." />
+            <p className="text-xs text-slate-400 mt-1">{caption.length} / 3,000 caracteres</p>
+          </div>
 
           {/* Carousel slides */}
-          {editing.format === 'carousel' && (
+          {postFormat === 'carousel' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-slate-500">Slides ({editing.slides.length})</label>
-                <button
-                  onClick={addSlide}
-                  className="flex items-center gap-1 text-xs text-[#0077B5] hover:text-[#005f8d] font-medium"
-                >
+                <label className="text-xs font-medium text-slate-500">Slides ({slides.length})</label>
+                <button onClick={() => setSlides(prev => [...prev, { title: '', body: '' }])}
+                  className="flex items-center gap-1 text-xs text-[#0077B5] hover:text-[#005f8d] font-medium">
                   <Plus className="w-3.5 h-3.5" /> Añadir slide
                 </button>
               </div>
-              {editing.slides.map((slide, i) => (
-                <div key={i} className="border border-slate-200 rounded-lg p-4 space-y-3 bg-slate-50/50">
+              {slides.map((slide, i) => (
+                <div key={i} className="border border-slate-200 rounded-lg p-4 space-y-2 bg-slate-50/50">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="w-4 h-4 text-slate-300" />
-                      <span className="text-xs font-semibold text-slate-500">
-                        {i === 0 ? 'Portada' : i === editing.slides.length - 1 ? 'CTA Final' : `Slide ${i + 1}`}
-                      </span>
-                    </div>
+                    <span className="text-xs font-semibold text-slate-500">
+                      {i === 0 ? 'Portada' : i === slides.length - 1 ? 'CTA Final' : `Slide ${i + 1}`}
+                    </span>
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => moveSlide(i, -1)}
-                        disabled={i === 0}
-                        className="p-1 text-slate-400 hover:text-[#0077B5] disabled:opacity-30"
-                      >
+                      <button onClick={() => { if (i > 0) { const s = [...slides]; [s[i], s[i-1]] = [s[i-1], s[i]]; setSlides(s); } }}
+                        disabled={i === 0} className="p-1 text-slate-400 hover:text-[#0077B5] disabled:opacity-30">
                         <ArrowUp className="w-3.5 h-3.5" />
                       </button>
-                      <button
-                        onClick={() => moveSlide(i, 1)}
-                        disabled={i === editing.slides.length - 1}
-                        className="p-1 text-slate-400 hover:text-[#0077B5] disabled:opacity-30"
-                      >
+                      <button onClick={() => { if (i < slides.length - 1) { const s = [...slides]; [s[i], s[i+1]] = [s[i+1], s[i]]; setSlides(s); } }}
+                        disabled={i === slides.length - 1} className="p-1 text-slate-400 hover:text-[#0077B5] disabled:opacity-30">
                         <ArrowDown className="w-3.5 h-3.5" />
                       </button>
-                      {editing.slides.length > 2 && (
-                        <button
-                          onClick={() => removeSlide(i)}
-                          className="p-1 text-slate-400 hover:text-red-500"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                      {slides.length > 2 && (
+                        <button onClick={() => setSlides(prev => prev.filter((_, j) => j !== i))}
+                          className="p-1 text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                       )}
                     </div>
                   </div>
-                  <input
-                    value={slide.title}
-                    onChange={(e) => updateSlide(i, 'title', e.target.value)}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5] bg-white"
-                    placeholder={i === 0 ? 'Título de portada' : 'Título de la slide'}
-                  />
-                  <textarea
-                    value={slide.body}
-                    onChange={(e) => updateSlide(i, 'body', e.target.value)}
-                    rows={3}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5] bg-white"
-                    placeholder={i === 0 ? 'Subtítulo o descripción' : 'Contenido de la slide'}
-                  />
+                  <input value={slide.title} onChange={e => { const s = [...slides]; s[i] = { ...s[i], title: e.target.value }; setSlides(s); }}
+                    className="w-full border border-slate-200 rounded px-3 py-2 text-sm bg-white" placeholder={i === 0 ? 'Título portada' : 'Título slide'} />
+                  <textarea value={slide.body} onChange={e => { const s = [...slides]; s[i] = { ...s[i], body: e.target.value }; setSlides(s); }}
+                    rows={2} className="w-full border border-slate-200 rounded px-3 py-2 text-sm bg-white" placeholder="Contenido" />
                 </div>
               ))}
-
-              {/* Carousel caption — the text that goes with the PDF */}
-              <div className="pt-2 border-t border-slate-200">
-                <label className="text-xs font-medium text-slate-500 mb-1 block">Caption del post (texto que acompaña al carrusel)</label>
-                <textarea
-                  value={editing.body}
-                  onChange={(e) => setEditing({ ...editing, body: e.target.value })}
-                  rows={5}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5] font-mono"
-                  placeholder="El texto del post que acompaña al carrusel..."
-                />
-              </div>
             </div>
           )}
 
-          {/* CTA */}
-          <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">CTA (call to action)</label>
-            <input
-              value={editing.cta || ''}
-              onChange={(e) => setEditing({ ...editing, cta: e.target.value })}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-              placeholder="Ej: Comenta 'GROWTH' y te envío la guía"
-            />
-          </div>
-
-          {/* Carousel template selector + preview */}
-          {editing.format === 'carousel' && editing.slides.length > 0 && (
-            <div className="border-t border-slate-200 pt-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-slate-500">Template visual</label>
-                <button
-                  onClick={handleExportSlides}
-                  className="flex items-center gap-1.5 text-xs font-medium text-[#0077B5] hover:text-[#005f8d]"
-                >
-                  <ImageIcon className="w-3.5 h-3.5" /> Descargar slides como PNG
-                </button>
-              </div>
-              <div className="flex gap-3">
-                {CAROUSEL_TEMPLATES.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setGenTemplate(t)}
-                    className={`flex flex-col items-center gap-1.5 px-4 py-3 rounded-lg border-2 transition-all ${
-                      genTemplate.id === t.id ? 'border-[#0077B5] bg-[#0077B5]/5' : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div
-                      className="w-10 h-14 rounded"
-                      style={{ background: t.bg, position: 'relative', overflow: 'hidden' }}
-                    >
-                      <div
-                        className="absolute bottom-1 left-1 right-1 top-3 rounded-sm"
-                        style={{ background: t.cardBg }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-slate-600">{t.name}</span>
-                  </button>
-                ))}
-              </div>
-              {/* Slide preview */}
-              <div className="flex items-start gap-6">
-                <div className="shrink-0">
-                  <canvas
-                    ref={slideCanvasRef}
-                    className="rounded-lg shadow-lg"
-                    style={{ width: 240, height: 300 }}
-                  />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <p className="text-sm font-medium text-[#032149]">Preview slide {previewIdx + 1} de {editing.slides.length}</p>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {editing.slides.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => { setPreviewSlides(editing.slides as any); setPreviewIdx(i); }}
-                        className={`w-8 h-8 rounded text-xs font-medium transition-colors ${
-                          previewIdx === i
-                            ? 'bg-[#0077B5] text-white'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {error && (
+            <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <AlertCircle className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
 
-          {/* Published URL */}
-          {editing.status === 'published' && (
-            <div>
-              <label className="text-xs font-medium text-slate-500 mb-1 block">URL del post publicado</label>
-              <input
-                value={editing.publishedUrl || ''}
-                onChange={(e) => setEditing({ ...editing, publishedUrl: e.target.value })}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-                placeholder="https://linkedin.com/posts/..."
-              />
-            </div>
-          )}
-
-          {/* Save */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              onClick={handleSave}
-              disabled={saving || !editing.title.trim()}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#0077B5] text-white text-sm font-medium rounded-lg hover:bg-[#005f8d] disabled:opacity-50 transition-colors"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              {saving ? 'Guardando...' : isNew ? 'Crear' : 'Guardar cambios'}
+          {/* Next: Preview */}
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => setStep('preview')} disabled={!caption.trim()}
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#0077B5] text-white text-sm font-medium rounded-lg hover:bg-[#005f8d] disabled:opacity-50 transition-colors ml-auto">
+              <Eye className="w-4 h-4" /> Vista previa y publicar
             </button>
-            {!isNew && editing.status !== 'ready' && editing.status !== 'published' && (
-              <button
-                onClick={async () => {
-                  setSaving(true);
-                  await updateLIContentPost(editing.id, { status: 'ready' });
-                  setSaving(false);
-                  setEditing(null);
-                  loadContent();
-                }}
-                disabled={saving || !editing.title.trim()}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#3ecda5] to-[#0077B5] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
-              >
-                <Send className="w-4 h-4" />
-                Listo para publicar
-              </button>
-            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // List view
+  // ===================== STEP 3: PREVIEW & PUBLISH =====================
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <select
-            value={filterFormat}
-            onChange={(e) => setFilterFormat(e.target.value as any)}
-            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-          >
-            <option value="all">Todos los formatos</option>
-            {FORMAT_OPTIONS.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
-          </select>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#0077B5]"
-          >
-            <option value="all">Todos los estados</option>
-            {CONTENT_STATUS_OPTIONS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => { setShowSourcePicker(!showSourcePicker); setSourceType(null); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[#6351d5] text-white hover:bg-[#4a3db8] transition-colors font-medium">
-            <Lightbulb className="w-4 h-4" /> Desde Ideas Hub
-          </button>
-          <button onClick={() => loadSources('blog')}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-[#0077B5] text-[#0077B5] hover:bg-[#0077B5] hover:text-white transition-colors">
-            <FileText className="w-4 h-4" /> Desde Blog
-          </button>
-          <button
-            onClick={() => setShowGenerator(!showGenerator)}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-[#3ecda5] to-[#0077B5] text-white hover:opacity-90 transition-opacity font-medium"
-          >
-            <Sparkles className="w-4 h-4" />
-            Generar con IA
-          </button>
-          {FORMAT_OPTIONS.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => handleNew(f.value)}
-              className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <f.icon className="w-4 h-4" />
-              + {f.label}
-            </button>
-          ))}
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <button onClick={() => setStep('editor')} className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
+          ← Editar
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-500">
+            {postFormat === 'text' ? 'Solo texto' : postFormat === 'image' ? 'Con imagen' : `Carrusel (${slides.length} slides)`}
+          </span>
+          <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-500">{selectedAccount.name}</span>
         </div>
       </div>
 
-      {/* AI Generator panel */}
-      {showGenerator && (
-        <div className="bg-gradient-to-br from-[#3ecda5]/5 to-[#0077B5]/5 rounded-xl border border-[#3ecda5]/20 p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#032149] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#3ecda5]" />
-              Generar contenido con IA
-            </h3>
-            <button onClick={() => setShowGenerator(false)} className="text-slate-400 hover:text-slate-600">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Format selector */}
-          <div className="flex gap-3">
-            {FORMAT_OPTIONS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setGenFormat(f.value)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
-                  genFormat === f.value
-                    ? 'border-[#3ecda5] bg-[#3ecda5]/10 text-[#3ecda5]'
-                    : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                }`}
-              >
-                <f.icon className="w-4 h-4" />
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Template selector (only for carousel) */}
-          {genFormat === 'carousel' && (
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-500">Template visual</label>
-              <div className="flex gap-3">
-                {CAROUSEL_TEMPLATES.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setGenTemplate(t)}
-                    className={`flex flex-col items-center gap-1.5 px-4 py-3 rounded-lg border-2 transition-all ${
-                      genTemplate.id === t.id ? 'border-[#3ecda5] bg-[#3ecda5]/5' : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div
-                      className="w-10 h-14 rounded"
-                      style={{ background: t.bg, position: 'relative', overflow: 'hidden' }}
-                    >
-                      <div
-                        className="absolute bottom-1 left-1 right-1 top-3 rounded-sm"
-                        style={{ background: t.cardBg }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-slate-600">{t.name}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-slate-500">Slides:</label>
-                <select
-                  value={genSlideCount}
-                  onChange={(e) => setGenSlideCount(Number(e.target.value))}
-                  className="border border-slate-200 rounded-lg px-2 py-1 text-sm outline-none"
-                >
-                  {[4, 5, 6, 7, 8, 9, 10].map((n) => (
-                    <option key={n} value={n}>{n} slides</option>
-                  ))}
-                </select>
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Image/Carousel preview */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <h4 className="text-xs font-medium text-slate-500 mb-3">
+            {postFormat === 'text' ? 'Sin imagen' : postFormat === 'carousel' ? 'Preview carrusel' : 'Preview imagen'}
+          </h4>
+          {postFormat === 'text' ? (
+            <div className="h-48 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 text-sm">
+              Post de solo texto — sin imagen adjunta
+            </div>
+          ) : (
+            <canvas ref={previewCanvasRef} className="w-full rounded-lg shadow-lg" style={{ maxHeight: 400 }} />
+          )}
+          {postFormat === 'carousel' && slides.length > 1 && (
+            <div className="flex gap-1.5 mt-3 justify-center">
+              {slides.map((_, i) => (
+                <button key={i} onClick={() => {
+                  if (previewCanvasRef.current) renderSlideToCanvas(previewCanvasRef.current, slides[i], selectedTemplate, i, slides.length, i === 0);
+                }}
+                  className="w-7 h-7 rounded text-xs font-medium bg-slate-100 text-slate-500 hover:bg-[#0077B5] hover:text-white transition-colors">
+                  {i + 1}
+                </button>
+              ))}
             </div>
           )}
+        </div>
 
-          {/* Prompt input */}
-          <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">
-              Tema o prompt
-            </label>
-            <textarea
-              value={genPrompt}
-              onChange={(e) => setGenPrompt(e.target.value)}
-              rows={3}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#3ecda5]"
-              placeholder="Ej: 5 errores que cometen las fintechs al medir el CAC, con datos reales y ejemplos de Growth4U..."
-            />
+        {/* Right: Caption preview + Publish */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+          <h4 className="text-xs font-medium text-slate-500">Caption</h4>
+          <div className="bg-slate-50 rounded-lg p-4 text-sm text-[#032149] whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+            {caption}
           </div>
 
-          {genError && (
+          {error && (
             <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {genError}
+              <AlertCircle className="w-4 h-4 shrink-0" /> {error}
             </div>
           )}
 
-          <button
-            onClick={handleGenerate}
-            disabled={generating || !genPrompt.trim()}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#3ecda5] text-white text-sm font-medium rounded-lg hover:bg-[#35b894] disabled:opacity-50 transition-colors"
-          >
-            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            {generating ? 'Generando...' : 'Generar contenido'}
-          </button>
-        </div>
-      )}
-
-      {/* Source picker — Ideas Hub */}
-      {showSourcePicker && !sourceType && (
-        <div className="bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-xl p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#032149] flex items-center gap-2">
-              <Lightbulb className="w-4 h-4 text-[#6351d5]" /> Crear desde fuente
-            </h3>
-            <button onClick={() => setShowSourcePicker(false)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => loadSources('ideas')}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-4 bg-white border-2 border-[#6351d5] rounded-xl text-[#6351d5] font-medium hover:bg-[#6351d5] hover:text-white transition-colors">
-              <Lightbulb className="w-5 h-5" /> Ideas Hub
-            </button>
-            <button onClick={() => loadSources('blog')}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-4 bg-white border-2 border-[#0077B5] rounded-xl text-[#0077B5] font-medium hover:bg-[#0077B5] hover:text-white transition-colors">
-              <FileText className="w-5 h-5" /> Blog Posts
+          <div className="flex gap-3 pt-2">
+            <button onClick={handlePublish} disabled={publishing || !caption.trim()}
+              className="flex-1 flex items-center gap-2 justify-center px-5 py-3 bg-[#0077B5] text-white text-sm font-semibold rounded-lg hover:bg-[#005f8d] disabled:opacity-50 transition-colors">
+              {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {publishing ? 'Publicando...' : 'Publicar ahora'}
             </button>
           </div>
         </div>
-      )}
-
-      {/* Source picker — Ideas list */}
-      {sourceType === 'ideas' && (
-        <div className="bg-[#6351d5]/5 border border-[#6351d5]/20 rounded-xl p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#032149]">Seleccionar idea para LinkedIn ({ideasList.length})</h3>
-            <button onClick={() => { setSourceType(null); setShowSourcePicker(false); }} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
-          </div>
-          {sourceLoading ? <Loader2 className="w-6 h-6 text-[#6351d5] animate-spin mx-auto" /> : (
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {ideasList.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-4">No hay ideas asignadas a LinkedIn en el Ideas Hub</p>
-              ) : ideasList.map(idea => (
-                <button key={idea.id} onClick={() => createFromIdea(idea)}
-                  className="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-[#6351d5] transition-colors">
-                  <p className="text-sm font-medium text-[#032149]">{idea.topic}</p>
-                  <p className="text-xs text-slate-400 mt-1 line-clamp-1">{idea.angle}</p>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Source picker — Blog list */}
-      {sourceType === 'blog' && (
-        <div className="bg-[#0077B5]/5 border border-[#0077B5]/20 rounded-xl p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#032149]">Seleccionar blog post ({blogList.length})</h3>
-            <button onClick={() => { setSourceType(null); setShowSourcePicker(false); }} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
-          </div>
-          {sourceLoading ? <Loader2 className="w-6 h-6 text-[#0077B5] animate-spin mx-auto" /> : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
-              {blogList.map(blog => (
-                <button key={blog.id} onClick={() => createFromBlog(blog)}
-                  className="text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-[#0077B5] transition-colors">
-                  {blog.image && <img src={blog.image} alt="" className="w-full h-20 object-cover rounded mb-2" />}
-                  <p className="text-xs font-medium text-[#032149] line-clamp-2">{blog.title}</p>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Posts list */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-          <Layers className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">No hay contenido todavía</p>
-          <p className="text-sm text-slate-400 mt-1">
-            Crea tu primer post de texto o carrusel para LinkedIn
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((post) => {
-            const statusOpt = CONTENT_STATUS_OPTIONS.find((s) => s.value === post.status);
-            const formatOpt = FORMAT_OPTIONS.find((f) => f.value === post.format);
-            return (
-              <div key={post.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 transition-colors">
-                <div className="flex items-start gap-4">
-                  {/* Format icon */}
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                    post.format === 'carousel' ? 'bg-[#0077B5]/10 text-[#0077B5]' : 'bg-slate-100 text-slate-500'
-                  }`}>
-                    {formatOpt ? <formatOpt.icon className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-semibold text-[#032149] truncate">{post.title || 'Sin título'}</h4>
-                      <span className={`text-xs px-2 py-0.5 rounded border ${statusOpt?.color || ''}`}>
-                        {statusOpt?.label || post.status}
-                      </span>
-                      <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-500">
-                        {formatOpt?.label || post.format}
-                      </span>
-                      {post.format === 'carousel' && (
-                        <span className="text-xs text-slate-400">{post.slides.length} slides</span>
-                      )}
-                    </div>
-                    {post.hook && (
-                      <p className="text-sm text-slate-500 mt-1 truncate">{post.hook}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-                      <span className="capitalize">{ACCOUNTS.find((a) => a.id === post.author)?.name || post.author}</span>
-                      {post.tags.length > 0 && (
-                        <div className="flex gap-1">
-                          {post.tags.map((t) => (
-                            <span key={t} className="px-1.5 py-0.5 rounded bg-[#0077B5]/5 text-[#0077B5]">{t}</span>
-                          ))}
-                        </div>
-                      )}
-                      {post.createdAt && (
-                        <span>{new Date(post.createdAt).toLocaleDateString('es-ES')}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    {post.publishedUrl && (
-                      <a href={post.publishedUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-[#0077B5]">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                    <button
-                      onClick={() => { setEditing(post); setIsNew(false); }}
-                      className="p-2 text-slate-400 hover:text-[#0077B5]"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="p-2 text-slate-400 hover:text-red-500"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// --- Ready Content List (for Publish tab) ---
-
-function ReadyContentList({ onAddToQueue, selectedAccount }: {
-  onAddToQueue: (post: LIContentPost & { id: string }) => void;
-  selectedAccount: LinkedInAccount;
-}) {
-  const [readyPosts, setReadyPosts] = useState<(LIContentPost & { id: string })[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const all = await getAllLIContentPosts();
-      setReadyPosts(all.filter(p => p.status === 'ready'));
-      setLoading(false);
-    })();
-  }, []);
-
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-[#0077B5] animate-spin" /></div>;
-
-  if (readyPosts.length === 0) return (
-    <div className="mb-8 text-center py-8 bg-white rounded-xl border border-slate-200">
-      <Layers className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-      <p className="text-slate-400 text-sm">No hay contenido listo para publicar</p>
-      <p className="text-xs text-slate-400 mt-1">Marca posts como &ldquo;Listo para publicar&rdquo; en la pestaña Contenido</p>
-    </div>
-  );
-
-  return (
-    <div className="mb-8">
-      <h2 className="text-lg font-semibold text-[#032149] mb-4">
-        Contenido listo para publicar ({readyPosts.length})
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {readyPosts.map(post => (
-          <div key={post.id}
-            onClick={() => onAddToQueue(post)}
-            className="bg-white rounded-xl border border-slate-200 p-4 hover:border-[#0077B5] hover:shadow-md cursor-pointer transition-all"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              {post.format === 'carousel' ? (
-                <Layers className="w-4 h-4 text-[#0077B5]" />
-              ) : (post.format as string) === 'image' ? (
-                <ImageIcon className="w-4 h-4 text-amber-500" />
-              ) : (
-                <FileText className="w-4 h-4 text-slate-400" />
-              )}
-              <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">Listo</span>
-              <span className="text-xs text-slate-400">{post.format}</span>
-            </div>
-            <h3 className="font-semibold text-sm text-[#032149] line-clamp-2">{post.title || '(sin título)'}</h3>
-            {post.body && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{post.body.slice(0, 100)}</p>}
-            {post.format === 'carousel' && post.slides?.length > 0 && (
-              <p className="text-xs text-[#0077B5] mt-1">{post.slides.length} slides</p>
-            )}
-          </div>
-        ))}
       </div>
     </div>
   );
 }
+
+// Old ContentTab — replaced by CreateTab above
+// (old ContentTab and ReadyContentList removed — replaced by CreateTab above)
 
 // --- Main component ---
 
@@ -1503,7 +953,7 @@ export default function LinkedInPage() {
   const [publishedSlugs, setPublishedSlugs] = useState<Set<string>>(new Set());
   const [linkedinStatus, setLinkedinStatus] = useState<{ connected: boolean; org?: string } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [activeTab, setActiveTab] = useState<'publish' | 'content' | 'metrics' | 'video'>('publish');
+  const [activeTab, setActiveTab] = useState<'create' | 'history' | 'metrics' | 'video'>('create');
   const [metrics, setMetrics] = useState<LIMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [metricsError, setMetricsError] = useState('');
@@ -1836,40 +1286,32 @@ export default function LinkedInPage() {
             </div>
           )}
         </div>
-        {activeTab === 'publish' && draftCount > 0 && (
-          <button
-            onClick={publishAll}
-            className="flex items-center gap-2 px-4 py-2 bg-[#0077B5] text-white rounded-lg hover:bg-[#005f8d] transition-colors"
-          >
-            <Send className="w-4 h-4" />
-            Publicar todos ({draftCount})
-          </button>
-        )}
+        {/* Publish all removed — unified create flow handles publishing */}
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-slate-100 rounded-xl p-1 w-fit">
         <button
-          onClick={() => setActiveTab('publish')}
+          onClick={() => setActiveTab('create')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'publish'
+            activeTab === 'create'
               ? 'bg-white text-[#032149] shadow-sm'
               : 'text-slate-500 hover:text-slate-700'
           }`}
         >
-          <Send className="w-4 h-4" />
-          Publicar
+          <Plus className="w-4 h-4" />
+          Crear
         </button>
         <button
-          onClick={() => setActiveTab('content')}
+          onClick={() => setActiveTab('history')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'content'
+            activeTab === 'history'
               ? 'bg-white text-[#032149] shadow-sm'
               : 'text-slate-500 hover:text-slate-700'
           }`}
         >
-          <Layers className="w-4 h-4" />
-          Contenido
+          <Clock className="w-4 h-4" />
+          Historial
         </button>
         <button
           onClick={() => setActiveTab('metrics')}
@@ -2019,15 +1461,41 @@ export default function LinkedInPage() {
       )}
 
       {/* Content Tab */}
-      {activeTab === 'content' && (
-        <ContentTab selectedAccount={selectedAccount} />
+      {/* Create Tab — unified flow */}
+      {activeTab === 'create' && (
+        <CreateTab
+          selectedAccount={selectedAccount}
+          onPublish={async (caption, imageUrl) => {
+            const res = await fetch(FUNCTION_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: caption, imageUrl: imageUrl || undefined, account: selectedAccount.id }),
+            });
+            const text = await res.text();
+            let data: any;
+            try { data = JSON.parse(text); } catch { throw new Error(`Error (${res.status}): ${text.slice(0, 200)}`); }
+            if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+            // Save to history
+            await createLIScheduledPost({
+              imageUrl: imageUrl || '',
+              caption,
+              blogTitle: '',
+              blogSlug: '',
+              scheduledDate: new Date().toISOString().split('T')[0],
+              scheduledTime: new Date().toTimeString().slice(0, 5),
+              status: 'sent',
+              account: selectedAccount.id,
+            });
+            loadSavedPosts();
+          }}
+        />
       )}
 
-      {/* Publish Tab */}
-      {activeTab === 'publish' && <>
+      {/* History Tab */}
+      {activeTab === 'history' && <>
 
-      {/* Queue — always on top */}
-      {accountQueue.length > 0 && (
+      {/* TODO: remove queue, keep only saved posts */}
+      {false && accountQueue.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-[#032149] mb-4">
             Cola de publicacion ({accountQueue.length})
@@ -2260,80 +1728,12 @@ export default function LinkedInPage() {
         </div>
       )}
 
-      {/* Ready content posts — select to publish */}
-      <ReadyContentList
-        onAddToQueue={async (contentPost) => {
-          const tomorrow = new Date();
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          const account = selectedAccount;
-          const fakePost = { id: contentPost.id, title: contentPost.title, slug: contentPost.id, category: '', excerpt: '', content: '', image: '', createdAt: null };
-
-          if (contentPost.format === 'text') {
-            // Text-only: no image needed
-            setQueue(prev => [...prev, {
-              post: fakePost, caption: contentPost.body, liImageUrl: '', status: 'draft' as const,
-              scheduledDate: tomorrow.toISOString().split('T')[0], scheduledTime: '10:00', account: account.id,
-            }]);
-          } else if (contentPost.format === 'image' || (contentPost.format as string) === 'image') {
-            // Single image: generate Tech Warm image with title
-            const newItem: QueueItem = {
-              post: fakePost, caption: contentPost.body, liImageUrl: '', status: 'generating',
-              scheduledDate: tomorrow.toISOString().split('T')[0], scheduledTime: '10:00', account: account.id,
-            };
-            setQueue(prev => [...prev, newItem]);
-            const idx = queue.length;
-            try {
-              const blob = await generateLIImage(contentPost.title, account.template);
-              const url = await uploadToCloudinary(blob, contentPost.id);
-              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], liImageUrl: url, status: 'draft' }; return u; });
-            } catch (err) {
-              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], status: 'error', error: String(err) }; return u; });
-            }
-          } else if (contentPost.format === 'carousel' && contentPost.slides?.length > 0) {
-            // Carousel: generate each slide as image, upload first slide as preview
-            const newItem: QueueItem = {
-              post: fakePost, caption: contentPost.body, liImageUrl: '', status: 'generating',
-              scheduledDate: tomorrow.toISOString().split('T')[0], scheduledTime: '10:00', account: account.id,
-            };
-            setQueue(prev => [...prev, newItem]);
-            const idx = queue.length;
-            try {
-              // Generate cover slide image
-              const canvas = document.createElement('canvas');
-              renderSlideToCanvas(canvas, contentPost.slides[0] as any, CAROUSEL_TEMPLATES[0], 0, contentPost.slides.length, true);
-              const blob = await new Promise<Blob>((resolve) => canvas.toBlob(b => resolve(b!), 'image/png'));
-              const url = await uploadToCloudinary(blob, `${contentPost.id}-cover`);
-              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], liImageUrl: url, status: 'draft' }; return u; });
-            } catch (err) {
-              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], status: 'error', error: String(err) }; return u; });
-            }
-          } else {
-            // Fallback: generate image
-            const newItem: QueueItem = {
-              post: fakePost, caption: contentPost.body, liImageUrl: '', status: 'generating',
-              scheduledDate: tomorrow.toISOString().split('T')[0], scheduledTime: '10:00', account: account.id,
-            };
-            setQueue(prev => [...prev, newItem]);
-            const idx = queue.length;
-            try {
-              const blob = await generateLIImage(contentPost.title, account.template);
-              const url = await uploadToCloudinary(blob, contentPost.id);
-              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], liImageUrl: url, status: 'draft' }; return u; });
-            } catch (err) {
-              setQueue(prev => { const u = [...prev]; if (u[idx]) u[idx] = { ...u[idx], status: 'error', error: String(err) }; return u; });
-            }
-          }
-          await updateLIContentPost(contentPost.id, { status: 'published' });
-        }}
-        selectedAccount={selectedAccount}
-      />
-
-      {/* Empty state */}
-      {accountQueue.length === 0 && accountSavedPosts.length === 0 && !loading && (
+      {/* Empty state for history */}
+      {accountSavedPosts.length === 0 && (
         <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-          <Layers className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">No hay contenido listo para publicar</p>
-          <p className="text-sm text-slate-400 mt-1">Ve a la pestaña Contenido para crear posts y marcarlos como &ldquo;Listo para publicar&rdquo;</p>
+          <Clock className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500">No hay posts enviados todavía</p>
+          <p className="text-sm text-slate-400 mt-1">Los posts publicados desde la pestaña Crear aparecerán aquí</p>
         </div>
       )}
 
