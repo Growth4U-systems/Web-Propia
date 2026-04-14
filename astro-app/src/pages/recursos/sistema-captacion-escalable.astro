@@ -1,0 +1,626 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StaticLeadMagnetGate from '../../react/StaticLeadMagnetGate';
+import { SITE_URL, generateOgImage } from '../../lib/constants';
+
+const slug = 'sistema-captacion-escalable';
+const title = 'Cómo Montar un Sistema de Atribución con Influencers usando Claude Code';
+const description = 'Guía paso a paso para construir un sistema de captación escalable: landings por influencer, tracking de eventos con PostHog, conexión con CRM y dashboard de métricas. Todo con Claude Code como asistente.';
+
+const excerpt = `## El 90% de las empresas que trabajan con influencers no pueden responder una pregunta simple:
+
+**"¿Cuántos clientes reales trajo este creador?"**
+
+Activan influencers, pagan fees, publican contenido… pero no tienen forma de conectar ese gasto con conversiones reales. El resultado: decisiones basadas en vanity metrics (likes, views) en vez de datos de negocio (registros, usuarios activos, inversores, ingresos).
+
+En esta guía te enseñamos **paso a paso** cómo montar un sistema de atribución completo que conecta cada euro invertido en influencers con cada cliente real — usando **Claude Code** como asistente técnico.
+
+Lo que vas a aprender:
+- Crear **landings dedicadas por influencer** con tracking integrado
+- Configurar **PostHog** para medir cada evento del funnel
+- Conectar los datos con tu **CRM vía API** para atribución end-to-end
+- Montar un **dashboard de métricas** con inversión, registros, CAC e ingresos por canal
+- Tomar decisiones de escalado o pausa basadas en datos reales
+
+Todo esto lo construimos para un caso real de crowdfunding inmobiliario — y te mostramos los datos.`;
+
+const fullContent = `<div style="font-family:inherit">
+
+  <!-- Visión general del sistema -->
+  <div style="background:linear-gradient(135deg,#032149,#0a3a6b);border-radius:16px;padding:28px;margin-bottom:28px">
+    <h2 style="color:white;font-size:22px;font-weight:800;margin-bottom:16px">El sistema completo en 4 capas</h2>
+    <p style="color:#cbd5e1;font-size:15px;margin-bottom:20px">Cada capa se construye sobre la anterior. Claude Code te ayuda a montar toda la infraestructura técnica.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(255,255,255,0.1)">
+        <div style="color:#3ecda5;font-size:24px;font-weight:800;margin-bottom:4px">1</div>
+        <div style="color:white;font-size:14px;font-weight:700;margin-bottom:4px">Landings</div>
+        <div style="color:#94a3b8;font-size:12px">Una URL única por influencer</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(255,255,255,0.1)">
+        <div style="color:#3ecda5;font-size:24px;font-weight:800;margin-bottom:4px">2</div>
+        <div style="color:white;font-size:14px;font-weight:700;margin-bottom:4px">Tracking</div>
+        <div style="color:#94a3b8;font-size:12px">Eventos PostHog en cada paso</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(255,255,255,0.1)">
+        <div style="color:#3ecda5;font-size:24px;font-weight:800;margin-bottom:4px">3</div>
+        <div style="color:white;font-size:14px;font-weight:700;margin-bottom:4px">CRM</div>
+        <div style="color:#94a3b8;font-size:12px">API para atribuir conversiones</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(255,255,255,0.1)">
+        <div style="color:#3ecda5;font-size:24px;font-weight:800;margin-bottom:4px">4</div>
+        <div style="color:white;font-size:14px;font-weight:700;margin-bottom:4px">Dashboard</div>
+        <div style="color:#94a3b8;font-size:12px">Métricas y decisiones</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 1: Landings dedicadas -->
+  <div style="background:#f8fafc;border-radius:16px;padding:28px;margin-bottom:28px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:40px;height:40px;background:#6351d5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="color:white;font-weight:800;font-size:18px">1</span>
+      </div>
+      <h2 style="color:#032149;font-size:22px;font-weight:800;margin:0">Crea una landing dedicada por influencer</h2>
+    </div>
+    <p style="color:#64748b;font-size:15px;margin-bottom:20px">Cada creador necesita su propia URL. Esto te da atribución 100% fiable: sabes exactamente de qué canal viene cada registro. Sin landing propia, no puedes medir nada.</p>
+
+    <div style="background:white;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px">
+      <p style="color:#032149;font-size:14px;font-weight:700;margin-bottom:10px">Estructura de URLs:</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <code style="background:#f1f5f9;padding:10px 16px;border-radius:8px;font-size:14px;color:#6351d5;display:block">tuproducto.com/r/jf-calero</code>
+        <code style="background:#f1f5f9;padding:10px 16px;border-radius:8px;font-size:14px;color:#6351d5;display:block">tuproducto.com/r/zumitow</code>
+        <code style="background:#f1f5f9;padding:10px 16px;border-radius:8px;font-size:14px;color:#6351d5;display:block">tuproducto.com/r/informe-k</code>
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px">
+      <p style="color:#032149;font-size:14px;font-weight:700;margin-bottom:10px">Qué debe tener cada landing:</p>
+      <ul style="color:#64748b;font-size:14px;padding-left:20px;line-height:2;margin:0">
+        <li><strong>Mención del creador:</strong> "Oferta exclusiva vía [Nombre]" — refuerza la confianza transferida</li>
+        <li><strong>Incentivo claro:</strong> el beneficio concreto que el creador menciona en su contenido</li>
+        <li><strong>CTA único:</strong> un solo botón de registro, sin distracciones</li>
+        <li><strong>Trust signals:</strong> regulación, datos, testimonios — lo que reduce fricción</li>
+        <li><strong>Código de partner:</strong> variable oculta que identifica la fuente en cada registro</li>
+      </ul>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;padding:20px;border:1px solid #334155">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:24px;height:24px;background:linear-gradient(135deg,#d4a574,#c9956b);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="color:white;font-size:14px;font-weight:700;margin:0">Con Claude Code:</p>
+      </div>
+      <p style="color:#94a3b8;font-size:14px;margin-bottom:10px">Le dices: <em style="color:#3ecda5">"Crea una landing para el influencer JF Calero con incentivo de 70€ en créditos, tracking PostHog y código de partner jf-calero"</em></p>
+      <p style="color:#94a3b8;font-size:13px;margin:0">Claude Code genera la landing completa: HTML, estilos, tracking, código de partner. Para un nuevo influencer, copias la plantilla y cambias dos variables. <strong style="color:white">5 minutos vs 2 días</strong> con un desarrollador.</p>
+    </div>
+  </div>
+
+  <!-- PASO 2: Tracking con PostHog -->
+  <div style="background:white;border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #e2e8f0">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:40px;height:40px;background:#6351d5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="color:white;font-weight:800;font-size:18px">2</span>
+      </div>
+      <h2 style="color:#032149;font-size:22px;font-weight:800;margin:0">Configura el tracking de eventos con PostHog</h2>
+    </div>
+    <p style="color:#64748b;font-size:15px;margin-bottom:20px">Cada landing envía eventos a PostHog. Esto te permite medir el funnel completo por canal y detectar dónde se pierden usuarios.</p>
+
+    <div style="background:#f8fafc;border-radius:12px;padding:20px;margin-bottom:16px">
+      <p style="color:#032149;font-size:14px;font-weight:700;margin-bottom:12px">Eventos que trackeamos:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:white;border-radius:8px;padding:14px;border-left:4px solid #3b82f6">
+          <p style="color:#032149;font-size:13px;font-weight:700;margin:0 0 4px 0">partner_landing_view</p>
+          <p style="color:#64748b;font-size:12px;margin:0">El usuario aterriza en la landing. Props: partner, utm_source</p>
+        </div>
+        <div style="background:white;border-radius:8px;padding:14px;border-left:4px solid #f59e0b">
+          <p style="color:#032149;font-size:13px;font-weight:700;margin:0 0 4px 0">partner_cta_click</p>
+          <p style="color:#64748b;font-size:12px;margin:0">Click en el botón de registro. Props: partner, button_position</p>
+        </div>
+        <div style="background:white;border-radius:8px;padding:14px;border-left:4px solid #22c55e">
+          <p style="color:#032149;font-size:13px;font-weight:700;margin:0 0 4px 0">registration_completed</p>
+          <p style="color:#64748b;font-size:12px;margin:0">Registro completado. Props: partner, user_id, email_domain</p>
+        </div>
+        <div style="background:white;border-radius:8px;padding:14px;border-left:4px solid #a855f7">
+          <p style="color:#032149;font-size:13px;font-weight:700;margin:0 0 4px 0">first_investment</p>
+          <p style="color:#64748b;font-size:12px;margin:0">Primera inversión real. Props: partner, amount, investment_id</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border-radius:12px;padding:20px;margin-bottom:16px">
+      <p style="color:#032149;font-size:14px;font-weight:700;margin-bottom:10px">Ejemplo de implementación:</p>
+      <pre style="background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;font-size:13px;overflow-x:auto;margin:0"><code>// En cada landing de influencer
+posthog.capture('partner_landing_view', {
+  partner: 'jf-calero',
+  utm_source: 'youtube',
+  utm_campaign: 'crowdfunding-q1'
+});
+
+// Al hacer click en CTA
+posthog.capture('partner_cta_click', {
+  partner: 'jf-calero',
+  button_position: 'hero'
+});
+
+// Después del registro (server-side o webhook)
+posthog.capture('registration_completed', {
+  partner: 'jf-calero',
+  user_id: 'usr_12345'
+});</code></pre>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;padding:20px;border:1px solid #334155">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:24px;height:24px;background:linear-gradient(135deg,#d4a574,#c9956b);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="color:white;font-size:14px;font-weight:700;margin:0">Con Claude Code:</p>
+      </div>
+      <p style="color:#94a3b8;font-size:14px;margin:0"><em style="color:#3ecda5">"Añade tracking PostHog a todas las landings de influencers. Quiero medir: visita, click en CTA, registro y primera inversión. Que cada evento incluya el partner como propiedad."</em> — Claude Code lo implementa en todas las landings de una vez.</p>
+    </div>
+  </div>
+
+  <!-- PASO 3: Conexión con CRM -->
+  <div style="background:#f8fafc;border-radius:16px;padding:28px;margin-bottom:28px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:40px;height:40px;background:#6351d5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="color:white;font-weight:800;font-size:18px">3</span>
+      </div>
+      <h2 style="color:#032149;font-size:22px;font-weight:800;margin:0">Conecta con tu CRM vía API para atribución end-to-end</h2>
+    </div>
+    <p style="color:#64748b;font-size:15px;margin-bottom:20px">PostHog te dice qué pasa en la landing. El CRM te dice qué pasa después: ¿el usuario se activó? ¿invirtió? ¿cuánto? Conectar ambos es lo que cierra el loop de atribución.</p>
+
+    <div style="background:white;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-bottom:16px">
+      <p style="color:#032149;font-size:14px;font-weight:700;margin-bottom:12px">Flujo de datos:</p>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="background:#3b82f6;color:white;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">Landing</span>
+        <span style="color:#64748b">→</span>
+        <span style="background:#f59e0b;color:white;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">PostHog</span>
+        <span style="color:#64748b">→</span>
+        <span style="background:#22c55e;color:white;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">Webhook</span>
+        <span style="color:#64748b">→</span>
+        <span style="background:#a855f7;color:white;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">CRM (GHL)</span>
+        <span style="color:#64748b">→</span>
+        <span style="background:#032149;color:white;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">Dashboard</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+      <div style="background:white;border-radius:12px;padding:18px;border:1px solid #e2e8f0">
+        <p style="color:#032149;font-size:14px;font-weight:700;margin-bottom:8px">Lo que guarda el CRM por lead:</p>
+        <ul style="color:#64748b;font-size:13px;padding-left:16px;line-height:1.9;margin:0">
+          <li><strong>Fuente:</strong> partner/influencer que lo trajo</li>
+          <li><strong>Landing:</strong> URL de entrada</li>
+          <li><strong>Fecha de registro</strong></li>
+          <li><strong>Estado:</strong> registro → usuario activo → inversor</li>
+          <li><strong>Importe invertido</strong> (cuando aplica)</li>
+        </ul>
+      </div>
+      <div style="background:white;border-radius:12px;padding:18px;border:1px solid #e2e8f0">
+        <p style="color:#032149;font-size:14px;font-weight:700;margin-bottom:8px">Lo que permite calcular:</p>
+        <ul style="color:#64748b;font-size:13px;padding-left:16px;line-height:1.9;margin:0">
+          <li><strong>CAC por canal:</strong> coste / usuarios adquiridos</li>
+          <li><strong>Tasa de conversión:</strong> registro → inversor</li>
+          <li><strong>Revenue por canal:</strong> ingresos atribuidos</li>
+          <li><strong>LTV por fuente:</strong> valor a largo plazo por canal</li>
+          <li><strong>ROI real:</strong> ingresos vs coste total</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;padding:20px;border:1px solid #334155">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:24px;height:24px;background:linear-gradient(135deg,#d4a574,#c9956b);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="color:white;font-size:14px;font-weight:700;margin:0">Con Claude Code:</p>
+      </div>
+      <p style="color:#94a3b8;font-size:14px;margin:0"><em style="color:#3ecda5">"Crea una Netlify function que reciba el webhook de registro, lo guarde en Firebase con el partner tag, y lo envíe a GHL vía API con las propiedades de atribución."</em> — Claude Code genera la función serverless, la conexión con GHL, y el manejo de errores.</p>
+    </div>
+  </div>
+
+  <!-- PASO 4: Dashboard de métricas -->
+  <div style="background:white;border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #e2e8f0">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:40px;height:40px;background:#6351d5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="color:white;font-weight:800;font-size:18px">4</span>
+      </div>
+      <h2 style="color:#032149;font-size:22px;font-weight:800;margin:0">Monta el dashboard de decisión</h2>
+    </div>
+    <p style="color:#64748b;font-size:15px;margin-bottom:20px">Con los datos de las 3 capas anteriores, construyes un dashboard que te dice exactamente qué canal escalar y cuál pausar. Aquí van los datos reales de nuestro caso.</p>
+  </div>
+
+  <div style="background:linear-gradient(135deg,#032149,#0a3a6b);border-radius:16px;padding:28px;margin-bottom:28px">
+    <h2 style="color:white;font-size:22px;font-weight:800;margin-bottom:20px">Datos reales: caso crowdfunding inmobiliario</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+      <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:16px;text-align:center">
+        <div style="color:#3ecda5;font-size:28px;font-weight:800">19.305 €</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:4px">Inversión total</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:16px;text-align:center">
+        <div style="color:#3ecda5;font-size:28px;font-weight:800">269</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:4px">Registros</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:16px;text-align:center">
+        <div style="color:#3ecda5;font-size:28px;font-weight:800">121</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:4px">Inversores</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:16px;text-align:center">
+        <div style="color:#3ecda5;font-size:28px;font-weight:800">17.883 €</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:4px">Ingresos</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;text-align:center">
+        <div style="color:white;font-size:20px;font-weight:800">112</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:2px">Usuarios activos</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;text-align:center">
+        <div style="color:white;font-size:20px;font-weight:800">27 €</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:2px">Mejor CAC usuario</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;text-align:center">
+        <div style="color:white;font-size:20px;font-weight:800">11</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:2px">Canales activados</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla completa de canales -->
+  <div style="background:white;border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #e2e8f0">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:16px">Rendimiento por canal</h2>
+
+    <div style="overflow-x:auto;margin-bottom:20px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:#032149;color:white">
+            <th style="padding:10px 12px;text-align:left;border-radius:8px 0 0 0">Canal</th>
+            <th style="padding:10px 12px;text-align:left">Formato</th>
+            <th style="padding:10px 12px;text-align:right">Inversión</th>
+            <th style="padding:10px 12px;text-align:right">Registros</th>
+            <th style="padding:10px 12px;text-align:right">Usuarios</th>
+            <th style="padding:10px 12px;text-align:right">Inversores</th>
+            <th style="padding:10px 12px;text-align:right">Ingresos</th>
+            <th style="padding:10px 12px;text-align:right;border-radius:0 8px 0 0">CAC Usr.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">JF Calero</td>
+            <td style="padding:10px 12px;color:#64748b">Mención en vídeo</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">4.000 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149;font-weight:700">150</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">67</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">71</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a;font-weight:700">16.501 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a;font-weight:700">27 €</td>
+          </tr>
+          <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Informe K</td>
+            <td style="padding:10px 12px;color:#64748b">Vídeo semi-dedicado</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">1.200 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">34</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">13</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">7</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a">122 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a;font-weight:700">35 €</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Zumitow</td>
+            <td style="padding:10px 12px;color:#64748b">Newsletter</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">720 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">21</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">11</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">10</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a">66 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a;font-weight:700">34 €</td>
+          </tr>
+          <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Finect</td>
+            <td style="padding:10px 12px;color:#64748b">Artículo</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">1.830 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">18</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">5</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">12</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a">534 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#d97706">102 €</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Memoria de Tiburón</td>
+            <td style="padding:10px 12px;color:#64748b">Vídeo semi-dedicado</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">4.000 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">15</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">3</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">7</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a">330 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#dc2626">267 €</td>
+          </tr>
+          <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Todocrowdlending</td>
+            <td style="padding:10px 12px;color:#64748b">Artículo, noticias, newsletter</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">1.595 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">9</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">5</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">4</td>
+            <td style="padding:10px 12px;text-align:right;color:#64748b">—</td>
+            <td style="padding:10px 12px;text-align:right;color:#dc2626">177 €</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Geekonomy</td>
+            <td style="padding:10px 12px;color:#64748b">Vídeo</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">840 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">6</td>
+            <td style="padding:10px 12px;text-align:right;color:#64748b">—</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">2</td>
+            <td style="padding:10px 12px;text-align:right;color:#64748b">—</td>
+            <td style="padding:10px 12px;text-align:right;color:#dc2626">140 €</td>
+          </tr>
+          <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Invierte Joven</td>
+            <td style="padding:10px 12px;color:#64748b">Hilo Twitter + Newsletter</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">1.020 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">6</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">4</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">1</td>
+            <td style="padding:10px 12px;text-align:right;color:#64748b">—</td>
+            <td style="padding:10px 12px;text-align:right;color:#dc2626">170 €</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Héctor Chamizo</td>
+            <td style="padding:10px 12px;color:#64748b">Vídeo podcast</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">3.000 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">5</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">2</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">3</td>
+            <td style="padding:10px 12px;text-align:right;color:#64748b">—</td>
+            <td style="padding:10px 12px;text-align:right;color:#dc2626">600 €</td>
+          </tr>
+          <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Rankia</td>
+            <td style="padding:10px 12px;color:#64748b">Ficha, artículo, newsletter</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">5.100 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">5</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">2</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">4</td>
+            <td style="padding:10px 12px;text-align:right;color:#16a34a">330 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#dc2626">1.020 €</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 12px;font-weight:700;color:#032149">Roams</td>
+            <td style="padding:10px 12px;color:#64748b">Artículo, noticias, RRSS</td>
+            <td style="padding:10px 12px;text-align:right;color:#032149">1.000 €</td>
+            <td style="padding:10px 12px;text-align:right;color:#64748b" colspan="5">Pendiente de datos</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr style="background:#032149;color:white;font-weight:700">
+            <td style="padding:10px 12px;border-radius:0 0 0 8px" colspan="2">TOTAL</td>
+            <td style="padding:10px 12px;text-align:right">19.305 €</td>
+            <td style="padding:10px 12px;text-align:right">269</td>
+            <td style="padding:10px 12px;text-align:right">112</td>
+            <td style="padding:10px 12px;text-align:right">121</td>
+            <td style="padding:10px 12px;text-align:right">17.883 €</td>
+            <td style="padding:10px 12px;text-align:right;border-radius:0 0 8px 0"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Top performer -->
+    <div style="background:linear-gradient(135deg,#f0fdf4,#f0f9ff);border-radius:12px;padding:20px;border-left:4px solid #3ecda5;margin-bottom:20px">
+      <p style="color:#032149;font-size:14px;font-weight:700;margin-bottom:8px">Top performer: JF Calero</p>
+      <p style="color:#475569;font-size:14px;margin:0">150 registros, 71 inversores, 16.501 € de ingresos y un <strong>CAC de solo 27 €</strong> — con una inversión de 4.000 €. Una sola mención en vídeo.</p>
+    </div>
+
+    <div style="background:#f0fdf4;border-radius:10px;padding:16px;margin-bottom:16px;border-left:4px solid #16a34a">
+      <p style="color:#15803d;font-size:14px;font-weight:700;margin-bottom:6px">Los micro-influencers con audiencia comprometida superan a los grandes.</p>
+      <p style="color:#475569;font-size:14px;margin:0">JF Calero (CAC 27 €), Zumitow (CAC 34 €) e Informe K (CAC 35 €) generaron los mejores resultados. No es cuestión de alcance — es cuestión de <strong>confianza transferida.</strong></p>
+    </div>
+
+    <h3 style="color:#032149;font-size:17px;font-weight:700;margin-bottom:12px">Insights clave</h3>
+    <ul style="color:#64748b;font-size:14px;padding-left:20px;line-height:2">
+      <li>El <strong>formato vídeo</strong> y las <strong>newsletters</strong> fueron los canales con mejor conversión</li>
+      <li>Los creadores que hablaron desde la experiencia personal convirtieron más</li>
+      <li>El incentivo de €70 fue decisivo: daba al creador algo concreto que ofrecer</li>
+      <li>Los registros siguieron llegando semanas después de la publicación — <strong>efecto long tail</strong></li>
+      <li><strong>Finect</strong> (medio) generó 12 inversores con solo 18 registros — tasa de conversión del 67%</li>
+    </ul>
+  </div>
+
+  <!-- Reglas de decisión -->
+  <div style="background:#f8fafc;border-radius:16px;padding:28px;margin-bottom:28px">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:16px">Reglas de decisión automáticas</h2>
+    <p style="color:#64748b;font-size:15px;margin-bottom:20px">Con los datos del dashboard, las decisiones se toman solas. Sin datos, son opiniones. Con datos, son decisiones.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+      <div style="background:#f0fdf4;border-radius:12px;padding:20px;border:2px solid #bbf7d0">
+        <p style="color:#15803d;font-size:15px;font-weight:700;margin-bottom:8px">CAC < objetivo → ESCALAR</p>
+        <p style="color:#475569;font-size:14px;margin:0">Negociar más contenido, amplificar como paid ad (whitelisting), aumentar presupuesto del canal. Es un canal que funciona — dale más gasolina.</p>
+      </div>
+      <div style="background:#fef2f2;border-radius:12px;padding:20px;border:2px solid #fecaca">
+        <p style="color:#991b1b;font-size:15px;font-weight:700;margin-bottom:8px">CAC > 2x objetivo → PAUSAR</p>
+        <p style="color:#475569;font-size:14px;margin:0">Reasignar presupuesto a canales con mejor rendimiento. No es personal — es matemática. Revisa después si el contenido genera long tail.</p>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;padding:20px;border:1px solid #334155">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:24px;height:24px;background:linear-gradient(135deg,#d4a574,#c9956b);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="color:white;font-size:14px;font-weight:700;margin:0">Con Claude Code:</p>
+      </div>
+      <p style="color:#94a3b8;font-size:14px;margin:0"><em style="color:#3ecda5">"Genera un dashboard con los datos de todos los canales. Quiero ver inversión, registros, usuarios, inversores, ingresos y CAC por canal. Protégelo con password."</em> — Claude Code crea el dashboard completo con filtros, KPIs y tabla interactiva.</p>
+    </div>
+  </div>
+
+  <!-- Resumen: qué le pides a Claude Code -->
+  <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #334155">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,#d4a574,#c9956b);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h2 style="color:white;font-size:22px;font-weight:800;margin:0">Los 4 prompts que le das a Claude Code</h2>
+        <p style="color:#94a3b8;font-size:14px;margin:4px 0 0 0">Todo el sistema se construye con estas instrucciones</p>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,0.1)">
+        <p style="color:#3ecda5;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Prompt 1 — Landings</p>
+        <p style="color:white;font-size:14px;font-style:italic;margin:0">"Crea una landing para el influencer [nombre] con incentivo de [X]€, tracking PostHog, código de partner [slug], y diseño mobile-first. Usa la misma plantilla que las anteriores."</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,0.1)">
+        <p style="color:#3ecda5;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Prompt 2 — Tracking</p>
+        <p style="color:white;font-size:14px;font-style:italic;margin:0">"Añade tracking PostHog a todas las landings. Eventos: partner_landing_view, partner_cta_click, registration_completed, first_investment. Incluye el partner como propiedad en cada evento."</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,0.1)">
+        <p style="color:#3ecda5;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Prompt 3 — CRM</p>
+        <p style="color:white;font-size:14px;font-style:italic;margin:0">"Crea una función serverless que reciba el webhook de registro, lo guarde en Firebase con el partner tag, y lo envíe a GHL vía API con las propiedades de atribución."</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,0.1)">
+        <p style="color:#3ecda5;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Prompt 4 — Dashboard</p>
+        <p style="color:white;font-size:14px;font-style:italic;margin:0">"Genera un dashboard con estos datos [tabla CSV]. Quiero KPIs, funnel visual y tabla con inversión, registros, usuarios, inversores, ingresos y CAC por canal. Protégelo con password."</p>
+      </div>
+    </div>
+
+    <div style="background:rgba(62,205,165,0.1);border-radius:10px;padding:14px;margin-top:16px;border:1px solid rgba(62,205,165,0.2)">
+      <p style="color:#3ecda5;font-size:14px;font-weight:700;margin-bottom:4px">Resultado: sistema completo en una tarde</p>
+      <p style="color:#94a3b8;font-size:13px;margin:0">Lo que antes requería un equipo de desarrollo durante semanas — landings, tracking, integraciones, dashboard — ahora se monta en horas con Claude Code. Tú te enfocas en la estrategia y las relaciones con creadores.</p>
+    </div>
+  </div>
+
+  <!-- Checklist de arranque -->
+  <div style="background:white;border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #e2e8f0">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:16px">Lo que necesitas para replicar esto</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:24px;height:24px;border:2px solid #3ecda5;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3ecda5" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span style="color:#475569;font-size:14px"><strong>Claude Code</strong> (CLI de Anthropic) — para generar landings, tracking y dashboard</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:24px;height:24px;border:2px solid #3ecda5;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3ecda5" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span style="color:#475569;font-size:14px"><strong>PostHog</strong> (plan gratuito) — para tracking de eventos</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:24px;height:24px;border:2px solid #3ecda5;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3ecda5" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span style="color:#475569;font-size:14px"><strong>Un CRM con API</strong> (GHL, HubSpot, Pipedrive) — para atribución de leads</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:24px;height:24px;border:2px solid #3ecda5;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3ecda5" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span style="color:#475569;font-size:14px"><strong>Hosting con serverless</strong> (Netlify, Vercel) — para las funciones de webhook</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:24px;height:24px;border:2px solid #3ecda5;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3ecda5" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span style="color:#475569;font-size:14px"><strong>Lista de influencers/medios</strong> — los canales que quieres activar y medir</span>
+      </div>
+    </div>
+  </div>
+
+</div>`;
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Recursos', item: `${SITE_URL}/recursos/` },
+    { '@type': 'ListItem', position: 3, name: title, item: `${SITE_URL}/recursos/${slug}/` },
+  ],
+};
+---
+
+<BaseLayout
+  title={`${title} | Growth4U`}
+  description={description}
+  canonical={`${SITE_URL}/recursos/${slug}/`}
+  ogImage={generateOgImage(title)}
+  jsonLd={[breadcrumbSchema]}
+>
+  <main class="min-h-screen bg-white">
+    <section class="bg-[#ece7de] pt-20 pb-14 relative overflow-hidden">
+      <!-- Claude sparkle decorations -->
+      <div class="absolute top-10 right-10 opacity-10">
+        <svg width="160" height="160" viewBox="0 0 100 100" fill="none">
+          <path d="M50 0 L53 47 L100 50 L53 53 L50 100 L47 53 L0 50 L47 47 Z" fill="#c9956b"/>
+        </svg>
+      </div>
+      <div class="absolute bottom-10 left-8 opacity-5">
+        <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+          <path d="M50 0 L53 47 L100 50 L53 53 L50 100 L47 53 L0 50 L47 47 Z" fill="#c9956b"/>
+        </svg>
+      </div>
+
+      <div class="max-w-5xl mx-auto px-4 relative z-10">
+        <div class="flex items-center gap-2 mb-6">
+          <a href="/" class="text-[#6b5c4c]/60 hover:text-[#6b5c4c] text-sm transition-colors">Growth4U</a>
+          <span class="text-[#6b5c4c]/30">/</span>
+          <span class="text-[#6b5c4c]/60 text-sm">Recursos</span>
+        </div>
+
+        <!-- Claude Code badge -->
+        <div class="inline-flex items-center gap-2 bg-[#c9956b]/20 border border-[#c9956b]/30 rounded-full px-4 py-2 mb-6">
+          <svg width="16" height="16" viewBox="0 0 100 100" fill="none">
+            <path d="M50 10 L53 47 L90 50 L53 53 L50 90 L47 53 L10 50 L47 47 Z" fill="#c9956b"/>
+          </svg>
+          <span class="text-[#8b6914] text-sm font-semibold">Guía práctica con Claude Code</span>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold text-[#1a1a1a] mb-6 leading-tight">{title}</h1>
+        <p class="text-xl text-[#5c5347] leading-relaxed mb-8 max-w-3xl">{description}</p>
+
+        <!-- Logos: Growth4U + Claude -->
+        <div class="flex items-center gap-6 mb-8">
+          <div class="flex items-center gap-3 bg-white/50 backdrop-blur border border-[#c9956b]/20 rounded-xl px-5 py-3">
+            <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U" class="h-5" />
+            <span class="text-[#c9956b]/50 text-lg">×</span>
+            <div class="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 100 100" fill="none">
+                <path d="M50 10 L53 47 L90 50 L53 53 L50 90 L47 53 L10 50 L47 47 Z" fill="#c9956b"/>
+              </svg>
+              <span class="text-[#1a1a1a] font-bold text-lg" style="font-family: Georgia, serif">Claude</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-6 text-[#6b5c4c] text-sm">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#c9956b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Guía paso a paso</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#c9956b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Con datos reales</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#c9956b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Prompts incluidos</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#c9956b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>100% gratuito</span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="max-w-5xl mx-auto px-4 py-12 pb-20">
+      <StaticLeadMagnetGate
+        client:only="react"
+        magnetSlug={slug}
+        magnetTitle={title}
+        excerpt={excerpt}
+        fullContent={fullContent}
+      />
+    </section>
+  </main>
+</BaseLayout>

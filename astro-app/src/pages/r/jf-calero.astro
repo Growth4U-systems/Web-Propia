@@ -1,0 +1,133 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE_URL } from '../../lib/constants';
+
+export const prerender = true;
+
+const partner = 'jf-calero';
+const partnerName = 'JF Calero';
+const incentive = '70 € en créditos de inversión';
+---
+
+<BaseLayout
+  title="Invierte en inmobiliario desde 100 € — Oferta exclusiva"
+  description={`Oferta exclusiva de ${partnerName}: ${incentive} gratis en tu primer registro. Crowdfunding inmobiliario regulado por la CNMV.`}
+  canonical={`${SITE_URL}/r/${partner}/`}
+>
+  <main class="min-h-screen bg-slate-50">
+    <!-- Hero -->
+    <section class="bg-[#032149] pt-16 pb-20">
+      <div class="max-w-3xl mx-auto px-4 text-center">
+        <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-full px-4 py-2 mb-8">
+          <span class="w-2 h-2 bg-[#3ecda5] rounded-full animate-pulse"></span>
+          <span class="text-white/80 text-sm">Oferta exclusiva vía <strong class="text-white">{partnerName}</strong></span>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
+          Invierte en inmobiliario<br/>desde <span class="text-[#3ecda5]">100 €</span>
+        </h1>
+
+        <p class="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+          Crowdfunding inmobiliario regulado por la CNMV. Rentabilidades históricas del 8-12% anual. Sin complicaciones.
+        </p>
+
+        <div class="bg-[#3ecda5]/20 border border-[#3ecda5]/30 rounded-2xl p-6 max-w-md mx-auto mb-10">
+          <p class="text-[#3ecda5] font-bold text-lg mb-1">{incentive}</p>
+          <p class="text-white/70 text-sm">Gratis con tu primer registro. Canjeables en tu primera inversión.</p>
+        </div>
+
+        <a
+          href="#registro"
+          class="inline-block bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold py-4 px-10 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#3ecda5]/30"
+        >
+          Registrarme gratis →
+        </a>
+      </div>
+    </section>
+
+    <!-- Trust signals -->
+    <section class="py-12 bg-white border-b border-slate-200">
+      <div class="max-w-4xl mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div>
+            <div class="text-3xl font-extrabold text-[#032149]">CNMV</div>
+            <p class="text-slate-500 text-sm mt-1">Regulado</p>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold text-[#032149]">100 €</div>
+            <p class="text-slate-500 text-sm mt-1">Inversión mínima</p>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold text-[#032149]">8-12%</div>
+            <p class="text-slate-500 text-sm mt-1">Rentabilidad histórica</p>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold text-[#3ecda5]">{incentive.split(' ')[0]} €</div>
+            <p class="text-slate-500 text-sm mt-1">Bonus de bienvenida</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="py-16 bg-slate-50">
+      <div class="max-w-3xl mx-auto px-4">
+        <h2 class="text-2xl font-extrabold text-[#032149] text-center mb-12">Cómo funciona</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="text-center">
+            <div class="w-14 h-14 bg-[#6351d5]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-[#6351d5] font-extrabold text-xl">1</span>
+            </div>
+            <h3 class="font-bold text-[#032149] mb-2">Regístrate gratis</h3>
+            <p class="text-slate-500 text-sm">Crea tu cuenta en 5 minutos. Verificación rápida y segura.</p>
+          </div>
+          <div class="text-center">
+            <div class="w-14 h-14 bg-[#6351d5]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-[#6351d5] font-extrabold text-xl">2</span>
+            </div>
+            <h3 class="font-bold text-[#032149] mb-2">Elige un proyecto</h3>
+            <p class="text-slate-500 text-sm">Explora proyectos inmobiliarios analizados por nuestro equipo.</p>
+          </div>
+          <div class="text-center">
+            <div class="w-14 h-14 bg-[#6351d5]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="text-[#6351d5] font-extrabold text-xl">3</span>
+            </div>
+            <h3 class="font-bold text-[#032149] mb-2">Invierte desde 100 €</h3>
+            <p class="text-slate-500 text-sm">Invierte con tus {incentive} de bienvenida incluidos.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA final -->
+    <section id="registro" class="py-16 bg-[#032149]">
+      <div class="max-w-xl mx-auto px-4 text-center">
+        <h2 class="text-3xl font-extrabold text-white mb-4">Empieza a invertir hoy</h2>
+        <p class="text-slate-300 mb-8">Aprovecha los {incentive} exclusivos por venir de parte de {partnerName}.</p>
+        <a
+          href="#"
+          class="inline-block bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold py-4 px-10 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#3ecda5]/30"
+        >
+          Crear mi cuenta gratis →
+        </a>
+        <p class="text-slate-500 text-xs mt-6">Al registrarte aceptas los términos y condiciones. Los créditos son canjeables únicamente en tu primera inversión.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- PostHog tracking snippet (example) -->
+  <script define:vars={{ partner }}>
+    // Example: PostHog event tracking per partner landing
+    if (typeof window !== 'undefined' && window.posthog) {
+      window.posthog.capture('partner_landing_view', { partner: partner });
+    }
+    // Track CTA clicks
+    document.querySelectorAll('a[href="#registro"], a[href="#"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        if (window.posthog) {
+          window.posthog.capture('partner_cta_click', { partner: partner });
+        }
+      });
+    });
+  </script>
+</BaseLayout>

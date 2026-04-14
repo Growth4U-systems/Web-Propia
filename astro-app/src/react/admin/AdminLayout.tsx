@@ -21,6 +21,7 @@ import {
   Lightbulb,
   ChevronDown,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { signInWithGoogle, signOutUser, onAuthChange, getAllLIComments, getAllLIProspects } from '../../lib/firebase-client';
@@ -70,7 +71,7 @@ export default function AdminLayout() {
   type NavItem = { name: string; href: string; icon: any; badge?: number; children?: NavItem[] };
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/admin/', icon: LayoutDashboard },
-    { name: 'Casos de Éxito', href: '/admin/casos-de-exito/', icon: Trophy },
+{ name: 'Casos de Éxito', href: '/admin/casos-de-exito/', icon: Trophy },
     { name: 'Ideas Hub', href: '/admin/ideas/', icon: Lightbulb, children: [
       { name: 'Blog', href: '/admin/blog/', icon: FileText },
       { name: 'Lead Magnets', href: '/admin/lead-magnets/', icon: Download },
