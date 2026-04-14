@@ -23,6 +23,10 @@ async function createGhlContact(
   empresa: string,
   magnetSlug: string,
   magnetTitle: string,
+  utmSource: string = '',
+  utmMedium: string = '',
+  utmCampaign: string = '',
+  utmContent: string = '',
 ): Promise<void> {
   try {
     const searchResp = await fetch(
@@ -69,8 +73,19 @@ async function createGhlContact(
         lastName: nameParts.slice(1).join(" ") || "",
         email,
         companyName: empresa || undefined,
-        tags: ["lead-magnet", `lead-magnet-${magnetSlug}`],
+        tags: [
+          "lead-magnet",
+          `lead-magnet-${magnetSlug}`,
+          ...(utmSource ? [`utm-source-${utmSource}`] : []),
+          ...(utmCampaign ? [`utm-campaign-${utmCampaign}`] : []),
+        ],
         source: `Lead Magnet: ${magnetTitle}`,
+        customFields: [
+          ...(utmSource ? [{ key: "utm_source", field_value: utmSource }] : []),
+          ...(utmMedium ? [{ key: "utm_medium", field_value: utmMedium }] : []),
+          ...(utmCampaign ? [{ key: "utm_campaign", field_value: utmCampaign }] : []),
+          ...(utmContent ? [{ key: "utm_content", field_value: utmContent }] : []),
+        ],
       }),
       signal: AbortSignal.timeout(5_000),
     });
@@ -107,7 +122,7 @@ export default async (req: Request, context: Context) => {
   if (req.method === "OPTIONS") return new Response("", { headers: CORS_HEADERS });
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
 
-  const { nombre, email, empresa, magnetSlug, magnetTitle, contentUrl } = await req.json();
+  const { nombre, email, empresa, magnetSlug, magnetTitle, contentUrl, utmSource, utmMedium, utmCampaign, utmContent } = await req.json();
 
   if (!nombre || !email || !magnetSlug || !magnetTitle || !contentUrl) {
     return jsonResponse({ error: "Missing fields" }, 400);
@@ -122,7 +137,7 @@ export default async (req: Request, context: Context) => {
   // Create GHL contact in background (don't block email sending)
   const ghlApiKey = process.env.GHL_API_KEY;
   if (ghlApiKey) {
-    createGhlContact(ghlApiKey, email.trim().toLowerCase(), nombre.trim(), empresa || "", magnetSlug, magnetTitle);
+    createGhlContact(ghlApiKey, email.trim().toLowerCase(), nombre.trim(), empresa || "", magnetSlug, magnetTitle, utmSource || "", utmMedium || "", utmCampaign || "", utmContent || "");
   }
 
   const firstName = nombre.trim().split(/\s+/)[0] || "Hola";

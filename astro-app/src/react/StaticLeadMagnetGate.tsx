@@ -37,6 +37,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
 
       // Send email via GHL (new flow)
       const contentUrl = `${window.location.origin}/recursos/${magnetSlug}/?token=${encodeURIComponent(btoa(formData.email.trim().toLowerCase()))}`;
+      const params = new URLSearchParams(window.location.search);
       const resp = await fetch('/api/lead-magnet-gate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,6 +48,10 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
           magnetSlug,
           magnetTitle,
           contentUrl,
+          utmSource: params.get('utm_source') || '',
+          utmMedium: params.get('utm_medium') || '',
+          utmCampaign: params.get('utm_campaign') || '',
+          utmContent: params.get('utm_content') || '',
         }),
       });
       const data = await resp.json();
