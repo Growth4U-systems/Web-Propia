@@ -246,6 +246,21 @@ function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedul
   const [scheduledTime, setScheduledTime] = useState('10:00');
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Auto-select idea from URL param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ideaId = params.get('ideaId');
+    if (ideaId && ideasList.length > 0) {
+      const idea = ideasList.find(i => i.id === ideaId);
+      if (idea) {
+        setTitle(idea.topic);
+        setCaption(idea.angle + (idea.sourceInspiration ? `\n\nInspiración: ${idea.sourceInspiration}` : ''));
+        setStep('editor');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [ideasList]);
+
   // Render preview image when on preview step
   useEffect(() => {
     if (step !== 'preview' || !previewCanvasRef.current || generatedImageUrl) return;
@@ -543,7 +558,7 @@ export default function CameraPage() {
         }
         setPublishedSlugs(slugs);
       }),
-      getAllContentIdeas().then(all => setIdeasList(all.filter(i => i.status === 'idea' || i.status === 'draft'))),
+      getAllContentIdeas().then(all => setIdeasList(all.filter(i => i.status === 'idea' || i.status === 'draft' || i.status === 'assigned'))),
     ]).catch(e => console.error('Error loading data:', e)).finally(() => setLoading(false));
   }, []);
 

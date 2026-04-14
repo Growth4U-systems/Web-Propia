@@ -568,10 +568,27 @@ function CreateTab({ selectedAccount, onPublish }: {
   // Preview canvas
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Load sources
+  // Load sources + auto-select idea from URL param
   useEffect(() => {
     Promise.all([
-      getAllContentIdeas().then(all => setIdeasList(all.filter(i => (i.status === 'idea' || i.status === 'draft') && i.platforms?.includes('linkedin')))),
+      getAllContentIdeas().then(all => {
+        const filtered = all.filter(i => i.status === 'idea' || i.status === 'draft' || i.status === 'assigned');
+        setIdeasList(filtered);
+        // Auto-select idea if ideaId in URL
+        const params = new URLSearchParams(window.location.search);
+        const ideaId = params.get('ideaId');
+        if (ideaId) {
+          const idea = filtered.find(i => i.id === ideaId) || all.find(i => i.id === ideaId);
+          if (idea) {
+            setTitle(idea.topic);
+            setCaption(idea.angle + (idea.sourceInspiration ? `\n\nInspiración: ${idea.sourceInspiration}` : ''));
+            setStep('editor');
+          }
+          // Clean URL
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+        return filtered;
+      }),
       getAllPosts().then(all => setBlogList(all as BlogPost[])),
     ]).then(() => setSourcesLoaded(true)).catch(() => setSourcesLoaded(true));
   }, []);
@@ -689,7 +706,7 @@ function CreateTab({ selectedAccount, onPublish }: {
           <div className="p-6 bg-gradient-to-br from-[#6351d5]/5 to-[#0077B5]/5 border-2 border-[#6351d5]/20 rounded-xl">
             <Lightbulb className="w-6 h-6 text-[#6351d5] mb-3" />
             <p className="font-semibold text-[#032149]">Desde Ideas Hub</p>
-            <p className="text-xs text-slate-400 mt-1">{ideasList.length} ideas para LinkedIn</p>
+            <p className="text-xs text-slate-400 mt-1">{ideasList.length} ideas disponibles</p>
           </div>
         </div>
 

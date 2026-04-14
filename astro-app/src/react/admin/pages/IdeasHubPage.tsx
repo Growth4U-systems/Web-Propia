@@ -197,12 +197,12 @@ export default function IdeasHubPage() {
       setIdeas(prev => prev.map(i => i.id === idea.id ? { ...i, status: 'assigned', assignedTo: channelList.join(', ') } : i));
       setSelectedChannels(prev => ({ ...prev, [idea.id]: new Set() }));
 
-      // Navigate to first channel
+      // Navigate to first channel with idea context
       const routes: Record<string, string> = {
         linkedin: '/admin/linkedin/', twitter: '/admin/twitter/',
         instagram: '/admin/instagram/', newsletter: '/admin/newsletter/', blog: '/admin/blog/',
       };
-      if (routes[channelList[0]]) navigate(routes[channelList[0]]);
+      if (routes[channelList[0]]) navigate(`${routes[channelList[0]]}?ideaId=${idea.id}`);
     } catch (err) {
       console.error('Error sending to channels:', err);
     }
