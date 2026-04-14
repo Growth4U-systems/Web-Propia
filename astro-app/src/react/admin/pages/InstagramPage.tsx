@@ -244,6 +244,7 @@ function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedul
   const [error, setError] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('10:00');
+  const [selectedAvatar, setSelectedAvatar] = useState(0);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Auto-select idea from URL param
@@ -267,8 +268,7 @@ function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedul
     // Auto-generate image on preview step
     (async () => {
       try {
-        const templateIdx = Math.floor(Math.random() * AVATAR_TEMPLATES.length);
-        const blob = await generateIGImage(title, '', templateIdx);
+        const blob = await generateIGImage(title, '', selectedAvatar);
         const url = await uploadToCloudinary(blob);
         setGeneratedImageUrl(url);
       } catch (err) {
@@ -276,7 +276,7 @@ function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedul
         setError('Error generando imagen');
       }
     })();
-  }, [step]);
+  }, [step, selectedAvatar]);
 
   function selectIdea(idea: ContentIdea & { id: string }) {
     setTitle(idea.topic);
@@ -318,8 +318,7 @@ function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedul
     try {
       let imageUrl = generatedImageUrl;
       if (!imageUrl) {
-        const templateIdx = Math.floor(Math.random() * AVATAR_TEMPLATES.length);
-        const blob = await generateIGImage(title, '', templateIdx);
+        const blob = await generateIGImage(title, '', selectedAvatar);
         imageUrl = await uploadToCloudinary(blob);
         setGeneratedImageUrl(imageUrl);
       }
@@ -336,8 +335,7 @@ function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedul
     try {
       let imageUrl = generatedImageUrl;
       if (!imageUrl) {
-        const templateIdx = Math.floor(Math.random() * AVATAR_TEMPLATES.length);
-        const blob = await generateIGImage(title, '', templateIdx);
+        const blob = await generateIGImage(title, '', selectedAvatar);
         imageUrl = await uploadToCloudinary(blob);
         setGeneratedImageUrl(imageUrl);
       }
@@ -449,6 +447,24 @@ function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedul
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-pink-400 font-mono"
               placeholder="El caption del post de Instagram..." />
             <p className="text-xs text-slate-400 mt-1">{caption.length} / 2,200 caracteres</p>
+          </div>
+
+          {/* Avatar selector */}
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-2 block">Avatar / Plantilla</label>
+            <div className="flex gap-3">
+              {AVATAR_TEMPLATES.map((tpl, i) => (
+                <button key={i} onClick={() => setSelectedAvatar(i)}
+                  className={`relative w-16 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedAvatar === i ? 'border-pink-500 ring-2 ring-pink-500/30' : 'border-slate-200 hover:border-slate-300'}`}>
+                  <img src={tpl.url} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                  {selectedAvatar === i && (
+                    <div className="absolute inset-0 bg-pink-500/10 flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-pink-500 text-white text-xs flex items-center justify-center font-bold">{i + 1}</div>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {error && (

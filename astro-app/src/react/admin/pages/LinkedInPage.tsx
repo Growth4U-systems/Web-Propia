@@ -190,20 +190,21 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-async function generateLIImage(text: string, _template: LinkedInAccount['template']): Promise<Blob> {
+async function generateLIImage(text: string, _template: LinkedInAccount['template'], carouselTemplate?: CarouselTemplate): Promise<Blob> {
+  const t = carouselTemplate || CAROUSEL_TEMPLATES[0];
   const W = 1080, H = 1350;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
 
-  // Background — Tech Warm
-  ctx.fillStyle = '#D4845A';
+  // Background — from selected template
+  ctx.fillStyle = t.bg;
   ctx.fillRect(0, 0, W, H);
 
   // Hex pattern
   ctx.globalAlpha = 0.06;
-  ctx.strokeStyle = '#F5F0EB';
+  ctx.strokeStyle = t.cardBg;
   ctx.lineWidth = 0.8;
   for (let row = 0; row < 20; row++) {
     for (let col = 0; col < 14; col++) {
@@ -215,7 +216,7 @@ async function generateLIImage(text: string, _template: LinkedInAccount['templat
   ctx.globalAlpha = 1;
 
   // Card
-  roundRect(ctx, 60, 80, 960, 1190, 24, '#F5F0EB');
+  roundRect(ctx, 60, 80, 960, 1190, 24, t.cardBg);
 
   // GROWTH4U watermark
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
@@ -223,9 +224,9 @@ async function generateLIImage(text: string, _template: LinkedInAccount['templat
   ctx.textAlign = 'left';
   ctx.fillText('GROWTH4U', 100, 56);
 
-  // Claude icon (simplified sparkle)
+  // Decorative sparkle icon
   const cx = 540, cy = 230;
-  ctx.fillStyle = '#D97757';
+  ctx.fillStyle = t.accentColor;
   for (let i = 0; i < 8; i++) {
     const angle = (Math.PI / 4) * i;
     ctx.save();
@@ -244,8 +245,8 @@ async function generateLIImage(text: string, _template: LinkedInAccount['templat
   const pillText = 'GROWTH AUTOMATION';
   ctx.font = 'bold 20px Inter, Helvetica, Arial, sans-serif';
   const pillW = ctx.measureText(pillText).width + 60;
-  roundRect(ctx, 540 - pillW / 2, 310, pillW, 44, 22, 'rgba(217,119,87,0.12)');
-  ctx.fillStyle = '#D97757';
+  roundRect(ctx, 540 - pillW / 2, 310, pillW, 44, 22, t.badgeBg + '20');
+  ctx.fillStyle = t.accentColor;
   ctx.textAlign = 'center';
   ctx.fillText(pillText, 540, 339);
 
@@ -259,7 +260,7 @@ async function generateLIImage(text: string, _template: LinkedInAccount['templat
     lines = wrapText(ctx, upperText, maxW);
     if (lines.length * (fontSize * 1.2) <= 500) break;
   }
-  ctx.fillStyle = '#1A1A1A';
+  ctx.fillStyle = t.titleColor;
   ctx.textAlign = 'center';
   const lineH = fontSize * 1.2;
   const startY = 420 + (500 - lines.length * lineH) / 2;
@@ -268,7 +269,7 @@ async function generateLIImage(text: string, _template: LinkedInAccount['templat
   }
 
   // Slide indicator
-  ctx.fillStyle = '#D4845A';
+  ctx.fillStyle = t.accentColor;
   ctx.font = 'bold 20px Inter, Helvetica, Arial, sans-serif';
   ctx.fillText('1 / 1', 540, 1320);
 
@@ -436,24 +437,57 @@ function renderSlideToCanvas(
   const contentX = cardMargin + pad;
   const contentW = cardW - pad * 2;
 
+  // Clip all text to card bounds
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(cardMargin, cardY, cardW, cardH);
+  ctx.clip();
+
   if (iscover) {
-    // Cover slide — big centered title
-    ctx.fillStyle = template.titleColor;
+    // Cover slide — big centered title with auto-sizing
     ctx.textAlign = 'center';
-    ctx.font = `bold 64px "Inter", "Helvetica Neue", Arial, sans-serif`;
-    const titleLines = wrapText(ctx, slide.title.toUpperCase(), contentW);
-    const startY = cardY + cardH / 2 - (titleLines.length * 78) / 2;
-    for (let i = 0; i < titleLines.length; i++) {
-      ctx.fillText(titleLines[i], W / 2, startY + i * 78);
-    }
-    // Subtitle
+    const maxTitleH = slide.body ? cardH * 0.5 : cardH * 0.7;
+    let titleSize = 64;
+    let titleLines: string[];
+    let titleLineH: number;
+    do {
+      ctx.font = `bold ${titleSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
+      titleLines = wrapText(ctx, slide.title.toUpperCase(), contentW);
+      titleLineH = titleSize * 1.22;
+      if (titleLines.length * titleLineH <= maxTitleH) break;
+      titleSize -= 2;
+    } while (titleSize >= 28);
+
+    ctx.fillStyle = template.titleColor;
+    const totalH = titleLines.length * titleLineH + (slide.body ? 30 : 0);
+    let subLines: string[] = [];
+    let subSize = 28;
+    let subLineH = 40;
     if (slide.body) {
-      ctx.font = `400 28px "Inter", "Helvetica Neue", Arial, sans-serif`;
+      // Auto-size subtitle to fit remaining space
+      const remainingH = cardH - 2 * pad - titleLines.length * titleLineH - 30;
+      do {
+        ctx.font = `400 ${subSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
+        subLines = wrapText(ctx, slide.body, contentW - 40);
+        subLineH = subSize * 1.4;
+        if (subLines.length * subLineH <= remainingH) break;
+        subSize -= 2;
+      } while (subSize >= 18);
+    }
+    const totalContentH = titleLines.length * titleLineH + (subLines.length > 0 ? 30 + subLines.length * subLineH : 0);
+    const startY = cardY + (cardH - totalContentH) / 2 + titleSize * 0.35;
+
+    ctx.font = `bold ${titleSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = template.titleColor;
+    for (let i = 0; i < titleLines.length; i++) {
+      ctx.fillText(titleLines[i], W / 2, startY + i * titleLineH);
+    }
+    if (subLines.length > 0) {
+      ctx.font = `400 ${subSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
       ctx.fillStyle = template.bodyColor;
-      const subLines = wrapText(ctx, slide.body, contentW - 40);
-      const subY = startY + titleLines.length * 78 + 30;
+      const subY = startY + titleLines.length * titleLineH + 30;
       for (let i = 0; i < subLines.length; i++) {
-        ctx.fillText(subLines[i], W / 2, subY + i * 40);
+        ctx.fillText(subLines[i], W / 2, subY + i * subLineH);
       }
     }
   } else {
@@ -471,23 +505,46 @@ function renderSlideToCanvas(
       y += 66;
     }
 
-    // Title
-    ctx.fillStyle = template.titleColor;
-    ctx.font = `bold 44px "Inter", "Helvetica Neue", Arial, sans-serif`;
-    const titleLines = wrapText(ctx, slide.title, contentW);
-    for (let i = 0; i < titleLines.length; i++) {
-      ctx.fillText(titleLines[i], contentX, y + i * 56);
-    }
-    y += titleLines.length * 56 + 24;
+    // Title — auto-size
+    const maxTitleArea = cardH * 0.35;
+    let titleSize = 44;
+    let titleLines: string[];
+    let titleLineH: number;
+    do {
+      ctx.font = `bold ${titleSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
+      titleLines = wrapText(ctx, slide.title, contentW);
+      titleLineH = titleSize * 1.28;
+      if (titleLines.length * titleLineH <= maxTitleArea) break;
+      titleSize -= 2;
+    } while (titleSize >= 24);
 
-    // Body
+    ctx.fillStyle = template.titleColor;
+    for (let i = 0; i < titleLines.length; i++) {
+      ctx.fillText(titleLines[i], contentX, y + i * titleLineH);
+    }
+    y += titleLines.length * titleLineH + 20;
+
+    // Body — auto-size to fit remaining card space
+    const bottomMargin = 60;
+    const remainingH = (cardY + cardH - bottomMargin) - y;
+    let bodySize = 28;
+    let bodyLines: string[];
+    let bodyLineH: number;
+    do {
+      ctx.font = `400 ${bodySize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
+      bodyLines = wrapText(ctx, slide.body, contentW);
+      bodyLineH = bodySize * 1.5;
+      if (bodyLines.length * bodyLineH <= remainingH) break;
+      bodySize -= 2;
+    } while (bodySize >= 16);
+
     ctx.fillStyle = template.bodyColor;
-    ctx.font = `400 28px "Inter", "Helvetica Neue", Arial, sans-serif`;
-    const bodyLines = wrapText(ctx, slide.body, contentW);
     for (let i = 0; i < bodyLines.length; i++) {
-      ctx.fillText(bodyLines[i], contentX, y + i * 42);
+      ctx.fillText(bodyLines[i], contentX, y + i * bodyLineH);
     }
   }
+
+  ctx.restore();
 
   // Slide indicator
   ctx.textAlign = 'center';
@@ -598,7 +655,7 @@ function CreateTab({ selectedAccount, onPublish }: {
     if (step !== 'preview' || !previewCanvasRef.current) return;
     if (postFormat === 'text') return;
     if (postFormat === 'image') {
-      generateLIImage(title, selectedAccount.template).then(async (blob) => {
+      generateLIImage(title, selectedAccount.template, selectedTemplate).then(async (blob) => {
         const url = URL.createObjectURL(blob);
         const img = new Image();
         img.onload = () => {
@@ -668,7 +725,7 @@ function CreateTab({ selectedAccount, onPublish }: {
     try {
       let imageUrl = '';
       if (postFormat === 'image') {
-        const blob = await generateLIImage(title, selectedAccount.template);
+        const blob = await generateLIImage(title, selectedAccount.template, selectedTemplate);
         imageUrl = await uploadToCloudinary(blob, `li-${Date.now()}`);
       } else if (postFormat === 'carousel' && slides.length > 0) {
         // Upload cover slide
