@@ -9,7 +9,6 @@ import {
   Sparkles,
   Eye,
   X,
-  Calendar,
   ImageIcon,
   BarChart3,
   Heart,
@@ -21,12 +20,17 @@ import {
   RefreshCw,
   ExternalLink,
   Video,
+  Lightbulb,
+  FileText,
+  Edit3,
 } from 'lucide-react';
 import {
   getAllPosts,
   getIGScheduledPosts,
   createIGScheduledPost,
   deleteIGScheduledPost,
+  getAllContentIdeas,
+  type ContentIdea,
 } from '../../../lib/firebase-client';
 import VideoTab from './VideoTab';
 
@@ -39,18 +43,6 @@ interface BlogPost {
   content: string;
   image: string;
   createdAt: string | null;
-}
-
-interface ScheduleItem {
-  post: BlogPost;
-  caption: string;
-  igImageUrl: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  status: 'generating' | 'draft' | 'publishing' | 'scheduled' | 'published' | 'error';
-  error?: string;
-  mediaId?: string;
-  firestoreId?: string; // ID in Firestore once scheduled
 }
 
 interface SavedScheduledPost {
@@ -229,44 +221,336 @@ interface IGMedia {
   shares: number;
 }
 
-// --- Component ---
+// ============================================================
+// CREATE IG TAB — Source → Editor → Preview (same flow as LinkedIn)
+// ============================================================
+
+type IGCreateStep = 'source' | 'editor' | 'preview';
+
+function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedule }: {
+  ideasList: (ContentIdea & { id: string })[];
+  blogList: BlogPost[];
+  publishedSlugs: Set<string>;
+  onPublish: (title: string, caption: string, imageUrl: string, blogSlug?: string) => Promise<void>;
+  onSchedule: (title: string, caption: string, imageUrl: string, blogSlug: string | undefined, scheduledAt: Date) => Promise<void>;
+}) {
+  const [step, setStep] = useState<IGCreateStep>('source');
+  const [title, setTitle] = useState('');
+  const [caption, setCaption] = useState('');
+  const [blogSlug, setBlogSlug] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState('');
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('10:00');
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Render preview image when on preview step
+  useEffect(() => {
+    if (step !== 'preview' || !previewCanvasRef.current || generatedImageUrl) return;
+    // Auto-generate image on preview step
+    (async () => {
+      try {
+        const templateIdx = Math.floor(Math.random() * AVATAR_TEMPLATES.length);
+        const blob = await generateIGImage(title, '', templateIdx);
+        const url = await uploadToCloudinary(blob);
+        setGeneratedImageUrl(url);
+      } catch (err) {
+        console.error('Error generating image:', err);
+        setError('Error generando imagen');
+      }
+    })();
+  }, [step]);
+
+  function selectIdea(idea: ContentIdea & { id: string }) {
+    setTitle(idea.topic);
+    setCaption(idea.angle + (idea.sourceInspiration ? `\n\nInspiración: ${idea.sourceInspiration}` : ''));
+    setBlogSlug('');
+    setStep('editor');
+  }
+
+  function selectBlog(blog: BlogPost) {
+    setTitle(blog.title);
+    setCaption(blog.excerpt);
+    setBlogSlug(blog.slug);
+    setStep('editor');
+  }
+
+  function startManual() {
+    setTitle('');
+    setCaption('');
+    setBlogSlug('');
+    setStep('editor');
+  }
+
+  async function handleGenerateCaption() {
+    if (!title.trim()) return;
+    setGenerating(true); setError('');
+    try {
+      const res = await fetch('/api/generate-caption', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform: 'instagram', title, excerpt: caption || title, slug: blogSlug, category: 'Growth' }),
+      });
+      const data = await res.json();
+      if (data.caption) setCaption(data.caption);
+    } catch (err: any) { setError(err.message); }
+    setGenerating(false);
+  }
+
+  async function handlePublish() {
+    setPublishing(true); setError('');
+    try {
+      let imageUrl = generatedImageUrl;
+      if (!imageUrl) {
+        const templateIdx = Math.floor(Math.random() * AVATAR_TEMPLATES.length);
+        const blob = await generateIGImage(title, '', templateIdx);
+        imageUrl = await uploadToCloudinary(blob);
+        setGeneratedImageUrl(imageUrl);
+      }
+      await onPublish(title, caption, imageUrl, blogSlug || undefined);
+      // Reset
+      setStep('source'); setTitle(''); setCaption(''); setBlogSlug(''); setGeneratedImageUrl('');
+    } catch (err: any) { setError(err.message); }
+    setPublishing(false);
+  }
+
+  async function handleSchedule() {
+    if (!scheduledDate) { setError('Selecciona fecha'); return; }
+    setPublishing(true); setError('');
+    try {
+      let imageUrl = generatedImageUrl;
+      if (!imageUrl) {
+        const templateIdx = Math.floor(Math.random() * AVATAR_TEMPLATES.length);
+        const blob = await generateIGImage(title, '', templateIdx);
+        imageUrl = await uploadToCloudinary(blob);
+        setGeneratedImageUrl(imageUrl);
+      }
+      const dateTime = new Date(`${scheduledDate}T${scheduledTime}:00`);
+      await onSchedule(title, caption, imageUrl, blogSlug || undefined, dateTime);
+      setStep('source'); setTitle(''); setCaption(''); setBlogSlug(''); setGeneratedImageUrl(''); setScheduledDate('');
+    } catch (err: any) { setError(err.message); }
+    setPublishing(false);
+  }
+
+  // ===================== STEP 1: SOURCE =====================
+  if (step === 'source') {
+    return (
+      <div className="space-y-6">
+        {/* Quick create */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button onClick={startManual}
+            className="p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-pink-400 transition-all text-left">
+            <Edit3 className="w-6 h-6 text-pink-500 mb-3" />
+            <p className="font-semibold text-[#032149]">Crear manual</p>
+            <p className="text-xs text-slate-400 mt-1">Escribe tu post desde cero</p>
+          </button>
+          <button onClick={() => { startManual(); setTimeout(() => handleGenerateCaption(), 100); }}
+            disabled={generating}
+            className="p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-[#3ecda5] transition-all text-left">
+            <Sparkles className="w-6 h-6 text-[#3ecda5] mb-3" />
+            <p className="font-semibold text-[#032149]">Generar con IA</p>
+            <p className="text-xs text-slate-400 mt-1">Claude genera el contenido completo</p>
+          </button>
+          <div className="p-6 bg-gradient-to-br from-[#6351d5]/5 to-pink-500/5 border-2 border-[#6351d5]/20 rounded-xl">
+            <Lightbulb className="w-6 h-6 text-[#6351d5] mb-3" />
+            <p className="font-semibold text-[#032149]">Desde Ideas Hub</p>
+            <p className="text-xs text-slate-400 mt-1">{ideasList.length} ideas para Instagram</p>
+          </div>
+        </div>
+
+        {/* Ideas from Hub */}
+        {ideasList.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-[#032149] mb-3 flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-[#6351d5]" /> Ideas Hub ({ideasList.length})
+            </h3>
+            <div className="space-y-2 max-h-[250px] overflow-y-auto">
+              {ideasList.map(idea => (
+                <button key={idea.id} onClick={() => selectIdea(idea)}
+                  className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-[#6351d5] hover:bg-[#6351d5]/5 transition-colors">
+                  <p className="text-sm font-medium text-[#032149]">{idea.topic}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{idea.angle}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Blog posts */}
+        {blogList.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-[#032149] mb-3 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-pink-500" /> Blog Posts ({blogList.length})
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[250px] overflow-y-auto">
+              {blogList.filter(b => !publishedSlugs.has(b.slug)).slice(0, 12).map(blog => (
+                <button key={blog.id} onClick={() => selectBlog(blog)}
+                  className="text-left p-2 rounded-lg border border-slate-200 hover:border-pink-400 transition-colors">
+                  {blog.image && <img src={blog.image} alt="" className="w-full h-16 object-cover rounded mb-1.5" />}
+                  <p className="text-[11px] font-medium text-[#032149] line-clamp-2">{blog.title}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ===================== STEP 2: EDITOR =====================
+  if (step === 'editor') {
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <button onClick={() => { setStep('source'); setGeneratedImageUrl(''); }} className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
+            ← Volver a fuentes
+          </button>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+          {/* Title */}
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1 block">Título / Tema</label>
+            <input value={title} onChange={e => setTitle(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-pink-400"
+              placeholder="El tema principal del post" />
+          </div>
+
+          {/* Generate caption button */}
+          {title.trim() && (
+            <button onClick={handleGenerateCaption}
+              disabled={generating}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#3ecda5] to-pink-500 text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 w-full justify-center">
+              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {generating ? 'Generando...' : 'Generar caption con IA'}
+            </button>
+          )}
+
+          {/* Caption */}
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1 block">Caption</label>
+            <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={8}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-pink-400 font-mono"
+              placeholder="El caption del post de Instagram..." />
+            <p className="text-xs text-slate-400 mt-1">{caption.length} / 2,200 caracteres</p>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+            </div>
+          )}
+
+          {/* Next: Preview */}
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => { setStep('preview'); setGeneratedImageUrl(''); setError(''); }} disabled={!caption.trim()}
+              className="flex items-center gap-2 px-6 py-2.5 bg-pink-500 text-white text-sm font-medium rounded-lg hover:bg-pink-600 disabled:opacity-50 transition-colors ml-auto">
+              <Eye className="w-4 h-4" /> Vista previa y publicar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ===================== STEP 3: PREVIEW & PUBLISH =====================
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <button onClick={() => setStep('editor')} className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
+          ← Editar
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Image preview */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <h4 className="text-xs font-medium text-slate-500 mb-3">Preview imagen (4:5)</h4>
+          {generatedImageUrl ? (
+            <img src={generatedImageUrl} alt={title} className="w-full rounded-lg shadow-lg" style={{ aspectRatio: '4/5', objectFit: 'cover' }} />
+          ) : (
+            <div className="w-full bg-gradient-to-br from-[#032149] via-[#1a3690] to-pink-500 rounded-lg flex items-center justify-center" style={{ aspectRatio: '4/5' }}>
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
+            </div>
+          )}
+          <canvas ref={previewCanvasRef} className="hidden" />
+        </div>
+
+        {/* Right: Caption + Publish */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+          <h4 className="text-xs font-medium text-slate-500">Caption</h4>
+          <div className="bg-slate-50 rounded-lg p-4 text-sm text-[#032149] whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+            {caption}
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+              <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+            </div>
+          )}
+
+          {/* Publish now */}
+          <button onClick={handlePublish} disabled={publishing || !caption.trim() || !generatedImageUrl}
+            className="w-full flex items-center gap-2 justify-center px-5 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-colors">
+            {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {publishing ? 'Publicando...' : 'Publicar ahora'}
+          </button>
+
+          {/* Schedule */}
+          <div className="border-t border-slate-200 pt-4">
+            <p className="text-xs font-medium text-slate-500 mb-2">O programar para después</p>
+            <div className="flex items-center gap-2">
+              <input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)}
+                className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-pink-400" />
+              <input type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)}
+                className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-pink-400" />
+              <button onClick={handleSchedule} disabled={publishing || !caption.trim() || !generatedImageUrl || !scheduledDate}
+                className="flex items-center gap-1 text-xs text-pink-500 border border-pink-500 px-3 py-1.5 rounded-lg hover:bg-pink-500/10 transition-colors disabled:opacity-50">
+                <Clock className="w-3.5 h-3.5" /> Programar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Main Component ---
 
 export default function CameraPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
-  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
-  const [generatingCaptions, setGeneratingCaptions] = useState(false);
-  const [previewItem, setPreviewItem] = useState<ScheduleItem | null>(null);
-  const [filter, setFilter] = useState<string>('all');
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const [activeTab, setActiveTab] = useState<'publish' | 'metrics' | 'video'>('publish');
   const [metrics, setMetrics] = useState<{ account: IGAccount; media: IGMedia[] } | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [metricsError, setMetricsError] = useState('');
   const [savedPosts, setSavedPosts] = useState<SavedScheduledPost[]>([]);
   const [publishedSlugs, setPublishedSlugs] = useState<Set<string>>(new Set());
+  const [ideasList, setIdeasList] = useState<(ContentIdea & { id: string })[]>([]);
 
   useEffect(() => {
-    loadPosts();
-    loadSavedPosts();
+    Promise.all([
+      getAllPosts().then(allPosts => setPosts(allPosts as BlogPost[])),
+      getIGScheduledPosts().then(saved => {
+        setSavedPosts(saved as SavedScheduledPost[]);
+        const slugs = new Set<string>();
+        for (const p of saved) {
+          if (p.status === 'pending' || p.status === 'published' || p.status === 'publishing') {
+            slugs.add(p.blogSlug);
+          }
+        }
+        setPublishedSlugs(slugs);
+      }),
+      getAllContentIdeas().then(all => setIdeasList(all.filter(i => (i.status === 'idea' || i.status === 'draft') && i.platforms?.includes('instagram')))),
+    ]).catch(e => console.error('Error loading data:', e)).finally(() => setLoading(false));
   }, []);
-
-  async function loadPosts() {
-    try {
-      const allPosts = await getAllPosts();
-      setPosts(allPosts as BlogPost[]);
-    } catch (e) {
-      console.error('Error loading posts:', e);
-    }
-    setLoading(false);
-  }
 
   async function loadSavedPosts() {
     try {
       const saved = await getIGScheduledPosts();
       setSavedPosts(saved as SavedScheduledPost[]);
-      // Track slugs that are already scheduled or published
       const slugs = new Set<string>();
       for (const p of saved) {
         if (p.status === 'pending' || p.status === 'published' || p.status === 'publishing') {
@@ -302,234 +586,6 @@ export default function CameraPage() {
     setMetricsLoading(false);
   }
 
-  function togglePost(id: string) {
-    setSelectedPosts((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function selectAll() {
-    const filtered = filteredPosts();
-    if (selectedPosts.size === filtered.length) {
-      setSelectedPosts(new Set());
-    } else {
-      setSelectedPosts(new Set(filtered.map((p) => p.id)));
-    }
-  }
-
-  function filteredPosts() {
-    if (filter === 'all') return posts;
-    return posts.filter((p) => p.category === filter);
-  }
-
-  async function generateCaption(post: BlogPost): Promise<string> {
-    try {
-      const res = await fetch('/api/generate-caption', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          platform: 'instagram',
-          title: post.title,
-          excerpt: post.excerpt,
-          slug: post.slug,
-          category: post.category,
-        }),
-      });
-      const data = await res.json();
-      if (data.caption) return data.caption;
-    } catch (err) {
-      console.error('AI caption generation failed, using fallback:', err);
-    }
-    // Fallback to basic template
-    return `${post.title}\n\n${post.excerpt}\n\n👉 Lee el artículo completo en growth4u.io/blog/${post.slug}/\n\n#GrowthMarketing #Fintech #Growth4U #MarketingDigital #B2B`;
-  }
-
-  async function generateCaptions() {
-    setGeneratingCaptions(true);
-
-    const selected = posts.filter((p) => selectedPosts.has(p.id));
-
-    // Generate default date schedule: one post per day starting tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // Create items with 'generating' status first
-    const items: ScheduleItem[] = await Promise.all(
-      selected.map(async (post, i) => {
-        const date = new Date(tomorrow);
-        date.setDate(date.getDate() + i);
-
-        return {
-          post,
-          caption: await generateCaption(post),
-          igImageUrl: '',
-          scheduledDate: date.toISOString().split('T')[0],
-          scheduledTime: '10:00',
-          status: 'generating' as const,
-        };
-      })
-    );
-
-    setScheduleItems(items);
-    setSelectedPosts(new Set());
-
-    // Generate and upload images for each item
-    for (let i = 0; i < items.length; i++) {
-      try {
-        const blob = await generateIGImage(items[i].post.title, items[i].post.category, i);
-        const url = await uploadToCloudinary(blob);
-        setScheduleItems((prev) =>
-          prev.map((it, idx) =>
-            idx === i ? { ...it, igImageUrl: url, status: 'draft' } : it
-          )
-        );
-      } catch (err) {
-        console.error('Error generating IG image:', err);
-        setScheduleItems((prev) =>
-          prev.map((it, idx) =>
-            idx === i
-              ? { ...it, status: 'error', error: 'Error generando imagen' }
-              : it
-          )
-        );
-      }
-    }
-
-    setGeneratingCaptions(false);
-  }
-
-  function updateCaption(index: number, caption: string) {
-    setScheduleItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, caption } : item))
-    );
-  }
-
-
-
-  function removeItem(index: number) {
-    setScheduleItems((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function updateSchedule(index: number, field: 'scheduledDate' | 'scheduledTime', value: string) {
-    setScheduleItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
-    );
-  }
-
-  async function publishItem(index: number, immediate: boolean) {
-    setScheduleItems((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, status: 'publishing' } : item
-      )
-    );
-
-    const item = scheduleItems[index];
-
-    try {
-      if (immediate) {
-        // Publish now via Netlify Function → Instagram API
-        const res = await fetch(FUNCTION_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'publish',
-            image_url: item.igImageUrl,
-            caption: item.caption,
-          }),
-        });
-
-        const text = await res.text();
-        let data: Record<string, unknown>;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          throw new Error(`Función no disponible (${res.status}). ¿Está desplegada?`);
-        }
-
-        if (!res.ok) {
-          throw new Error((data.error as string) || `Error ${res.status}: ${text.slice(0, 200)}`);
-        }
-
-        // Also save to Firebase as published for tracking
-        await createIGScheduledPost({
-          imageUrl: item.igImageUrl,
-          caption: item.caption,
-          blogTitle: item.post.title,
-          blogSlug: item.post.slug,
-          scheduledAt: new Date(),
-        });
-
-        setScheduleItems((prev) =>
-          prev.map((it, i) =>
-            i === index
-              ? { ...it, status: 'published' as const, mediaId: String(data.media_id || '') }
-              : it
-          )
-        );
-        setPublishedSlugs((prev) => new Set([...prev, item.post.slug]));
-      } else {
-        // Schedule for later — save to Firebase, cron will publish
-        const dateTime = new Date(`${item.scheduledDate}T${item.scheduledTime}:00`);
-        const firestoreId = await createIGScheduledPost({
-          imageUrl: item.igImageUrl,
-          caption: item.caption,
-          blogTitle: item.post.title,
-          blogSlug: item.post.slug,
-          scheduledAt: dateTime,
-        });
-
-        setScheduleItems((prev) =>
-          prev.map((it, i) =>
-            i === index
-              ? { ...it, status: 'scheduled' as const, firestoreId }
-              : it
-          )
-        );
-        setPublishedSlugs((prev) => new Set([...prev, item.post.slug]));
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setScheduleItems((prev) =>
-        prev.map((it, i) =>
-          i === index ? { ...it, status: 'error', error: message } : it
-        )
-      );
-    }
-  }
-
-  async function publishAll() {
-    for (let i = 0; i < scheduleItems.length; i++) {
-      if (scheduleItems[i].status === 'draft') {
-        await publishItem(i, true);
-        await new Promise((r) => setTimeout(r, 5000));
-      }
-    }
-  }
-
-  async function cancelScheduled(id: string, index: number) {
-    try {
-      await deleteIGScheduledPost(id);
-      const item = scheduleItems[index];
-      setScheduleItems((prev) =>
-        prev.map((it, i) => (i === index ? { ...it, status: 'draft' as const, firestoreId: undefined } : it))
-      );
-      setPublishedSlugs((prev) => {
-        const next = new Set(prev);
-        next.delete(item.post.slug);
-        return next;
-      });
-    } catch (e) {
-      console.error('Error cancelling:', e);
-    }
-  }
-
-  const categories = [...new Set(posts.map((p) => p.category))];
-  const filtered = filteredPosts();
-  const draftCount = scheduleItems.filter((i) => i.status === 'draft').length;
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -551,15 +607,6 @@ export default function CameraPage() {
             Publica y programa posts desde tu contenido del blog
           </p>
         </div>
-        {activeTab === 'publish' && scheduleItems.length > 0 && draftCount > 0 && (
-          <button
-            onClick={publishAll}
-            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity"
-          >
-            <Send className="w-4 h-4" />
-            Publicar todos ({draftCount})
-          </button>
-        )}
       </div>
 
       {/* Tabs */}
@@ -772,183 +819,12 @@ export default function CameraPage() {
         </div>
       )}
 
-      {/* Publish Tab */}
+      {/* Publish Tab — Stepped flow: Source → Editor → Preview */}
       {activeTab === 'publish' && <>
-
-      {/* Queue section */}
-      {scheduleItems.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-lg font-bold text-[#032149] mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Cola de publicación ({scheduleItems.length} posts)
-          </h2>
-
-          <div className="space-y-4">
-            {scheduleItems.map((item, index) => (
-              <div
-                key={item.post.id}
-                className={`bg-white rounded-xl border p-4 transition-all ${
-                  item.status === 'published'
-                    ? 'border-green-200 bg-green-50/50'
-                    : item.status === 'scheduled'
-                      ? 'border-blue-200 bg-blue-50/50'
-                      : item.status === 'error'
-                        ? 'border-red-200 bg-red-50/50'
-                        : 'border-slate-200'
-                }`}
-              >
-                <div className="flex gap-4">
-                  {/* IG Image preview (vertical) */}
-                  <div className="w-20 h-25 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
-                    {item.igImageUrl ? (
-                      <img
-                        src={item.igImageUrl}
-                        alt={item.post.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : item.status === 'generating' ? (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 text-[#3ecda5] animate-spin" />
-                      </div>
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#032149] to-[#0faec1]" />
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold text-[#032149] text-sm line-clamp-1">
-                        {item.post.title}
-                      </h3>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {item.status === 'draft' && (
-                          <>
-                            <button
-                              onClick={() => setPreviewItem(item)}
-                              className="p-1.5 text-slate-400 hover:text-[#3ecda5] transition-colors"
-                              title="Preview"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => publishItem(index, true)}
-                              className="p-1.5 text-slate-400 hover:text-green-600 transition-colors"
-                              title="Publicar ahora"
-                            >
-                              <Send className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => removeItem(index)}
-                              className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
-                              title="Quitar"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
-                        {item.status === 'generating' && (
-                          <span className="text-xs text-slate-400">Generando imagen...</span>
-                        )}
-                        {item.status === 'publishing' && (
-                          <Loader2 className="w-4 h-4 text-[#3ecda5] animate-spin" />
-                        )}
-                        {item.status === 'published' && (
-                          <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        )}
-                        {item.status === 'scheduled' && (
-                          <>
-                            <button
-                              onClick={() => setPreviewItem(item)}
-                              className="p-1.5 text-slate-400 hover:text-[#3ecda5] transition-colors"
-                              title="Preview"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <Clock className="w-5 h-5 text-blue-500" />
-                          </>
-                        )}
-                        {item.status === 'error' && (
-                          <AlertCircle className="w-5 h-5 text-red-500" />
-                        )}
-                      </div>
-                    </div>
-
-                    {item.status === 'draft' && (
-                      <>
-                        <textarea
-                          value={item.caption}
-                          onChange={(e) => updateCaption(index, e.target.value)}
-                          rows={3}
-                          className="w-full mt-2 text-xs text-slate-600 border border-slate-200 rounded-lg p-2 resize-none focus:outline-none focus:border-[#3ecda5]"
-                        />
-                        <div className="flex items-center gap-3 mt-2 flex-wrap">
-                          <button
-                            onClick={() => publishItem(index, true)}
-                            className="text-xs bg-[#3ecda5] text-white px-4 py-1.5 rounded-lg hover:bg-[#5040c0] transition-colors font-medium"
-                          >
-                            Publicar ahora
-                          </button>
-                          <div className="flex items-center gap-2 ml-auto">
-                            <input
-                              type="date"
-                              value={item.scheduledDate}
-                              onChange={(e) => updateSchedule(index, 'scheduledDate', e.target.value)}
-                              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#3ecda5]"
-                            />
-                            <input
-                              type="time"
-                              value={item.scheduledTime}
-                              onChange={(e) => updateSchedule(index, 'scheduledTime', e.target.value)}
-                              className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#3ecda5]"
-                            />
-                            <button
-                              onClick={() => publishItem(index, false)}
-                              className="text-xs text-[#3ecda5] border border-[#3ecda5] px-3 py-1.5 rounded-lg hover:bg-[#3ecda5]/10 transition-colors"
-                            >
-                              Programar
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    {item.status === 'error' && (
-                      <p className="text-xs text-red-500 mt-2">{item.error}</p>
-                    )}
-
-                    {item.status === 'scheduled' && (
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-xs text-blue-600">
-                          Programado para {item.scheduledDate} a las {item.scheduledTime}
-                        </p>
-                        {item.firestoreId && (
-                          <button
-                            onClick={() => cancelScheduled(item.firestoreId!, index)}
-                            className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                          >
-                            Cancelar
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {item.status === 'published' && (
-                      <p className="text-xs text-green-600 mt-2">
-                        Publicado correctamente
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Saved scheduled posts from Firebase */}
       {savedPosts.filter((p) => p.status === 'pending').length > 0 && (
-        <div className="mb-10">
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-[#032149] flex items-center gap-2">
               <Clock className="w-5 h-5 text-blue-500" />
@@ -983,20 +859,11 @@ export default function CameraPage() {
                   </div>
                   <div className="flex items-center gap-3 ml-4">
                     {p.imageUrl && (
-                      <button
-                        onClick={() => setPreviewItem({
-                          post: { id: p.id, title: p.blogTitle, slug: p.blogSlug, category: '', excerpt: '', image: '', createdAt: null },
-                          caption: p.caption,
-                          igImageUrl: p.imageUrl,
-                          scheduledDate: '',
-                          scheduledTime: '',
-                          status: 'scheduled',
-                        })}
+                      <a href={p.imageUrl} target="_blank" rel="noopener noreferrer"
                         className="p-1.5 text-slate-400 hover:text-[#3ecda5] transition-colors"
-                        title="Preview"
-                      >
+                        title="Preview">
                         <Eye className="w-4 h-4" />
-                      </button>
+                      </a>
                     )}
                   </div>
                   <button
@@ -1014,7 +881,7 @@ export default function CameraPage() {
         </div>
       )}
 
-      {/* Reset button — clear all saved posts and unblock slugs */}
+      {/* Reset button */}
       {savedPosts.length > 0 && (
         <div className="mb-6 flex justify-end">
           <button
@@ -1034,175 +901,47 @@ export default function CameraPage() {
         </div>
       )}
 
-      {/* Post selection */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-[#032149]">
-            Seleccionar posts ({posts.length} disponibles)
-          </h2>
-          <div className="flex items-center gap-3">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#3ecda5]"
-            >
-              <option value="all">Todas las categorías</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+      <CreateIGTab
+        ideasList={ideasList}
+        blogList={posts}
+        publishedSlugs={publishedSlugs}
+        onPublish={async (title, caption, imageUrl, blogSlug) => {
+          try {
+            const res = await fetch(FUNCTION_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'publish', image_url: imageUrl, caption }),
+            });
+            const text = await res.text();
+            let data: Record<string, unknown>;
+            try { data = JSON.parse(text); } catch { throw new Error(`Función no disponible (${res.status})`); }
+            if (!res.ok) throw new Error((data.error as string) || `Error ${res.status}`);
 
-            <button
-              onClick={selectAll}
-              className="text-sm text-[#3ecda5] hover:underline"
-            >
-              {selectedPosts.size === filtered.length
-                ? 'Deseleccionar'
-                : 'Seleccionar todos'}
-            </button>
-          </div>
-        </div>
-
-        {selectedPosts.size > 0 && (
-          <div className="mb-4 flex items-center gap-3">
-            <span className="text-sm text-slate-600">
-              {selectedPosts.size} seleccionados
-            </span>
-            <button
-              onClick={generateCaptions}
-              disabled={generatingCaptions}
-              className="flex items-center gap-2 bg-[#3ecda5] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#5040c0] transition-colors disabled:opacity-50"
-            >
-              {generatingCaptions ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              Generar imágenes y captions
-            </button>
-          </div>
-        )}
-
-        {/* Posts grid — compact cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto">
-          {filtered.map((post) => {
-            const isSelected = selectedPosts.has(post.id);
-            const isInQueue = scheduleItems.some((i) => i.post.id === post.id);
-            const isAlreadyPublished = publishedSlugs.has(post.slug);
-            const isDisabled = isInQueue || isAlreadyPublished;
-
-            return (
-              <button
-                key={post.id}
-                onClick={() => !isDisabled && togglePost(post.id)}
-                disabled={isDisabled}
-                className={`rounded-xl border-2 transition-all text-left p-3 ${
-                  isAlreadyPublished
-                    ? 'border-green-300 opacity-40 cursor-not-allowed'
-                    : isInQueue
-                      ? 'border-blue-300 opacity-50 cursor-not-allowed'
-                      : isSelected
-                        ? 'border-[#3ecda5] shadow-lg ring-2 ring-[#3ecda5]/20 bg-purple-50/50'
-                        : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  {post.image ? (
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-[#032149] to-[#0faec1] flex items-center justify-center flex-shrink-0">
-                      <ImageIcon className="w-5 h-5 text-white/30" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#032149] line-clamp-2 leading-tight">
-                      {post.title}
-                    </p>
-                    <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">
-                      {post.category}
-                    </span>
-                  </div>
-                  {isSelected && (
-                    <div className="w-5 h-5 bg-[#3ecda5] rounded-full flex items-center justify-center flex-shrink-0">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  )}
-                  {isAlreadyPublished && !isInQueue && (
-                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  )}
-                  {isInQueue && (
-                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Preview modal — Instagram-like with vertical image */}
-      {previewItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl max-w-sm w-full mx-4 overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200">
-              <h3 className="font-semibold text-[#032149]">Vista previa Instagram</h3>
-              <button
-                onClick={() => setPreviewItem(null)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-3 p-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3ecda5] to-[#0faec1] flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">G4U</span>
-                </div>
-                <span className="text-sm font-semibold">growth4u_systems</span>
-              </div>
-
-              {/* Vertical image preview (4:5 ratio) */}
-              {previewItem.igImageUrl ? (
-                <img
-                  src={previewItem.igImageUrl}
-                  alt={previewItem.post.title}
-                  className="w-full"
-                  style={{ aspectRatio: '4/5' }}
-                />
-              ) : (
-                <div
-                  className="w-full bg-gradient-to-br from-[#032149] via-[#1a3690] to-[#0faec1] flex items-center justify-center"
-                  style={{ aspectRatio: '4/5' }}
-                >
-                  <Loader2 className="w-8 h-8 text-white animate-spin" />
-                </div>
-              )}
-
-              <div className="p-3">
-                <p className="text-sm whitespace-pre-line">
-                  <span className="font-semibold">growth4u_systems</span>{' '}
-                  {previewItem.caption}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Hidden canvas for image generation */}
-      <canvas ref={previewCanvasRef} className="hidden" />
+            await createIGScheduledPost({
+              imageUrl,
+              caption,
+              blogTitle: title,
+              blogSlug: blogSlug || '',
+              scheduledAt: new Date(),
+            });
+            if (blogSlug) setPublishedSlugs(prev => new Set([...prev, blogSlug]));
+            loadSavedPosts();
+          } catch (err: any) {
+            throw err;
+          }
+        }}
+        onSchedule={async (title, caption, imageUrl, blogSlug, scheduledAt) => {
+          await createIGScheduledPost({
+            imageUrl,
+            caption,
+            blogTitle: title,
+            blogSlug: blogSlug || '',
+            scheduledAt,
+          });
+          if (blogSlug) setPublishedSlugs(prev => new Set([...prev, blogSlug]));
+          loadSavedPosts();
+        }}
+      />
 
       </>}
     </div>
