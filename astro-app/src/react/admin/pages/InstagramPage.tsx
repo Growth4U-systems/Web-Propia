@@ -355,7 +355,7 @@ function CreateIGTab({ ideasList, blogList, publishedSlugs, onPublish, onSchedul
           <div className="p-6 bg-gradient-to-br from-[#6351d5]/5 to-pink-500/5 border-2 border-[#6351d5]/20 rounded-xl">
             <Lightbulb className="w-6 h-6 text-[#6351d5] mb-3" />
             <p className="font-semibold text-[#032149]">Desde Ideas Hub</p>
-            <p className="text-xs text-slate-400 mt-1">{ideasList.length} ideas para Instagram</p>
+            <p className="text-xs text-slate-400 mt-1">{ideasList.length} ideas disponibles</p>
           </div>
         </div>
 
@@ -543,7 +543,7 @@ export default function CameraPage() {
         }
         setPublishedSlugs(slugs);
       }),
-      getAllContentIdeas().then(all => setIdeasList(all.filter(i => (i.status === 'idea' || i.status === 'draft') && i.platforms?.includes('instagram')))),
+      getAllContentIdeas().then(all => setIdeasList(all.filter(i => i.status === 'idea' || i.status === 'draft'))),
     ]).catch(e => console.error('Error loading data:', e)).finally(() => setLoading(false));
   }, []);
 
