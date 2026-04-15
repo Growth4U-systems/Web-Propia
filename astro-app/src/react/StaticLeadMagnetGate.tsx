@@ -109,7 +109,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
             <p className="text-white/70 text-sm font-medium uppercase tracking-wider mb-3">¿Quieres implementarlo en tu empresa?</p>
             <h3 className="text-2xl font-bold text-white mb-4">Hablamos 30 minutos y te digo dónde está tu mayor oportunidad</h3>
             <a
-              href="https://api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN"
+              href="https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#3ecda5]/30"

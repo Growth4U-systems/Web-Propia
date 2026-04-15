@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { saveLeadMagnetLead } from '../lib/firebase-client';
 
-const BOOKING_LINK = 'https://api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN';
+const BOOKING_LINK = 'https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w';
 
 export default function NewsletterCTA() {
   const [step, setStep] = useState<'idle' | 'form' | 'done'>('idle');

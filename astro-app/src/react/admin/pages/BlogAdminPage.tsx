@@ -395,7 +395,7 @@ export default function BlogAdminPage() {
 
 ---
 
-*¿Quieres implementar esta estrategia en tu empresa tech? [Agenda una llamada gratuita con Growth4U](https://api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN) y te ayudamos a diseñar tu motor de crecimiento.*`;
+*¿Quieres implementar esta estrategia en tu empresa tech? [Agenda una llamada gratuita con Growth4U](https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w) y te ayudamos a diseñar tu motor de crecimiento.*`;
 
   const applyGeoTemplate = () => {
     if (formData.content && !confirm('¿Reemplazar el contenido actual con la plantilla GEO?')) return;

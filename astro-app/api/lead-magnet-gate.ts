@@ -126,7 +126,7 @@ export default async function handler(req: Request) {
   }
 
   const firstName = nombre.trim().split(/\s+/)[0] || "Hola";
-  const calendarUrl = "https://api.leadconnectorhq.com/widget/booking/XsVb9H5fZjGeVArLn2EN";
+  const calendarUrl = "https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w";
 
   const htmlBody = `
 <!DOCTYPE html>
