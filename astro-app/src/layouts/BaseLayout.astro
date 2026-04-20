@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { GA4_ID, TRUSTPILOT_BU_ID, SITE_NAME, SITE_URL, SITE_DESCRIPTION, OG_IMAGE, LOGO_IMAGE, FAVICON, LINKEDIN_URL, INSTAGRAM_URL } from '../lib/constants';
+import { GA4_ID, TRUSTPILOT_BU_ID, SITE_NAME, SITE_URL, SITE_DESCRIPTION, OG_IMAGE, LOGO_IMAGE, FAVICON, LINKEDIN_URL, INSTAGRAM_URL, BOOKING_LINK } from '../lib/constants';
 import { getAlternateUrl } from '../i18n/utils';
 import CookieBanner from '../react/CookieBanner';
 
@@ -125,6 +125,65 @@ const organizationSchema = {
 
     <!-- Cookie Banner (consent-based Meta Pixel) -->
     <CookieBanner client:idle />
+
+    <!-- WebMCP: expose site actions to in-browser AI agents. No-op when navigator.modelContext is absent. -->
+    <script is:inline define:vars={{ SITE_URL, BOOKING_LINK }}>
+      (function () {
+        if (typeof navigator === 'undefined' || !navigator.modelContext || typeof navigator.modelContext.provideContext !== 'function') return;
+
+        const go = (path) => { window.location.href = new URL(path, SITE_URL).href; };
+
+        navigator.modelContext.provideContext({
+          tools: [
+            {
+              name: 'book_consultation',
+              description: 'Open the Growth4U consultation booking page to schedule a 30-minute strategy call with the founder.',
+              inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+              execute: async () => { window.location.href = BOOKING_LINK; return { booking_url: BOOKING_LINK }; },
+            },
+            {
+              name: 'browse_lead_magnets',
+              description: 'Navigate to the Growth4U resources page with free lead magnets (frameworks, guides, playbooks on fintech growth).',
+              inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+              execute: async () => { go('/recursos/'); return { url: SITE_URL + '/recursos/' }; },
+            },
+            {
+              name: 'browse_blog',
+              description: 'Navigate to the Growth4U blog — articles on growth marketing, GEO, fintech, and Trust Engine methodology.',
+              inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+              execute: async () => { go('/blog/'); return { url: SITE_URL + '/blog/' }; },
+            },
+            {
+              name: 'browse_case_studies',
+              description: 'Navigate to Growth4U case studies (BNEXT, Bit2Me, GoCardless) with verified growth results.',
+              inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+              execute: async () => { go('/casos-de-exito/'); return { url: SITE_URL + '/casos-de-exito/' }; },
+            },
+            {
+              name: 'view_service',
+              description: 'Navigate to a Growth4U service page: GEO for fintechs, growth marketing fintech, or the Trust Engine methodology.',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  service: {
+                    type: 'string',
+                    enum: ['geo-para-fintechs', 'growth-marketing-fintech', 'trust-engine'],
+                    description: 'Which service page to open.',
+                  },
+                },
+                required: ['service'],
+                additionalProperties: false,
+              },
+              execute: async ({ service }) => {
+                const path = `/servicios/${service}/`;
+                go(path);
+                return { url: SITE_URL + path };
+              },
+            },
+          ],
+        });
+      })();
+    </script>
 
     <!-- Google Analytics 4 (deferred to after content) -->
     <script is:inline src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`} async></script>
