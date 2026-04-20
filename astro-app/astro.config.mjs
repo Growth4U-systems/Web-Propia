@@ -1,4 +1,7 @@
 import { defineConfig } from 'astro/config';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
@@ -9,6 +12,23 @@ const postDateMap = new Map();
 for (const p of postsCache) {
   const date = p.updatedAt || p.createdAt;
   if (date) postDateMap.set(p.slug, date);
+}
+
+// Parse redirected paths from netlify.toml so the sitemap doesn't list URLs
+// that redirect elsewhere (Google flags them as "Página con redirección").
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const netlifyTomlPath = path.resolve(__dirname, '..', 'netlify.toml');
+const redirectedPaths = new Set();
+try {
+  const toml = fs.readFileSync(netlifyTomlPath, 'utf8');
+  for (const m of toml.matchAll(/from\s*=\s*"([^"]+)"/g)) {
+    const from = m[1];
+    // Skip patterns with wildcards (they're route-level redirects, not specific pages)
+    if (from.includes('*') || from.includes(':')) continue;
+    redirectedPaths.add(from.endsWith('/') ? from : from + '/');
+  }
+} catch (e) {
+  console.warn('sitemap: could not parse netlify.toml redirects', e.message);
 }
 
 export default defineConfig({
@@ -26,8 +46,15 @@ export default defineConfig({
     react(),
     tailwind(),
     sitemap({
-      filter: (page) =>
-        !page.includes('/admin') && !page.includes('/feedback'),
+      filter: (page) => {
+        if (page.includes('/admin') || page.includes('/feedback')) return false;
+        // Exclude URLs that redirect (parsed from netlify.toml at build time).
+        try {
+          const urlPath = new URL(page).pathname;
+          if (redirectedPaths.has(urlPath)) return false;
+        } catch {}
+        return true;
+      },
       serialize(item) {
         // Add lastmod for blog posts from posts.json dates
         const blogMatch = item.url.match(/\/blog\/([^/]+)\/$/);

@@ -1,2 +1,8 @@
 node_modules/
 .env
+
+# Local Netlify folder
+.netlify
+
+# GSC audit output (ad-hoc reports, not source)
+scripts/gsc-output/
