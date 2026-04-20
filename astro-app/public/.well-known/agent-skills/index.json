@@ -1,0 +1,12 @@
+{
+  "$schema": "https://agentskills.io/schema/v0.2.0/index.json",
+  "skills": [
+    {
+      "name": "growth4u-overview",
+      "type": "instruction",
+      "description": "Growth4U company overview and service catalog (fintech growth marketing, Trust Engine, GEO) for use by LLMs and autonomous agents.",
+      "url": "https://growth4u.io/llms.txt",
+      "sha256": "f6b9c6ab24912e80354bcceb48292e089046ec416203f42056341481960aa13d"
+    }
+  ]
+}

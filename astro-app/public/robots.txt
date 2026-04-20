@@ -1,5 +1,6 @@
 # Invitación a los motores de búsqueda y IA
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 Disallow: /admin
 Disallow: /feedback

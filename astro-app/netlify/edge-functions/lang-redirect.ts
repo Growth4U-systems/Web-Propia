@@ -2,13 +2,14 @@ export default async (request: Request, context: any) => {
   const url = new URL(request.url);
   const path = url.pathname;
 
-  // Skip: already on /en/, admin, static assets, API, functions
+  // Skip: already on /en/, admin, static assets, API, functions, well-known
   if (
     path.startsWith('/en/') ||
     path === '/en' ||
     path.startsWith('/admin') ||
     path.startsWith('/_astro') ||
     path.startsWith('/.netlify') ||
+    path.startsWith('/.well-known') ||
     path.startsWith('/trust-score') ||
     path.match(/\.\w+$/) // static files (.js, .css, .png, etc.)
   ) {

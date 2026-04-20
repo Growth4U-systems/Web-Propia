@@ -7,6 +7,11 @@
 [functions]
   node_bundler = "esbuild"
 
+# Markdown negotiation (Accept: text/markdown) — runs before lang-redirect
+[[edge_functions]]
+  function = "markdown-negotiation"
+  path = "/*"
+
 # Language auto-detection (IP + Accept-Language → /en/ redirect)
 [[edge_functions]]
   function = "lang-redirect"
@@ -602,3 +607,20 @@
   for = "/images/*"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+
+# Agent discovery: Link headers on homepage (RFC 8288)
+[[headers]]
+  for = "/"
+  [headers.values]
+    Link = '''</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json", </llms.txt>; rel="service-doc"; type="text/plain", </sitemap-index.xml>; rel="sitemap"; type="application/xml", </.well-known/agent-skills/index.json>; rel="https://agentskills.io/rel/index"; type="application/json"'''
+
+# Broad well-known cache policy
+[[headers]]
+  for = "/.well-known/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/.well-known/agent-skills/index.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
