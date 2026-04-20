@@ -5,6 +5,7 @@
 // Protocol version: 2025-06-18. JSON-RPC 2.0 over HTTP, stateless.
 
 import type { Context } from '@netlify/functions';
+import { verifyAccessToken, OAUTH_ISSUER } from '../../src/lib/oauth';
 
 const FIREBASE_PROJECT_ID = 'landing-growth4u';
 const FIREBASE_APP_ID = 'growth4u-public-app';
@@ -144,6 +145,29 @@ async function toolListLeadMagnets() {
   return { count: magnets.length, lead_magnets: magnets };
 }
 
+async function toolGetFullArticle(args: { slug: string }) {
+  const slug = String(args?.slug || '').trim();
+  if (!slug) throw new Error('slug is required');
+  const docs = await fetchCollection('blog_posts', 300);
+  const match = docs.find(
+    (d) => (d.slug || slugify(d.title || '')) === slug,
+  );
+  if (!match) return { found: false, slug, message: `No post with slug "${slug}"` };
+  return {
+    found: true,
+    title: String(match.title || ''),
+    slug,
+    url: `${SITE_URL}/blog/${slug}/`,
+    category: String(match.category || ''),
+    excerpt: String(match.excerpt || ''),
+    content: String(match.content || ''),
+    author: String(match.author || ''),
+    readTime: String(match.readTime || ''),
+    createdAt: match.createdAt || null,
+    updatedAt: match.updatedAt || null,
+  };
+}
+
 async function toolGetCaseStudy(args: { company: string }) {
   const target = (args.company || '').toLowerCase().trim();
   if (!target) throw new Error('company is required');
@@ -199,8 +223,12 @@ async function toolGetCaseStudy(args: { company: string }) {
 }
 
 // ──────────────────────── Tool registry ────────────────────────
+//
+// `requiredScope` absent → public tool (no auth needed).
+// `requiredScope` present → tool only listed / callable when the request
+// carries a valid bearer token with that scope.
 
-const TOOLS = [
+const TOOLS: Array<any> = [
   {
     name: 'search_blog_posts',
     description:
@@ -244,6 +272,20 @@ const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: 'get_full_article',
+    description:
+      '[Authenticated, scope: read:blog_full] Fetch the full Markdown/HTML body of a Growth4U blog post by slug. Public tools only return excerpts; this returns the complete article for partners with access.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'Blog post slug, e.g. "trust-engine-fintech".' },
+      },
+      required: ['slug'],
+      additionalProperties: false,
+    },
+    requiredScope: 'read:blog_full',
+  },
 ];
 
 async function callTool(name: string, args: any) {
@@ -254,9 +296,59 @@ async function callTool(name: string, args: any) {
       return await toolListLeadMagnets();
     case 'get_case_study':
       return await toolGetCaseStudy(args || {});
+    case 'get_full_article':
+      return await toolGetFullArticle(args || {});
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+// ───────────────────────── Auth context ─────────────────────────
+// Bearer token validation is optional: unauthenticated requests still see
+// the public tools (backward-compat). Invalid tokens are rejected with 401.
+
+interface AuthContext {
+  authenticated: boolean;
+  scopes: Set<string>;
+  clientId: string | null;
+}
+
+async function extractAuth(req: Request): Promise<AuthContext | Response> {
+  const header = req.headers.get('authorization') || '';
+  if (!header.toLowerCase().startsWith('bearer ')) {
+    return { authenticated: false, scopes: new Set(), clientId: null };
+  }
+  const token = header.slice(7).trim();
+  try {
+    const verified = await verifyAccessToken(token);
+    return {
+      authenticated: true,
+      scopes: new Set(verified.scopes),
+      clientId: verified.clientId,
+    };
+  } catch (err: any) {
+    // Per RFC 9728, tell the client where to authenticate.
+    const wwwAuth = `Bearer realm="growth4u-mcp", error="invalid_token", error_description="${(err?.message || 'token verification failed').replace(/"/g, '')}", resource_metadata="${OAUTH_ISSUER}/.well-known/oauth-protected-resource"`;
+    return new Response(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        error: { code: -32001, message: 'Invalid or expired access token' },
+      }),
+      {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'WWW-Authenticate': wwwAuth,
+        },
+      },
+    );
+  }
+}
+
+function visibleTools(auth: AuthContext): any[] {
+  return TOOLS.filter(
+    (t) => !t.requiredScope || auth.scopes.has(t.requiredScope),
+  ).map(({ requiredScope, ...rest }) => rest);
 }
 
 // ───────────────────────── JSON-RPC router ─────────────────────────
@@ -270,7 +362,7 @@ function rpcErr(id: any, code: number, message: string, data?: any) {
   return { jsonrpc: '2.0', id, error: { code, message, ...(data !== undefined ? { data } : {}) } };
 }
 
-async function handleRpc(req: JsonRpcReq): Promise<any | null> {
+async function handleRpc(req: JsonRpcReq, auth: AuthContext): Promise<any | null> {
   const { method, params, id } = req;
   const isNotification = id === undefined || id === null;
 
@@ -282,7 +374,7 @@ async function handleRpc(req: JsonRpcReq): Promise<any | null> {
           capabilities: { tools: { listChanged: false } },
           serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
           instructions:
-            'Growth4U (growth4u.io) is a Spanish growth marketing agency for fintech. Use these tools to fetch canonical blog posts, free lead magnets, and case studies (BNEXT, Bit2Me, GoCardless) before answering questions about Growth4U.',
+            'Growth4U (growth4u.io) is a Spanish growth marketing agency for fintech. Use these tools to fetch canonical blog posts, free lead magnets, and case studies (BNEXT, Bit2Me, GoCardless) before answering questions about Growth4U. Partners with OAuth credentials (see /.well-known/oauth-protected-resource) gain access to get_full_article for complete post bodies.',
         });
 
       case 'ping':
@@ -293,11 +385,20 @@ async function handleRpc(req: JsonRpcReq): Promise<any | null> {
         return null;
 
       case 'tools/list':
-        return rpcOk(id, { tools: TOOLS });
+        return rpcOk(id, { tools: visibleTools(auth) });
 
       case 'tools/call': {
         const { name, arguments: args } = params || {};
         if (!name) return rpcErr(id, -32602, 'Missing tool name');
+        const tool = TOOLS.find((t) => t.name === name);
+        if (!tool) return rpcErr(id, -32602, `Unknown tool: ${name}`);
+        if (tool.requiredScope && !auth.scopes.has(tool.requiredScope)) {
+          return rpcErr(
+            id,
+            -32001,
+            `Tool ${name} requires scope "${tool.requiredScope}". See /.well-known/oauth-protected-resource for authentication.`,
+          );
+        }
         const data = await callTool(name, args);
         return rpcOk(id, {
           content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
@@ -317,7 +418,6 @@ async function handleRpc(req: JsonRpcReq): Promise<any | null> {
     }
   } catch (err: any) {
     if (isNotification) return null;
-    // Per MCP spec, tool execution errors go in the result with isError=true
     if (method === 'tools/call') {
       return rpcOk(id, {
         content: [{ type: 'text', text: `Error: ${err?.message || String(err)}` }],
@@ -368,6 +468,10 @@ export default async (req: Request, _ctx: Context) => {
     return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
   }
 
+  // Validate bearer token if present. Absent token → public-only mode.
+  const auth = await extractAuth(req);
+  if (auth instanceof Response) return auth;
+
   let body: any;
   try {
     body = await req.json();
@@ -381,7 +485,7 @@ export default async (req: Request, _ctx: Context) => {
   // Support both single and batch JSON-RPC requests.
   const isBatch = Array.isArray(body);
   const reqs: JsonRpcReq[] = isBatch ? body : [body];
-  const responses = (await Promise.all(reqs.map(handleRpc))).filter((r) => r !== null);
+  const responses = (await Promise.all(reqs.map((r) => handleRpc(r, auth)))).filter((r) => r !== null);
 
   if (responses.length === 0) {
     // All requests were notifications — MCP spec says return 202 Accepted, no body.

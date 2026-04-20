@@ -612,7 +612,7 @@
 [[headers]]
   for = "/"
   [headers.values]
-    Link = '''</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json", </llms.txt>; rel="service-doc"; type="text/plain", </sitemap-index.xml>; rel="sitemap"; type="application/xml", </.well-known/agent-skills/index.json>; rel="https://agentskills.io/rel/index"; type="application/json", </.well-known/mcp/server-card.json>; rel="https://modelcontextprotocol.io/rel/server-card"; type="application/json"'''
+    Link = '''</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json", </llms.txt>; rel="service-doc"; type="text/plain", </sitemap-index.xml>; rel="sitemap"; type="application/xml", </.well-known/agent-skills/index.json>; rel="https://agentskills.io/rel/index"; type="application/json", </.well-known/mcp/server-card.json>; rel="https://modelcontextprotocol.io/rel/server-card"; type="application/json", </.well-known/oauth-authorization-server>; rel="http://openid.net/specs/connect/1.0/issuer"; type="application/json", </.well-known/oauth-protected-resource>; rel="https://datatracker.ietf.org/doc/html/rfc9728"; type="application/json"'''
 
 # Broad well-known cache policy
 [[headers]]
@@ -630,8 +630,9 @@
   [headers.values]
     Content-Type = "application/json; charset=utf-8"
 
-# Advertise MCP server card in Link header of /mcp endpoint
+# Advertise MCP server card + OAuth protected resource in Link header of /mcp
 [[headers]]
   for = "/mcp"
   [headers.values]
-    Link = '''</.well-known/mcp/server-card.json>; rel="service-desc"; type="application/json"'''
+    Link = '''</.well-known/mcp/server-card.json>; rel="service-desc"; type="application/json", </.well-known/oauth-protected-resource>; rel="http://openid.net/specs/connect/1.0/issuer"; type="application/json"'''
+
