@@ -93,6 +93,20 @@
   status = 301
   force = true
 
+# Unit Economics: "la mentira del LTV" consolidado en la guía CAC/LTV/Payback
+[[redirects]]
+  from = "/blog/unit-economics-en-fintech-la-mentira-del-ltv-proyectado/"
+  to = "/blog/unit-economics-fintech-cac-ltv-payback/"
+  status = 301
+  force = true
+
+# Comité asesor B2B: "de grabaciones" consolidado en el post principal
+[[redirects]]
+  from = "/blog/de-grabaciones-de-reuniones-a-pildoras-de-contenido-linkedin-el-metodo/"
+  to = "/blog/comite-asesor-b2b-de-reuniones-mensuales-a-pildoras-de-contenido-linkedin/"
+  status = 301
+  force = true
+
 # Atribución: duplicado técnico bayesiano
 [[redirects]]
   from = "/blog/modelo-bayesiano-jerarquico-para-atribucion-multi-tactil-transparente/"

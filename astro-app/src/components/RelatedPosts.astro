@@ -8,23 +8,50 @@ interface Props {
   maxPosts?: number;
 }
 
-const { currentSlug, currentCategory, allPosts, maxPosts = 3 } = Astro.props;
+const { currentSlug, currentCategory, allPosts, maxPosts = 4 } = Astro.props;
+
+// Select related posts by keyword overlap (title + excerpt) instead of pure
+// recency. Spreads internal link equity to semantically-related posts — helps
+// Google discover older/less-linked content and build topic clusters.
+const STOPWORDS = new Set([
+  'de','la','el','y','en','que','los','las','un','una','para','con','por','o','del','al','es','se',
+  'a','como','sin','sobre','entre','mas','tu','te','me','su','lo','e','no','si','ya','mi','ser',
+  'esta','este','pero','cuando','todo','puede','hay','son','hacer','the','to','and','of','in',
+]);
+
+function tokens(str: string): Set<string> {
+  return new Set(
+    str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !STOPWORDS.has(w)),
+  );
+}
+
+const current = allPosts.find((p) => p.slug === currentSlug);
+const currentTokens = tokens(`${current?.title || ''} ${current?.excerpt || ''}`);
 
 const relatedPosts = allPosts
   .filter((p) => p.slug !== currentSlug)
-  .sort((a, b) => {
-    const aMatch = a.category === currentCategory ? 1 : 0;
-    const bMatch = b.category === currentCategory ? 1 : 0;
-    if (aMatch !== bMatch) return bMatch - aMatch;
-    return (b.createdAt || '').localeCompare(a.createdAt || '');
+  .map((p) => {
+    const t = tokens(`${p.title} ${p.excerpt}`);
+    let shared = 0;
+    for (const w of t) if (currentTokens.has(w)) shared++;
+    const categoryBoost = p.category === currentCategory ? 1 : 0;
+    return { post: p, score: shared + categoryBoost * 0.5 };
   })
-  .slice(0, maxPosts);
+  .sort((a, b) => b.score - a.score || (b.post.createdAt || '').localeCompare(a.post.createdAt || ''))
+  .slice(0, maxPosts)
+  .map((x) => x.post);
 ---
 
 {relatedPosts.length > 0 && (
   <section class="mt-16 pt-10 border-t border-slate-200">
     <h3 class="text-2xl font-bold text-[#032149] mb-8">Artículos relacionados</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {relatedPosts.map((post) => (
         <a href={`/blog/${post.slug}/`} class="group">
           <div class="relative overflow-hidden rounded-xl mb-3 aspect-video bg-slate-100">
