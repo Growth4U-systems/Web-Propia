@@ -22,6 +22,6 @@ LOG_FILE="data/bot-$(date +%Y-%m-%d).log"
 echo "=== Bot run: $(date) ===" >> "$LOG_FILE"
 
 # Run the bot
-node --import tsx src/daily.ts >> "$LOG_FILE" 2>&1
+node --import tsx/esm src/daily.ts >> "$LOG_FILE" 2>&1
 
 echo "=== Run complete: $(date) ===" >> "$LOG_FILE"

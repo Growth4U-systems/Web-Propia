@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node --import tsx src/index.ts",
-    "scrape": "node --import tsx src/scrape-cli.ts",
-    "run-daily": "node --import tsx src/daily.ts",
-    "status": "node --import tsx src/status.ts"
+    "start": "node --import tsx/esm src/index.ts",
+    "scrape": "node --import tsx/esm src/scrape-cli.ts",
+    "run-daily": "node --import tsx/esm src/daily.ts",
+    "status": "node --import tsx/esm src/status.ts"
   },
   "dependencies": {
     "dotenv": "^17.3.1",
