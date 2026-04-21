@@ -76,11 +76,13 @@ export default function AdminLayout() {
       { name: 'Blog', href: '/admin/blog/', icon: FileText },
       { name: 'Lead Magnets', href: '/admin/lead-magnets/', icon: Download },
       { name: 'Instagram', href: '/admin/instagram/', icon: Camera },
-      { name: 'IG Bot', href: '/admin/instagram-bot/', icon: Bot },
       { name: 'LinkedIn', href: '/admin/linkedin/', icon: LinkedinIcon },
-      { name: 'LI Bot', href: '/admin/linkedin-bot/', icon: Bot, badge: liBotBadge },
       { name: 'X / Twitter', href: '/admin/twitter/', icon: Twitter },
       { name: 'Newsletter', href: '/admin/newsletter/', icon: Mail },
+    ]},
+    { name: 'Bots', href: '/admin/linkedin-bot/', icon: Bot, children: [
+      { name: 'LinkedIn Bot', href: '/admin/linkedin-bot/', icon: LinkedinIcon, badge: liBotBadge },
+      { name: 'Instagram Bot', href: '/admin/instagram-bot/', icon: Camera },
     ]},
     { name: 'Visibilidad', href: '/admin/visibilidad/', icon: Search },
     { name: 'Partners', href: '/admin/partners/', icon: Handshake },
@@ -88,10 +90,19 @@ export default function AdminLayout() {
     { name: 'Leads', href: '/admin/leads/', icon: Users },
   ];
 
-  // Auto-expand Ideas Hub if current path is a child
-  const ideasChildPaths = ['/admin/ideas/', '/admin/blog/', '/admin/lead-magnets/', '/admin/instagram/', '/admin/instagram-bot/', '/admin/linkedin/', '/admin/linkedin-bot/', '/admin/twitter/', '/admin/newsletter/'];
-  const isInIdeasGroup = ideasChildPaths.some(p => normalizedPath === p);
-  const [ideasExpanded, setIdeasExpanded] = useState(isInIdeasGroup);
+  // Auto-expand any group whose children include the current path
+  const groupChildPaths: Record<string, string[]> = {
+    '/admin/ideas/': ['/admin/ideas/', '/admin/blog/', '/admin/lead-magnets/', '/admin/instagram/', '/admin/linkedin/', '/admin/twitter/', '/admin/newsletter/'],
+    '/admin/linkedin-bot/': ['/admin/linkedin-bot/', '/admin/instagram-bot/'],
+  };
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    for (const [key, paths] of Object.entries(groupChildPaths)) {
+      initial[key] = paths.some(p => normalizedPath === p);
+    }
+    return initial;
+  });
+  const toggleGroup = (href: string) => setExpandedGroups(prev => ({ ...prev, [href]: !prev[href] }));
 
   if (loading) {
     return (
@@ -184,8 +195,8 @@ export default function AdminLayout() {
               const isGroupActive = hasChildren && item.children!.some(c => normalizedPath === c.href);
 
               if (hasChildren) {
-                const expanded = item.href === '/admin/ideas/' ? ideasExpanded : false;
-                const toggle = item.href === '/admin/ideas/' ? () => setIdeasExpanded(e => !e) : () => {};
+                const expanded = expandedGroups[item.href] ?? false;
+                const toggle = () => toggleGroup(item.href);
                 return (
                   <div key={item.name}>
                     <div className="flex items-center">
