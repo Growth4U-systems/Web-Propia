@@ -18,7 +18,7 @@ export default function LeadMagnetGate({ magnetId, magnetSlug, magnetTitle, exce
   const [submitting, setSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [sentEmail, setSentEmail] = useState('');
-  const [formData, setFormData] = useState({ nombre: '', email: '', empresa: '' });
+  const [formData, setFormData] = useState({ nombre: '', email: '', telefono: '', empresa: '' });
   const [error, setError] = useState('');
 
   const storageKey = `lead_magnet_unlocked_${magnetSlug}`;
@@ -73,6 +73,7 @@ export default function LeadMagnetGate({ magnetId, magnetSlug, magnetTitle, exce
       await saveLeadMagnetLead({
         nombre: formData.nombre.trim(),
         email: formData.email.trim(),
+        telefono: formData.telefono.trim(),
         tag: formData.empresa.trim(),
         magnetSlug,
         magnetTitle,
@@ -86,6 +87,7 @@ export default function LeadMagnetGate({ magnetId, magnetSlug, magnetTitle, exce
         body: JSON.stringify({
           nombre: formData.nombre.trim(),
           email: formData.email.trim(),
+          telefono: formData.telefono.trim(),
           empresa: formData.empresa.trim(),
           magnetSlug,
           magnetTitle,
@@ -260,6 +262,18 @@ export default function LeadMagnetGate({ magnetId, magnetSlug, magnetTitle, exce
                   disabled={submitting}
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent disabled:opacity-50"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Tu móvil</label>
+                <input
+                  type="tel"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  placeholder="+34 600 000 000"
+                  disabled={submitting}
+                  autoComplete="tel"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent disabled:opacity-50"
                 />
               </div>
               <div>

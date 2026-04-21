@@ -294,6 +294,7 @@ export interface LeadMagnetLead {
   tag: string;
   magnetSlug: string;
   magnetTitle: string;
+  telefono?: string;
 }
 
 // Articles CRUD
@@ -412,12 +413,14 @@ function sendToGHL(data: LeadMagnetLead): void {
     firstName,
     lastName,
     email: data.email,
+    phone: data.telefono || undefined,
     tags: isNewsletter ? ['newsletter-subscriber'] : ['lead-magnet', data.magnetSlug],
     source: `Growth4U - ${data.magnetTitle}`,
     customData: {
       magnetSlug: data.magnetSlug,
       magnetTitle: data.magnetTitle,
       tag: data.tag,
+      telefono: data.telefono || '',
     },
   };
   const webhookUrl = isNewsletter ? GHL_WEBHOOK_NEWSLETTER : GHL_WEBHOOK_LEADMAGNET;

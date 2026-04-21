@@ -23,6 +23,7 @@ async function createGhlContact(
   empresa: string,
   magnetSlug: string,
   magnetTitle: string,
+  telefono: string = '',
   utmSource: string = '',
   utmMedium: string = '',
   utmCampaign: string = '',
@@ -44,7 +45,12 @@ async function createGhlContact(
     if (existing) {
       const existingTags: string[] = existing.tags || [];
       const newTag = `lead-magnet-${magnetSlug}`;
-      if (!existingTags.includes(newTag)) {
+      const needsTagUpdate = !existingTags.includes(newTag);
+      const needsPhoneUpdate = telefono && !existing.phone;
+      if (needsTagUpdate || needsPhoneUpdate) {
+        const body: Record<string, unknown> = {};
+        if (needsTagUpdate) body.tags = [...existingTags, newTag];
+        if (needsPhoneUpdate) body.phone = telefono;
         await fetch(`https://services.leadconnectorhq.com/contacts/${existing.id}`, {
           method: "PUT",
           headers: {
@@ -52,7 +58,7 @@ async function createGhlContact(
             "Content-Type": "application/json",
             Version: "2021-07-28",
           },
-          body: JSON.stringify({ tags: [...existingTags, newTag] }),
+          body: JSON.stringify(body),
           signal: AbortSignal.timeout(5_000),
         }).catch(() => {});
       }
@@ -72,6 +78,7 @@ async function createGhlContact(
         firstName: nameParts[0] || "",
         lastName: nameParts.slice(1).join(" ") || "",
         email,
+        phone: telefono || undefined,
         companyName: empresa || undefined,
         tags: [
           "lead-magnet",
@@ -122,7 +129,7 @@ export default async (req: Request, context: Context) => {
   if (req.method === "OPTIONS") return new Response("", { headers: CORS_HEADERS });
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
 
-  const { nombre, email, empresa, magnetSlug, magnetTitle, contentUrl, utmSource, utmMedium, utmCampaign, utmContent } = await req.json();
+  const { nombre, email, telefono, empresa, magnetSlug, magnetTitle, contentUrl, utmSource, utmMedium, utmCampaign, utmContent } = await req.json();
 
   if (!nombre || !email || !magnetSlug || !magnetTitle || !contentUrl) {
     return jsonResponse({ error: "Missing fields" }, 400);
@@ -137,7 +144,7 @@ export default async (req: Request, context: Context) => {
   // Create GHL contact in background (don't block email sending)
   const ghlApiKey = process.env.GHL_API_KEY;
   if (ghlApiKey) {
-    createGhlContact(ghlApiKey, email.trim().toLowerCase(), nombre.trim(), empresa || "", magnetSlug, magnetTitle, utmSource || "", utmMedium || "", utmCampaign || "", utmContent || "");
+    createGhlContact(ghlApiKey, email.trim().toLowerCase(), nombre.trim(), empresa || "", magnetSlug, magnetTitle, (telefono || "").trim(), utmSource || "", utmMedium || "", utmCampaign || "", utmContent || "");
   }
 
   const firstName = nombre.trim().split(/\s+/)[0] || "Hola";
