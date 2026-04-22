@@ -19,8 +19,8 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nombre.trim() || !formData.email.trim()) {
-      setError('Nombre y email son obligatorios');
+    if (!formData.nombre.trim() || !formData.email.trim() || !formData.telefono.trim()) {
+      setError('Nombre, email y móvil son obligatorios');
       return;
     }
     setError('');
@@ -210,7 +210,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tu móvil</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Tu móvil *</label>
                 <input
                   type="tel"
                   value={formData.telefono}
@@ -219,6 +219,7 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
                   disabled={submitting}
                   autoComplete="tel"
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3ecda5] focus:border-transparent disabled:opacity-50"
+                  required
                 />
               </div>
               <div>
