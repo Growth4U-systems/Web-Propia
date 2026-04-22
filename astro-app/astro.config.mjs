@@ -48,6 +48,14 @@ export default defineConfig({
     sitemap({
       filter: (page) => {
         if (page.includes('/admin') || page.includes('/feedback')) return false;
+        // Pages with noindex meta should not be in sitemap (conflicting signal).
+        if (
+          page.includes('/privacidad/') ||
+          page.includes('/cookies/') ||
+          page.includes('/dashboard-captacion')
+        ) {
+          return false;
+        }
         // Exclude URLs that redirect (parsed from netlify.toml at build time).
         try {
           const urlPath = new URL(page).pathname;

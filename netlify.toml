@@ -29,6 +29,13 @@
   status = 301
   force = true
 
+# Trust Score without trailing slash → canonical with slash (edge function requires /trust-score/*)
+[[redirects]]
+  from = "/trust-score"
+  to = "/trust-score/"
+  status = 301
+  force = true
+
 # Redirects from old query parameter URLs to new clean URLs
 [[redirects]]
   from = "/blog"
