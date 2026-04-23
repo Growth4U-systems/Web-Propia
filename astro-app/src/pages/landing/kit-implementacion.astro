@@ -1,0 +1,172 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StaticLeadMagnetGate from '../../react/StaticLeadMagnetGate';
+import { SITE_URL, generateOgImage } from '../../lib/constants';
+
+const slug = 'kit-implementacion';
+const title = 'Kit de Implementación Trust Engine';
+const description = '3 playbooks operativos de las 4 fases del Trust Engine + vídeo explicativo del framework. Instala capacidad de growth sin depender de agencias.';
+const mediumName = 'Puromarketing';
+
+const excerpt = `## Para lectores de ${mediumName}: el kit real que usamos con clientes
+
+El problema con el modelo de agencia no es que sea caro. Es que está diseñado para que sigas dependiendo de ellos. El incentivo estructural de una agencia es **retenerte**, no enseñarte a operar solo.
+
+Por eso publicamos abierto el mismo kit que usamos en los primeros meses con cada cliente. Incluye:
+
+- **Playbook F0 — Diagnóstico y Base** (20 páginas). Cómo auditar atribución, activación, trust y autonomía en 5 pasos.
+- **Playbook F1 — Trust Fortress** (18 páginas). Checklist de las 4 capas de credibilidad que hacen que tu tráfico convierta: producto como proof, social proof orgánica, precedencia en medios, borrowed trust.
+- **Playbook F2 — Outbound estructurado** (22 páginas). Frameworks de outbound que funcionan cuando ya hay trust construido. Secuencias, templates, criterios de calificación.
+- **Vídeo explicativo** (18 min). Las 4 fases del Trust Engine narradas con ejemplos reales: Bnext (0 → 400K usuarios), Bit2Me (CAC 85€ → 34€), Criptan (100 → 1.000 depósitos/mes), Múltiplo (93 leads → 17 clientes).
+
+Esto **no** es una versión light del método. Es la versión completa de 3 de los 13 playbooks que usamos en un engagement de 6 meses. Lo publicamos abierto porque el valor real está en la ejecución — y la ejecución requiere meses con un equipo que lo construye contigo.
+
+Si después de aplicar estos 3 playbooks quieres que te ayudemos con los 10 restantes, hablamos. Si con estos resuelves tu bloqueo solo, mejor aún: el objetivo del kit es que puedas empezar hoy sin firmar nada.`;
+
+const fullContent = `<div style="font-family:inherit">
+
+  <div style="background:#f8fafc;border-radius:16px;padding:28px;margin-bottom:28px">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:8px">Qué hay dentro del kit</h2>
+    <p style="color:#64748b;font-size:15px;margin-bottom:24px">3 playbooks operativos + 1 vídeo. Total: ~60 páginas de material + 18 minutos de vídeo. Descarga inmediata al email.</p>
+    <div style="display:grid;gap:16px">
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #3ecda5;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#3ecda5;color:white;padding:4px 10px;border-radius:20px;font-weight:800;font-size:11px;letter-spacing:0.05em">FASE 0</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Playbook de Diagnóstico y Base</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>20 páginas · Instala atribución clara antes de invertir un euro más.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">La fase 0 no es una fase romántica: es la que hace que todas las demás funcionen. Sin atribución real, cualquier inversión en paid, content u outbound va a ciegas. El playbook te guía por los 5 pasos que usamos: UTMs bien estructurados, distinción lead/cliente, inclusión del tiempo de equipo en el CAC, cruce CAC-LTV a 90 días, y cadencia semanal de decisión. Incluye templates de dashboard y ejemplos reales de cómo lo hacen Bnext y Bit2Me.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #45b6f7;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#45b6f7;color:white;padding:4px 10px;border-radius:20px;font-weight:800;font-size:11px;letter-spacing:0.05em">FASE 1</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Playbook de Trust Fortress</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>18 páginas · Construye la credibilidad que hace que tu tráfico convierta.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">La mayoría de founders invierten en tráfico antes de construir trust. Resultado: el tráfico llega y no convierte porque cada lead tiene que construir la confianza desde cero. Este playbook desglosa las 4 capas del Trust Engine (producto como proof, social proof orgánica, precedencia en medios, borrowed trust) con checklists específicos por capa, ejemplos de cómo Criptan construyó su trust en 18 meses hasta generar 17M€ por afiliación, y matriz de priorización según tu momento de negocio.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #0faec1;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#0faec1;color:white;padding:4px 10px;border-radius:20px;font-weight:800;font-size:11px;letter-spacing:0.05em">FASE 2</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Playbook de Outbound estructurado</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>22 páginas · Outbound que funciona porque hay trust previo.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">El outbound a pelo (sin trust) tiene tasas de respuesta del 2-3% y quema la marca. El outbound sobre una base de trust construida (fase 1) tiene tasas de respuesta de 5x y posiciona tu marca. Este playbook incluye: secuencias por tipo de ICP, templates de email con trust-signals integrados, criterios de calificación para decidir a quién contactar y a quién no, y el framework para escalar outbound sin perder personalización. Es el mismo material que usamos con Múltiplo para pasar de 93 leads → 17 clientes confirmados.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #22c55e;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#22c55e;color:white;padding:4px 10px;border-radius:20px;font-weight:800;font-size:11px;letter-spacing:0.05em">VÍDEO</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Las 4 fases del Trust Engine</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>18 minutos · El framework completo con casos reales narrados.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">El vídeo explica cómo encadenar las 4 fases (F0 Base → F1 Trust → F2 Generación de Demanda → F3 Optimización) en un engagement de 6 meses con fechas de entrada y salida. Incluye ejemplos narrados de Bnext, Bit2Me, Criptan y Múltiplo con cifras concretas, decisiones específicas y plazos reales. Sirve para entender el mapa completo antes de abrir cada playbook individual.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="background:white;border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #e2e8f0">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:20px">Cómo usarlo</h2>
+    <div style="display:grid;gap:12px">
+      <div style="background:#f0fdf4;border-radius:12px;padding:18px">
+        <h3 style="color:#15803d;font-size:15px;font-weight:700;margin-bottom:8px">Semana 1: mira el vídeo y haz el audit de F0</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">18 minutos de vídeo + 1 hora de equipo rellenando el audit del Playbook F0. Al final de la semana sabes exactamente dónde está tu bloqueo en la capa de atribución.</p>
+      </div>
+      <div style="background:#f0f0ff;border-radius:12px;padding:18px">
+        <h3 style="color:#6351d5;font-size:15px;font-weight:700;margin-bottom:8px">Semanas 2-4: instala la capa de F0 que falte</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">Si el audit reveló que no tienes UTMs bien estructurados, o que no cruzas CAC con LTV, el playbook te da los pasos concretos. La mayoría de equipos pueden cerrar los gaps de F0 en 3-4 semanas.</p>
+      </div>
+      <div style="background:#fffbeb;border-radius:12px;padding:18px">
+        <h3 style="color:#b45309;font-size:15px;font-weight:700;margin-bottom:8px">Mes 2: ataca las 2 capas más débiles de F1</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">Con atribución clara ya puedes ver qué capas de trust te están haciendo perder conversiones. El Playbook F1 te da checklist de priorización para empezar por lo que más impacto tiene en tu CAC.</p>
+      </div>
+      <div style="background:#f0f9ff;border-radius:12px;padding:18px">
+        <h3 style="color:#0284c7;font-size:15px;font-weight:700;margin-bottom:8px">Mes 3: monta la secuencia de outbound con trust-signals</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">El Playbook F2 asume que F0 y F1 están cerrados. Si los saltas, tu tasa de respuesta no va a subir aunque uses las mejores secuencias. Por eso el orden importa.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:white;border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #e2e8f0">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:20px">Qué no incluye (honestidad radical)</h2>
+    <p style="color:#64748b;font-size:14px;margin-bottom:16px;line-height:1.7">No te vamos a vender que con 3 playbooks resuelves todo. El engagement completo del Trust Engine son 13 playbooks en 6 meses. El kit cubre 3, los más autosuficientes. Lo que no incluye:</p>
+    <ul style="color:#475569;font-size:14px;margin:0;padding-left:20px;line-height:2">
+      <li><strong>Playbooks de Fase 3</strong> (Generación de Demanda estratégica con paid + influencers + afiliados)</li>
+      <li><strong>Playbooks de Fase 4</strong> (Optimización continua, rituales, infraestructura operativa)</li>
+      <li><strong>Dashboard operativo</strong> configurado para tu stack específico</li>
+      <li><strong>Revisiones semanales</strong> con el equipo para ajustar según resultados</li>
+      <li><strong>Garantía de resultados</strong> medibles en 6 meses (que sí ofrecemos en el engagement)</li>
+    </ul>
+    <p style="color:#64748b;font-size:14px;margin-top:16px;margin-bottom:0;line-height:1.7">Si con los 3 playbooks + vídeo ves que el framework encaja con tu situación y quieres la versión completa, hablamos. Si no, al menos tienes material real para mover la aguja esta semana.</p>
+  </div>
+
+  <div style="background:#032149;border-radius:16px;padding:28px;color:white">
+    <h2 style="color:white;font-size:22px;font-weight:800;margin-bottom:12px">Por qué lo publicamos abierto</h2>
+    <p style="color:rgba(255,255,255,0.8);font-size:15px;margin-bottom:16px;line-height:1.7">Porque el valor real no está en el documento — está en la ejecución. Y la ejecución requiere meses con un equipo que lo construye contigo, no un PDF.</p>
+    <p style="color:rgba(255,255,255,0.8);font-size:15px;margin:0;line-height:1.7">Si después de este kit decides que lo haces solo, perfecto — fue el objetivo. Si decides que quieres ayuda para instalarlo, hablamos. Pero no queremos que firmes nada sin haber visto cómo trabajamos. Por eso te damos el material ahora.</p>
+  </div>
+
+</div>`;
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Landing', item: `${SITE_URL}/landing/` },
+    { '@type': 'ListItem', position: 3, name: title, item: `${SITE_URL}/landing/${slug}/` },
+  ],
+};
+---
+
+<BaseLayout
+  title={`${title} | Growth4U`}
+  description={description}
+  canonical={`${SITE_URL}/landing/${slug}/`}
+  ogImage={generateOgImage(title)}
+  jsonLd={[breadcrumbSchema]}
+>
+  <main class="min-h-screen bg-white">
+    <section class="bg-[#032149] pt-20 pb-14">
+      <div class="max-w-3xl mx-auto px-4">
+        <div class="flex items-center gap-2 mb-6">
+          <a href="/" class="text-white/50 hover:text-white text-sm transition-colors">Growth4U</a>
+          <span class="text-white/30">/</span>
+          <span class="text-white/50 text-sm">Landing</span>
+        </div>
+        <span class="inline-block px-3 py-1 bg-[#3ecda5]/30 text-[#a89cf7] rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+          Exclusivo para lectores de {mediumName}
+        </span>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">{title}</h1>
+        <p class="text-xl text-slate-300 leading-relaxed mb-8">{description}</p>
+        <div class="flex flex-wrap items-center gap-6 text-slate-400 text-sm">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>3 playbooks + vídeo 18 min</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Descarga inmediata</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Sin spam</span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="max-w-3xl mx-auto px-4 py-12 pb-20">
+      <StaticLeadMagnetGate
+        client:only="react"
+        magnetSlug={slug}
+        magnetTitle={title}
+        excerpt={excerpt}
+        fullContent={fullContent}
+      />
+    </section>
+  </main>
+</BaseLayout>

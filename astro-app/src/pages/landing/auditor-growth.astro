@@ -1,0 +1,169 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StaticLeadMagnetGate from '../../react/StaticLeadMagnetGate';
+import { SITE_URL, generateOgImage } from '../../lib/constants';
+
+const slug = 'auditor-growth';
+const title = 'El Auditor de tu Sistema de Growth';
+const description = 'Un checklist de 20 preguntas sobre atribución, canales, trust y tooling. La misma auditoría que hacemos cuando llega un cliente nuevo — con análisis de gaps por email.';
+const mediumName = 'José Facchin';
+
+const excerpt = `## Para lectores de ${mediumName}: audita tu sistema en 20 preguntas
+
+Copiar tácticas de growth que funcionaron a otros es la forma más cara de perder 6 meses. Buffer tenía un contexto de 2012, Hotmart tenía una red de creadores, Bnext tenía una base de trust previa. Tú tienes **tu** contexto — y un sistema que seguramente tiene 4 o 5 huecos que hacen que cada campaña rinda por debajo de lo que debería.
+
+Este auditor te da **20 preguntas estructuradas** en 5 bloques:
+
+- **Atribución** — ¿sabes qué canal trae clientes reales, no leads fríos?
+- **Canales activos** — ¿están conectados entre sí o son silos?
+- **Trust Engine** — ¿tu tráfico convierte porque hay credibility previa?
+- **Equipo y autonomía** — ¿el sistema funciona sin ti?
+- **Tooling y data** — ¿tienes lo que necesitas para tomar decisiones semanales?
+
+Al descargarlo recibes el **PDF con las 20 preguntas** más un email con el **análisis de tus gaps**: los 3 puntos donde tu sistema tiene más fugas y por dónde empezaría yo si fuera tu consultor.
+
+Este es el mismo documento que usamos en Growth4U en la primera semana con clientes como Bnext, Criptan o Múltiplo.`;
+
+const fullContent = `<div style="font-family:inherit">
+
+  <div style="background:#f8fafc;border-radius:16px;padding:28px;margin-bottom:28px">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:8px">Los 5 bloques del auditor</h2>
+    <p style="color:#64748b;font-size:15px;margin-bottom:24px">20 preguntas que revelan dónde está el bloqueo real de tu growth. Cada bloque ataca un nivel distinto del sistema.</p>
+    <div style="display:grid;gap:16px">
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #3ecda5;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#3ecda5;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">1</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Atribución (4 preguntas)</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>Si no sabes qué canal trae clientes, no sabes dónde invertir.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">Examinamos si tienes UTM bien estructurados, si distingues entre leads y clientes de pago, si tu CAC incluye el tiempo de equipo (no solo ad spend), y si tu dashboard cruza CAC con LTV a 90 días. Típicamente los equipos puntúan mal en 3 de las 4 — y ahí está el primer gap.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #45b6f7;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#45b6f7;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">2</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Canales activos (4 preguntas)</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>Canales sin conexión entre sí son una colección de experimentos, no un sistema.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">Revisamos si tus canales se alimentan unos a otros (lo que aprendes de paid informa tu orgánico, lo que aprendes de outbound informa tu contenido), si cada canal tiene hipótesis documentada, y si tienes un rito mensual para matar lo que no funciona. Los founders suelen descubrir aquí que llevan 12 meses rotando canales sin acumular aprendizaje.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #0faec1;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#0faec1;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">3</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Trust Engine (4 preguntas)</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>Sin credibility previa, cada lead cuesta 3x más.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">Preguntamos por las 4 capas del Trust Engine: producto como proof, social proof orgánica, precedencia en medios y borrowed trust. Si tu buyer te googlea y encuentra pocas señales de confianza, el CAC sube no porque tu producto sea peor, sino porque cada lead tiene que construir la confianza desde cero. Múltiplo resolvió esto en 6 meses y pasó de 93 leads → 17 clientes con ROI recuperado en semanas.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #22c55e;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#22c55e;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">4</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Equipo y autonomía (4 preguntas)</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>Si el sistema no funciona sin el fundador, no es un sistema.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">Evaluamos si tienes playbooks documentados (no "así lo hacemos" sino "así lo haces tú"), si el conocimiento está distribuido o concentrado en una persona, y si tu agencia (si la tienes) construye autonomía o dependencia. El mayor riesgo para una startup no es que una táctica falle — es que el knowledge se vaya cuando se va el growth manager o la agencia.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #f59e0b;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#f59e0b;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">5</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Tooling y data (4 preguntas)</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>Stack desalineado = decisiones por intuición.</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">Chequeamos si tu CRM, analítica y automatizaciones hablan entre sí, si tienes un dashboard de decisión (no solo de reporting), y si revisas los datos con cadencia semanal. Un stack desconectado es la razón #1 por la que los equipos "no tienen tiempo" para growth — pasan todo el tiempo moviendo datos entre herramientas.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="background:white;border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #e2e8f0">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:20px">Qué incluye la descarga</h2>
+    <div style="display:grid;gap:12px">
+      <div style="background:#f0fdf4;border-radius:12px;padding:18px">
+        <h3 style="color:#15803d;font-size:15px;font-weight:700;margin-bottom:8px">PDF con las 20 preguntas</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">Formato checklist, imprimible, con espacio para que tu equipo responda y compare semanas/meses. Diseñado para que sea un ritual, no un documento que leas una vez y olvides.</p>
+      </div>
+      <div style="background:#f0f0ff;border-radius:12px;padding:18px">
+        <h3 style="color:#6351d5;font-size:15px;font-weight:700;margin-bottom:8px">Análisis de tus gaps por email</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">Al rellenar el formulario te llega un análisis personalizado: los 3 bloques con mayor probabilidad de ser tu bloqueo según tu perfil (startup B2B, B2C, fintech, SaaS, etc.) y qué atacar primero.</p>
+      </div>
+      <div style="background:#fffbeb;border-radius:12px;padding:18px">
+        <h3 style="color:#b45309;font-size:15px;font-weight:700;margin-bottom:8px">Referencias a casos equivalentes</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">Cada gap viene con un ejemplo de un cliente real que lo tuvo, cómo lo resolvió y en qué plazo. No teoría — números verificables.</p>
+      </div>
+      <div style="background:#f0f9ff;border-radius:12px;padding:18px">
+        <h3 style="color:#0284c7;font-size:15px;font-weight:700;margin-bottom:8px">Cadencia de revisión recomendada</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">No basta con hacer el audit una vez. Te damos el ritual mensual con las 5 preguntas que deberías repasar cada mes con tu equipo para evitar que el sistema derive.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#032149;border-radius:16px;padding:28px;color:white">
+    <h2 style="color:white;font-size:22px;font-weight:800;margin-bottom:12px">Por qué este auditor funciona</h2>
+    <p style="color:rgba(255,255,255,0.8);font-size:15px;margin-bottom:16px;line-height:1.7">La mayoría de auditorías gratuitas son simplemente imanes de leads disfrazados de herramienta. Este no — es el mismo documento que usamos internamente cuando entramos en un cliente nuevo.</p>
+    <p style="color:rgba(255,255,255,0.8);font-size:15px;margin:0;line-height:1.7">Lo publicamos abierto porque el valor real no es el checklist, es la ejecución. Y la ejecución requiere construir el sistema — que es nuestra unidad de trabajo. Si después de rellenarlo decides que quieres ayuda, hablamos. Si no, ya tienes 20 preguntas que te dan claridad sobre qué mover primero.</p>
+  </div>
+
+</div>`;
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Landing', item: `${SITE_URL}/landing/` },
+    { '@type': 'ListItem', position: 3, name: title, item: `${SITE_URL}/landing/${slug}/` },
+  ],
+};
+---
+
+<BaseLayout
+  title={`${title} | Growth4U`}
+  description={description}
+  canonical={`${SITE_URL}/landing/${slug}/`}
+  ogImage={generateOgImage(title)}
+  jsonLd={[breadcrumbSchema]}
+>
+  <main class="min-h-screen bg-white">
+    <section class="bg-[#032149] pt-20 pb-14">
+      <div class="max-w-3xl mx-auto px-4">
+        <div class="flex items-center gap-2 mb-6">
+          <a href="/" class="text-white/50 hover:text-white text-sm transition-colors">Growth4U</a>
+          <span class="text-white/30">/</span>
+          <span class="text-white/50 text-sm">Landing</span>
+        </div>
+        <span class="inline-block px-3 py-1 bg-[#3ecda5]/30 text-[#a89cf7] rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+          Exclusivo para lectores de {mediumName}
+        </span>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">{title}</h1>
+        <p class="text-xl text-slate-300 leading-relaxed mb-8">{description}</p>
+        <div class="flex flex-wrap items-center gap-6 text-slate-400 text-sm">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Checklist 20 preguntas</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Análisis de gaps por email</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Sin spam</span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="max-w-3xl mx-auto px-4 py-12 pb-20">
+      <StaticLeadMagnetGate
+        client:only="react"
+        magnetSlug={slug}
+        magnetTitle={title}
+        excerpt={excerpt}
+        fullContent={fullContent}
+      />
+    </section>
+  </main>
+</BaseLayout>

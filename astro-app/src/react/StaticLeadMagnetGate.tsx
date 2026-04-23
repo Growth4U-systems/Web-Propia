@@ -36,8 +36,9 @@ export default function StaticLeadMagnetGate({ magnetSlug, magnetTitle, excerpt,
         magnetTitle,
       });
 
-      // Send email via GHL (new flow)
-      const contentUrl = `${window.location.origin}/recursos/${magnetSlug}/?token=${encodeURIComponent(btoa(formData.email.trim().toLowerCase()))}`;
+      // Send email via GHL (new flow). Use the current page path so the unlock
+      // link works on both /recursos/... and /landing/... lead magnets.
+      const contentUrl = `${window.location.origin}${window.location.pathname}?token=${encodeURIComponent(btoa(formData.email.trim().toLowerCase()))}`;
       const params = new URLSearchParams(window.location.search);
       const resp = await fetch('/api/lead-magnet-gate', {
         method: 'POST',

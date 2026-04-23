@@ -1,0 +1,168 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StaticLeadMagnetGate from '../../react/StaticLeadMagnetGate';
+import { SITE_URL, generateOgImage } from '../../lib/constants';
+
+const slug = 'diagnostico-growth';
+const title = 'Diagnóstico Gratuito de Growth';
+const description = 'Un diagnóstico honesto de 5 preguntas para saber por qué tu crecimiento está bloqueado — y por dónde empezar a resolverlo esta semana.';
+const mediumName = 'TodoStartups';
+
+const excerpt = `## Para lectores de ${mediumName}: diagnostica tu sistema de growth en 5 minutos
+
+Si llevas 6 meses probando canales sin encontrar el que rompe la barrera — LinkedIn un mes, Meta otro, un blog que lee tu madre — **el problema casi nunca es el canal**. Es que no tienes un sistema que acumule aprendizaje entre experimentos.
+
+Este diagnóstico te hace **5 preguntas incómodas** sobre atribución, activación, trust y autonomía de tu equipo. Al responderlas recibes un informe personalizado con:
+
+- Dónde está tu **bloqueo real** (no el aparente)
+- Qué **fase del Trust Engine** necesitas atacar antes de escalar paid
+- 3 **acciones concretas** para aplicar esta semana
+- Referencias a **casos reales** de startups que pasaron por lo mismo (Bnext, Bit2Me, Criptan)
+
+No es un quiz de marketing ni una herramienta de captación disfrazada. Es la misma auditoría que hacemos cuando nos llega un cliente nuevo — con la diferencia de que aquí la respondes tú y te llega al email en 2 minutos.
+
+**Tiempo estimado:** 5 minutos. Sin llamadas. Sin compromisos.`;
+
+const fullContent = `<div style="font-family:inherit">
+
+  <div style="background:#f8fafc;border-radius:16px;padding:28px;margin-bottom:28px">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:8px">Las 5 preguntas del diagnóstico</h2>
+    <p style="color:#64748b;font-size:15px;margin-bottom:24px">Responde con honestidad. Cada "no sé" es una pista sobre dónde está tu bloqueo real.</p>
+    <div style="display:grid;gap:16px">
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #3ecda5;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#3ecda5;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">1</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Atribución</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>¿Cuántos clientes reales generó cada canal el mes pasado?</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">No leads ni registros. Clientes que pagaron. Si la respuesta es "más o menos" o "creemos que LinkedIn va mejor", tienes un problema de atribución. Y sin atribución no hay aprendizaje entre experimentos — cada mes empiezas de cero.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #45b6f7;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#45b6f7;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">2</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Activación</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>¿Qué % de los usuarios que se registran llegan al momento "aha" en 72 horas?</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">El momento aha es la acción que predice retención. Si no lo tienes definido con datos, todo tu CAC está tirado: un usuario que no activa no vale nada — y cuesta lo mismo que uno que sí activa. Bnext redujo el churn de 90 días del 52% al 21% solo trabajando este punto.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #0faec1;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#0faec1;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">3</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Trust</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>Cuando un buyer te googlea antes de hablar contigo, ¿qué encuentra?</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">Reviews, casos de éxito con cifras, menciones en medios del sector. Si encuentra poco, tu CAC sube no porque tu producto sea peor, sino porque cada lead tiene que construir confianza desde cero. Criptan tardó 18 meses en construir esto — y su canal de afiliación terminó generando 17M€.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #22c55e;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#22c55e;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">4</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Sistema</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>¿El aprendizaje de un canal informa lo que haces en el siguiente?</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">Un sistema acumula: lo que aprendes de LinkedIn mejora tus emails, lo que aprendes de paid mejora tu contenido orgánico. Si cada canal funciona en silos, tienes una colección de tácticas — no un motor. La diferencia se ve en el CAC: Bit2Me bajó de 85€ a 34€ en 18 meses justamente porque cada experimento alimentaba al siguiente.</p>
+      </div>
+
+      <div style="background:white;border-radius:12px;padding:20px;border-left:4px solid #f59e0b;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <span style="background:#f59e0b;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">5</span>
+          <h3 style="color:#032149;font-size:17px;font-weight:700;margin:0">Autonomía</h3>
+        </div>
+        <p style="color:#475569;font-size:14px;margin:0 0 10px 0"><strong>Si te vas de la empresa 3 meses, ¿el growth se sigue ejecutando?</strong></p>
+        <p style="color:#64748b;font-size:14px;margin:0">Si la respuesta es no, tu growth es founder-dependent — y eso es el cuello de botella más peligroso. Cuando el fundador es el único que entiende el sistema, escalar es imposible y contratar no resuelve nada. Lo que hay que construir son playbooks, dashboards y rituales que funcionen sin ti.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="background:white;border-radius:16px;padding:28px;margin-bottom:28px;border:1px solid #e2e8f0">
+    <h2 style="color:#032149;font-size:22px;font-weight:800;margin-bottom:20px">Qué pasa cuando rellenas el diagnóstico</h2>
+    <div style="display:grid;gap:12px">
+      <div style="background:#f0fdf4;border-radius:12px;padding:18px">
+        <h3 style="color:#15803d;font-size:15px;font-weight:700;margin-bottom:8px">1. Recibes tu informe en 2 minutos</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">Te llega un email con el análisis de tus 5 respuestas: en qué fase del Trust Engine estás, cuál es tu bloqueo más crítico y qué señales de tu negocio lo confirman.</p>
+      </div>
+      <div style="background:#f0f0ff;border-radius:12px;padding:18px">
+        <h3 style="color:#6351d5;font-size:15px;font-weight:700;margin-bottom:8px">2. Tres acciones concretas para esta semana</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">No un plan de 6 meses. Tres movimientos específicos que puedes empezar hoy: qué métrica instrumentar, qué pieza de trust construir, qué canal pausar.</p>
+      </div>
+      <div style="background:#fffbeb;border-radius:12px;padding:18px">
+        <h3 style="color:#b45309;font-size:15px;font-weight:700;margin-bottom:8px">3. Referencias a casos reales</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">Te decimos qué cliente nuestro estuvo en tu situación, qué decidió hacer y qué resultado obtuvo en qué plazo. Bnext, Bit2Me, Criptan, Múltiplo — no teoría, números.</p>
+      </div>
+      <div style="background:#f0f9ff;border-radius:12px;padding:18px">
+        <h3 style="color:#0284c7;font-size:15px;font-weight:700;margin-bottom:8px">4. Si quieres, hablamos 30 minutos</h3>
+        <p style="color:#475569;font-size:14px;margin:0;line-height:1.7">Sin ventas agresivas. Si después del informe quieres discutirlo con nosotros, agendas una sesión. Si no, el informe ya te da suficiente material para atacar el problema solo.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#032149;border-radius:16px;padding:28px;color:white">
+    <h2 style="color:white;font-size:22px;font-weight:800;margin-bottom:12px">Por qué te sirve</h2>
+    <p style="color:rgba(255,255,255,0.8);font-size:15px;margin-bottom:16px;line-height:1.7">La mayoría de founders llevan meses apagando fuegos tácticos —probar un canal más, contratar otra agencia, publicar más contenido— sin parar a diagnosticar si el problema es el nivel en el que están trabajando.</p>
+    <p style="color:rgba(255,255,255,0.8);font-size:15px;margin:0;line-height:1.7">Este diagnóstico te obliga a mirar el sistema, no las tácticas. Y cuando ves el sistema, normalmente la siguiente decisión se vuelve obvia. No necesitas otra agencia. Necesitas claridad.</p>
+  </div>
+
+</div>`;
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Landing', item: `${SITE_URL}/landing/` },
+    { '@type': 'ListItem', position: 3, name: title, item: `${SITE_URL}/landing/${slug}/` },
+  ],
+};
+---
+
+<BaseLayout
+  title={`${title} | Growth4U`}
+  description={description}
+  canonical={`${SITE_URL}/landing/${slug}/`}
+  ogImage={generateOgImage(title)}
+  jsonLd={[breadcrumbSchema]}
+>
+  <main class="min-h-screen bg-white">
+    <section class="bg-[#032149] pt-20 pb-14">
+      <div class="max-w-3xl mx-auto px-4">
+        <div class="flex items-center gap-2 mb-6">
+          <a href="/" class="text-white/50 hover:text-white text-sm transition-colors">Growth4U</a>
+          <span class="text-white/30">/</span>
+          <span class="text-white/50 text-sm">Landing</span>
+        </div>
+        <span class="inline-block px-3 py-1 bg-[#3ecda5]/30 text-[#a89cf7] rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+          Exclusivo para lectores de {mediumName}
+        </span>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">{title}</h1>
+        <p class="text-xl text-slate-300 leading-relaxed mb-8">{description}</p>
+        <div class="flex flex-wrap items-center gap-6 text-slate-400 text-sm">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>5 minutos</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Informe personalizado</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Sin spam</span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="max-w-3xl mx-auto px-4 py-12 pb-20">
+      <StaticLeadMagnetGate
+        client:only="react"
+        magnetSlug={slug}
+        magnetTitle={title}
+        excerpt={excerpt}
+        fullContent={fullContent}
+      />
+    </section>
+  </main>
+</BaseLayout>
