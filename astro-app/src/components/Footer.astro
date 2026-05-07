@@ -1,10 +1,15 @@
 ---
+import type { Locale } from '../i18n/utils';
+
 interface Props {
   t: any;
   bookingLink: string;
+  lang?: Locale;
 }
 
-const { t, bookingLink } = Astro.props;
+const { t, bookingLink, lang = 'es' } = Astro.props;
+const casesHref = lang === 'es' ? '/casos-de-exito/' : '/en/success-stories/';
+const casesLabel = lang === 'es' ? 'Casos de Éxito' : 'Success Stories';
 ---
 
 <section id="contacto" class="bg-[#032149] py-24 text-white">
@@ -43,7 +48,7 @@ const { t, bookingLink } = Astro.props;
           <div class="flex flex-col gap-2">
             <a href="/recursos/" class="text-slate-400 hover:text-white transition-colors text-sm">Recursos Gratuitos</a>
             <a href="/blog/" class="text-slate-400 hover:text-white transition-colors text-sm">Blog</a>
-            <a href="/casos-de-exito/" class="text-slate-400 hover:text-white transition-colors text-sm">Casos de Éxito</a>
+            <a href={casesHref} class="text-slate-400 hover:text-white transition-colors text-sm">{casesLabel}</a>
             <a href="/equipo/" class="text-slate-400 hover:text-white transition-colors text-sm">Equipo</a>
           </div>
         </div>
