@@ -1,10 +1,14 @@
 ---
+import type { Locale } from '../i18n/utils';
+
 interface Props {
   t: any;
   bookingLink: string;
+  lang?: Locale;
 }
 
-const { t, bookingLink } = Astro.props;
+const { t, bookingLink, lang = 'es' } = Astro.props;
+const trustScoreHref = lang === 'es' ? '/trust-score/' : '/en/trust-score/';
 
 const clientNames = ['BNEXT', 'Bit2Me', 'GoCardless', 'Criptan', 'Lydia', 'Capital on Tap', 'Multimarkts', 'Multiplo'];
 ---
@@ -44,7 +48,7 @@ const clientNames = ['BNEXT', 'Bit2Me', 'GoCardless', 'Criptan', 'Lydia', 'Capit
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
       </a>
       <a
-        href="/trust-score/"
+        href={trustScoreHref}
         class="group flex items-center justify-center gap-2 bg-white text-[#3ecda5] border-2 border-[#3ecda5]/30 hover:border-[#3ecda5] hover:bg-[#3ecda5]/5 font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 hover:shadow-md"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>

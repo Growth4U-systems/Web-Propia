@@ -1,0 +1,183 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Footer from '../../../components/Footer.astro';
+
+import { getTranslations } from '../../../i18n/utils';
+import { BOOKING_LINK, TRUST_SCORE_URL } from '../../../lib/constants';
+
+const t = getTranslations('en');
+
+const pillars = [
+  { icon: '🤝', name: 'Borrowed Trust', desc: 'Mentions and references from third parties' },
+  { icon: '🔍', name: 'SERP Trust', desc: 'Presence and ranking on Google' },
+  { icon: '🎨', name: 'Brand Assets', desc: 'Visual and brand assets' },
+  { icon: '🤖', name: 'GEO Presence', desc: 'Visibility in generative AI engines' },
+  { icon: '📣', name: 'Outbound Readiness', desc: 'Readiness to capture leads' },
+  { icon: '⚡', name: 'Demand Engine', desc: 'Demand-generation infrastructure' },
+];
+
+const benefits = [
+  'No sign-up required — just enter your URL',
+  'AI-powered analysis across 6 trust pillars',
+  'Full report delivered to your inbox in minutes',
+  'Specific gaps, benchmarks and actionable recommendations',
+];
+---
+
+<BaseLayout
+  title="Trust Score Analyzer | Growth4U"
+  description="Discover in 2 minutes how Google, AI engines and your prospects perceive your brand. Free analysis of 6 trust pillars with actionable recommendations."
+  locale="en"
+>
+  <!-- Nav -->
+  <header class="fixed top-0 inset-x-0 z-50 nav-header">
+    <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="/en/" class="flex items-center gap-0 cursor-pointer group flex-shrink-0">
+          <img src="https://i.imgur.com/imHxGWI.png" alt="Growth4U Logo" width="133" height="20" class="h-5 md:h-6 w-auto object-contain transition-opacity group-hover:opacity-80 brightness-0 invert" />
+        </a>
+        <div class="hidden md:flex items-center gap-1">
+          <a href="/en/" class="text-white/80 hover:text-white transition-colors px-3 py-2 text-sm font-medium">Home</a>
+          <a href="/en/blog/" class="text-white/80 hover:text-white transition-colors px-3 py-2 text-sm font-medium">Blog</a>
+          <a href="/en/success-stories/" class="text-white/80 hover:text-white transition-colors px-3 py-2 text-sm font-medium">Success Stories</a>
+          <span class="text-white px-3 py-2 text-sm font-bold">Trust Score</span>
+          <div class="w-px h-5 bg-white/20 mx-2"></div>
+          <a href={TRUST_SCORE_URL} class="lang-toggle flex items-center gap-1.5 text-white/70 hover:text-white px-2 py-1.5 text-xs font-semibold transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            ES
+          </a>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href={BOOKING_LINK} target="_blank" rel="noopener noreferrer" class="bg-[#3ecda5] text-white font-bold py-2 px-5 rounded-full text-sm transition-all duration-200 hover:bg-[#35b894]">
+            {t.nav.cta}
+          </a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="pt-32 pb-16 px-4 bg-gradient-to-br from-[#032149] to-[#0a1628] relative overflow-hidden">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#0faec1]/5 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-4xl mx-auto text-center relative">
+      <span class="inline-flex items-center gap-2 bg-[#0faec1]/15 text-[#0faec1] text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-6">
+        <span class="w-1.5 h-1.5 bg-[#0faec1] rounded-full animate-pulse"></span>
+        Free tool
+      </span>
+      <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight leading-tight">
+        Does your brand generate<br/>
+        <span class="text-[#0faec1]">digital trust?</span>
+      </h1>
+      <p class="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
+        Discover in 2 minutes how Google, AI engines and your prospects perceive you.
+        We analyze 6 pillars of your digital presence and deliver an actionable diagnosis.
+      </p>
+
+      <a
+        href={TRUST_SCORE_URL}
+        class="group inline-flex items-center justify-center gap-2.5 bg-[#0faec1] hover:bg-[#0d9ba8] text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg shadow-[#0faec1]/20 hover:shadow-xl hover:shadow-[#0faec1]/30 transition-all duration-300"
+      >
+        Analyze my brand for free
+        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <p class="text-xs text-slate-400 mt-4">100% free — results in under 2 minutes</p>
+
+      <p class="text-xs text-slate-500 mt-8 max-w-md mx-auto leading-relaxed">
+        The interactive analyzer is currently available in Spanish. The diagnosis itself is technical (URLs, scores, gaps) and can be shared with your team in any language.
+      </p>
+    </div>
+  </section>
+
+  <!-- 6 Pillars -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-12">
+        <span class="text-[#0faec1] text-xs font-bold uppercase tracking-wider">The 6 Pillars</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-[#032149] mt-3 mb-4">
+          What we analyze
+        </h2>
+        <p class="text-slate-600 max-w-xl mx-auto">
+          Every dimension that determines whether a B2B buyer trusts you before talking to sales.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {pillars.map((p) => (
+          <div class="bg-slate-50 border border-slate-100 rounded-2xl p-6 hover:border-[#0faec1]/40 hover:shadow-md transition-all">
+            <div class="text-3xl mb-3">{p.icon}</div>
+            <h3 class="text-base font-bold text-[#032149] mb-1.5">{p.name}</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">{p.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  <section class="py-20 px-4 bg-slate-50">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-12">
+        <span class="text-[#0faec1] text-xs font-bold uppercase tracking-wider">What you get</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-[#032149] mt-3 mb-4">
+          A real, actionable diagnosis
+        </h2>
+      </div>
+
+      <div class="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-slate-100">
+        <ul class="space-y-5">
+          {benefits.map((b) => (
+            <li class="flex items-start gap-4">
+              <div class="w-8 h-8 bg-[#0faec1]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-[#0faec1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <span class="text-base md:text-lg text-slate-700 leading-relaxed pt-1">{b}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why it matters -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-4xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="bg-gradient-to-br from-[#032149] to-[#0a1628] rounded-2xl p-8 text-white">
+          <div class="text-5xl font-extrabold text-[#0faec1] mb-3">81%</div>
+          <p class="text-slate-300 leading-relaxed">
+            of B2B buyers research online before making a decision. If your trust signals aren't there, the conversation never starts.
+          </p>
+        </div>
+        <div class="bg-gradient-to-br from-[#032149] to-[#0a1628] rounded-2xl p-8 text-white">
+          <div class="text-5xl font-extrabold text-[#0faec1] mb-3">AI</div>
+          <p class="text-slate-300 leading-relaxed">
+            Generative engines (ChatGPT, Perplexity, Google AI) already recommend your competitors. Trust Score tells you where you stand and what to fix.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="py-24 px-4 bg-slate-50">
+    <div class="max-w-3xl mx-auto text-center">
+      <h2 class="text-3xl md:text-5xl font-bold text-[#032149] mb-6 leading-tight">
+        Ready to see your<br/>
+        <span class="text-[#0faec1]">Trust Score</span>?
+      </h2>
+      <p class="text-lg text-slate-600 mb-10 max-w-xl mx-auto">
+        Two minutes. No sign-up. A complete report in your inbox.
+      </p>
+      <a
+        href={TRUST_SCORE_URL}
+        class="group inline-flex items-center justify-center gap-2.5 bg-[#0faec1] hover:bg-[#0d9ba8] text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg shadow-[#0faec1]/20 hover:shadow-xl hover:shadow-[#0faec1]/30 transition-all duration-300"
+      >
+        Start my free analysis
+        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <Footer t={t} bookingLink={BOOKING_LINK} lang="en" />
+</BaseLayout>

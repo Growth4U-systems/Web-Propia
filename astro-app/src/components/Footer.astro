@@ -10,6 +10,7 @@ interface Props {
 const { t, bookingLink, lang = 'es' } = Astro.props;
 const casesHref = lang === 'es' ? '/casos-de-exito/' : '/en/success-stories/';
 const casesLabel = lang === 'es' ? 'Casos de Éxito' : 'Success Stories';
+const trustScoreHref = lang === 'es' ? '/trust-score/' : '/en/trust-score/';
 ---
 
 <section id="contacto" class="bg-[#032149] py-24 text-white">
@@ -55,7 +56,7 @@ const casesLabel = lang === 'es' ? 'Casos de Éxito' : 'Success Stories';
         <div>
           <p class="text-xs font-bold uppercase tracking-wider text-white/40 mb-3">Herramientas</p>
           <div class="flex flex-col gap-2">
-            <a href="/trust-score/" class="text-slate-400 hover:text-white transition-colors text-sm">Trust Score Analyzer</a>
+            <a href={trustScoreHref} class="text-slate-400 hover:text-white transition-colors text-sm">Trust Score Analyzer</a>
           </div>
         </div>
         <div>
