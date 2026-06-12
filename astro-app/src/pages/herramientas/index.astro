@@ -1,0 +1,107 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE_URL } from '../../lib/constants';
+
+const title = 'Herramientas de Growth4U';
+const description = 'Las herramientas que usamos y construimos en Growth4U: análisis de confianza digital, generación de contenido y más.';
+
+const herramientas = [
+  {
+    href: '/trust-score/',
+    title: 'Trust Score Analyzer',
+    description: 'Descubre en 2 minutos cómo te perciben Google, las IAs y tus potenciales clientes. Análisis gratuito de 6 pilares de confianza digital.',
+    tag: 'Análisis',
+    color: '#0faec1',
+    cta: 'Analizar mi marca',
+  },
+  {
+    href: '/g4u-video/',
+    title: 'G4U Video',
+    description: 'Generador de vídeos demo con marca G4U: guion, voz IA, subtítulos y render en 16:9 y 9:16. Herramienta interna del equipo, requiere código de acceso.',
+    tag: 'Interno',
+    color: '#6351d5',
+    cta: 'Abrir herramienta',
+  },
+];
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Herramientas', item: `${SITE_URL}/herramientas/` },
+  ],
+};
+---
+
+<BaseLayout
+  title={`${title} | Growth4U`}
+  description={description}
+  canonical={`${SITE_URL}/herramientas/`}
+  jsonLd={[breadcrumbSchema]}
+>
+  <main class="min-h-screen bg-white">
+    <!-- Hero -->
+    <section class="bg-[#032149] pt-20 pb-14">
+      <div class="max-w-5xl mx-auto px-4">
+        <div class="flex items-center gap-2 mb-6">
+          <a href="/" class="text-white/50 hover:text-white text-sm transition-colors">Growth4U</a>
+          <span class="text-white/30">/</span>
+          <span class="text-white/80 text-sm">Herramientas</span>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
+          Herramientas
+        </h1>
+        <p class="text-xl text-slate-300 leading-relaxed max-w-2xl">
+          Las herramientas que construimos y usamos en Growth4U. Algunas son de acceso libre; otras son internas del equipo.
+        </p>
+      </div>
+    </section>
+
+    <!-- Grid de herramientas -->
+    <section class="max-w-5xl mx-auto px-4 py-12 pb-20">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {herramientas.map((h) => (
+          <a
+            href={h.href}
+            class="group block bg-white rounded-2xl border border-slate-200 hover:border-[#3ecda5]/40 hover:shadow-lg transition-all duration-200 overflow-hidden"
+          >
+            <div class="p-6">
+              <span
+                class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4"
+                style={`background:${h.color}20;color:${h.color}`}
+              >
+                {h.tag}
+              </span>
+              <h2 class="text-lg font-bold text-[#032149] mb-3 group-hover:text-[#3ecda5] transition-colors leading-snug">
+                {h.title}
+              </h2>
+              <p class="text-sm text-slate-500 leading-relaxed mb-4">
+                {h.description}
+              </p>
+              <div class="flex items-center gap-2 text-[#3ecda5] text-sm font-semibold">
+                <span>{h.cta}</span>
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+                </svg>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <!-- Mas recursos -->
+      <div class="mt-16 text-center bg-slate-50 rounded-2xl p-10 border border-slate-100">
+        <h2 class="text-2xl font-extrabold text-[#032149] mb-3">
+          ¿Buscas frameworks y playbooks?
+        </h2>
+        <p class="text-slate-500 mb-6 max-w-xl mx-auto">
+          Todos nuestros recursos descargables (frameworks, kits y templates) viven en la sección de recursos.
+        </p>
+        <a href="/recursos/" class="inline-block bg-[#032149] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#3ecda5] transition-colors">
+          Ver recursos gratuitos
+        </a>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
