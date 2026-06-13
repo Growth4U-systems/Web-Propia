@@ -157,20 +157,24 @@ function localelessPath(pathname) {
 // Si la misma página canónica existe en varios idiomas, deja solo la del idioma
 // primario del sitio (home, si no el más frecuente). En sitios monolingües no hace nada.
 function dedupeLocales(pages, startUrl, preferredLocale = null) {
+  // El idioma sin prefijo (p. ej. español en growth4u.io, que va en la raíz) cuenta
+  // como un idioma más: "default". Así un sitio ES-sin-prefijo + /en/ ofrece elegir
+  // entre los dos y deduplica de verdad, no solo los sitios con /es//en/ explícitos.
+  const DEFAULT = "default";
   const groups = new Map();
   const localeCounts = new Map();
   for (const page of pages) {
     const u = new URL(page.url);
-    const loc = pathLocale(u.pathname);
+    const loc = pathLocale(u.pathname) || DEFAULT;
     const key = localelessPath(u.pathname);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push({ page, locale: loc });
-    if (loc) localeCounts.set(loc, (localeCounts.get(loc) || 0) + 1);
+    localeCounts.set(loc, (localeCounts.get(loc) || 0) + 1);
   }
 
   const availableLocales = [...localeCounts.entries()].sort((a, b) => b[1] - a[1]).map(([l]) => l);
   const hasCrossLocaleDup = [...groups.values()].some(
-    (arr) => new Set(arr.filter((x) => x.locale).map((x) => x.locale)).size > 1
+    (arr) => new Set(arr.map((x) => x.locale)).size > 1
   );
   if (!hasCrossLocaleDup || localeCounts.size < 2) {
     return { pages, primaryLocale: null, collapsed: 0, availableLocales };
@@ -178,8 +182,8 @@ function dedupeLocales(pages, startUrl, preferredLocale = null) {
 
   // El usuario puede forzar el idioma canónico; si no, se autodetecta (home, luego más frecuente).
   let primary = preferredLocale && localeCounts.has(preferredLocale) ? preferredLocale : null;
-  if (!primary) primary = pathLocale(new URL(startUrl).pathname);
-  if (!primary) primary = availableLocales[0];
+  if (!primary) primary = pathLocale(new URL(startUrl).pathname) || DEFAULT;
+  if (!localeCounts.has(primary)) primary = availableLocales[0];
 
   const kept = [];
   const keptKeys = new Set();
@@ -187,7 +191,7 @@ function dedupeLocales(pages, startUrl, preferredLocale = null) {
   for (const page of pages) {
     const key = localelessPath(new URL(page.url).pathname);
     const arr = groups.get(key);
-    const distinct = new Set(arr.filter((x) => x.locale).map((x) => x.locale));
+    const distinct = new Set(arr.map((x) => x.locale));
     if (distinct.size <= 1) {
       kept.push(page);
       continue;
@@ -196,7 +200,7 @@ function dedupeLocales(pages, startUrl, preferredLocale = null) {
       collapsed++;
       continue;
     }
-    const preferred = arr.find((x) => x.locale === primary) || arr.find((x) => !x.locale) || arr[0];
+    const preferred = arr.find((x) => x.locale === primary) || arr[0];
     if (page.url === preferred.page.url) {
       kept.push(page);
       keptKeys.add(key);

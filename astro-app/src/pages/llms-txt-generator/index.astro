@@ -62,11 +62,11 @@ const softwareSchema = {
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/8 p-5 text-sm text-slate-300 shadow-2xl shadow-black/20 backdrop-blur">
           <div class="mb-3 flex items-center justify-between gap-3">
-            <span class="font-bold text-white">Cobertura automática</span>
-            <span class="rounded-full bg-[#0faec1]/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-[#70e7f2]">Sin configurar</span>
+            <span class="font-bold text-white">Qué hace</span>
+            <span class="rounded-full bg-[#0faec1]/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-[#70e7f2]">Automático</span>
           </div>
           <p class="leading-relaxed">
-            Lee sitemap, rastrea enlaces internos, detecta rutas en bundles JavaScript y usa renderizado de lectura cuando el HTML llega vacío.
+            Recorre tu web, elige las páginas con más valor para una IA y arma el archivo llms.txt listo para publicar. Tú solo pones la URL.
           </p>
         </div>
       </div>
@@ -220,7 +220,7 @@ const softwareSchema = {
   const localeSelect = document.querySelector("#locale-select");
   const tabButtons = [...document.querySelectorAll(".tab-button")];
 
-  const LOCALE_NAMES = { en: "Inglés", es: "Español", fr: "Francés", de: "Alemán", it: "Italiano", pt: "Portugués", nl: "Neerlandés", ca: "Catalán", eu: "Euskera", gl: "Gallego" };
+  const LOCALE_NAMES = { default: "Principal", en: "Inglés", es: "Español", fr: "Francés", de: "Alemán", it: "Italiano", pt: "Portugués", nl: "Neerlandés", ca: "Catalán", eu: "Euskera", gl: "Gallego" };
 
   let result = null;
   let activeTab = "llmsTxt";
@@ -291,7 +291,9 @@ const softwareSchema = {
   function renderLocalePicker(stats) {
     const locales = stats?.availableLocales || [];
     if (!localeWrap || !localeSelect) return;
-    if (locales.length < 2) {
+    // Solo mostramos el selector si de verdad hubo duplicados de idioma que resolver
+    // (primaryLocale se fija únicamente cuando hay páginas equivalentes en varios idiomas).
+    if (!stats?.primaryLocale || locales.length < 2) {
       localeWrap.hidden = true;
       return;
     }

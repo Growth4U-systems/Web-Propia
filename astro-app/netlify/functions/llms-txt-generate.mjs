@@ -67,6 +67,7 @@ function parseRequest(event) {
 
 function normalizeLocale(value) {
   const v = String(value || "").trim().toLowerCase();
+  if (v === "default") return v;
   return /^[a-z]{2}(?:-[a-z]{2})?$/.test(v) ? v : null;
 }
 
