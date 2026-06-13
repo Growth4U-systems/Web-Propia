@@ -7,6 +7,12 @@
 [functions]
   node_bundler = "esbuild"
 
+# llms.txt generator → Netlify function (rewrite, status 200)
+[[redirects]]
+  from = "/api/llms-txt-generator/generate"
+  to = "/.netlify/functions/llms-txt-generate"
+  status = 200
+
 # Markdown negotiation (Accept: text/markdown) — runs before lang-redirect
 [[edge_functions]]
   function = "markdown-negotiation"
