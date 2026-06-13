@@ -9,15 +9,46 @@ const SECTION_ORDER = [
   "Documentation",
   "Articles And Resources",
   "Company",
-  "Other Pages"
+  "Other Pages",
+  "Optional"
 ];
 
-export function generateLlmsFiles(crawlResult) {
-  const pages = [...crawlResult.pages].sort((a, b) => scorePage(b, crawlResult.startUrl) - scorePage(a, crawlResult.startUrl));
+// Páginas de relleno legal/normativo: van a ## Optional (convención del estándar
+// llms.txt para "esto el LLM puede ignorar"). Se matchea sobre el PATH, no sobre
+// título/descripción, para no arrastrar páginas de contenido que mencionen "terms".
+const BOILERPLATE_PATH_RE =
+  /(privacy|privacidad|cookie|terms|terminos|términos|aviso-legal|legal-advice|legal-notice|politica-de|política-de|gdpr|rgpd|disclaimer|condiciones-generales|condiciones-de-uso)/;
+
+// Primer segmento de path tipo "es", "en", "pt-br": idioma probable.
+const KNOWN_LANGS = new Set([
+  "en", "es", "fr", "de", "it", "pt", "nl", "ca", "eu", "gl", "ja", "zh", "ko",
+  "ru", "pl", "sv", "da", "no", "fi", "cs", "tr", "ar", "he", "el", "ro", "hu", "uk"
+]);
+const LOCALE_SEG_RE = /^[a-z]{2}(?:-[a-z]{2})?$/i;
+
+export function generateLlmsFiles(crawlResult, preferredLocale = null) {
+  const sorted = [...crawlResult.pages].sort(
+    (a, b) => scorePage(b, crawlResult.startUrl) - scorePage(a, crawlResult.startUrl)
+  );
+  // Colapsar variantes de idioma de la misma página (mantiene la del idioma primario).
+  const { pages, primaryLocale, collapsed, availableLocales } = dedupeLocales(
+    sorted,
+    crawlResult.startUrl,
+    preferredLocale
+  );
+
   const site = crawlResult.site;
   const title = cleanMarkdownText(site.title || new URL(crawlResult.startUrl).hostname.replace(/^www\./, ""));
   const description = cleanMarkdownText(site.description || `Important pages discovered for ${new URL(crawlResult.startUrl).hostname}.`);
   const grouped = groupPages(pages);
+
+  // Contexto para deduplicar títulos/descripciones repetidas en los enlaces.
+  const titleFreq = new Map();
+  for (const page of pages) {
+    const t = cleanMarkdownText(page.title || "");
+    if (t) titleFreq.set(t, (titleFreq.get(t) || 0) + 1);
+  }
+  const linkCtx = { siteTitle: title, titleFreq, usedDescriptions: new Set() };
 
   const llmsTxt = [
     `# ${title}`,
@@ -26,7 +57,9 @@ export function generateLlmsFiles(crawlResult) {
     "",
     `Source: ${crawlResult.startUrl}`,
     "",
-    ...SECTION_ORDER.flatMap((section) => renderSection(section, grouped.get(section) || []))
+    ...SECTION_ORDER.flatMap((section) => renderSection(section, grouped.get(section) || [], linkCtx)),
+    "",
+    "<!-- Generado gratis con https://growth4u.io/llms-txt-generator -->"
   ]
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
@@ -49,7 +82,10 @@ export function generateLlmsFiles(crawlResult) {
       source: crawlResult.startUrl,
       renderedPages: crawlResult.stats?.renderedPages || 0,
       discoveredSpaRoutes: crawlResult.stats?.discoveredSpaRoutes || 0,
-      spaShellsDetected: crawlResult.stats?.spaShellsDetected || 0
+      spaShellsDetected: crawlResult.stats?.spaShellsDetected || 0,
+      primaryLocale: primaryLocale || null,
+      availableLocales,
+      collapsedLocaleDuplicates: collapsed
     },
     errors: crawlResult.errors
   };
@@ -64,6 +100,11 @@ export function categorizePage(page) {
 
   if (path === "/" || path === "") {
     return "Core Pages";
+  }
+
+  // Legal/privacidad/cookies → Optional (antes que cualquier otra categoría).
+  if (BOILERPLATE_PATH_RE.test(path)) {
+    return "Optional";
   }
 
   if (/(blog|news|article|articulo|insights?|whitepaper|webinar|podcast|events?|eventos?|categoria)/.test(joined)) {
@@ -94,11 +135,76 @@ export function categorizePage(page) {
     return "Documentation";
   }
 
-  if (/(about|company|empresa|equipo|team|careers?|trabaja|contact|contacto|press|legal|privacy|privacidad|terms|security)/.test(joined)) {
+  if (/(about|company|empresa|equipo|team|careers?|trabaja|contact|contacto|press|security)/.test(joined)) {
     return "Company";
   }
 
   return "Other Pages";
+}
+
+function pathLocale(pathname) {
+  const seg = pathname.split("/").filter(Boolean)[0];
+  if (!seg || !LOCALE_SEG_RE.test(seg)) return null;
+  return KNOWN_LANGS.has(seg.slice(0, 2).toLowerCase()) ? seg.toLowerCase() : null;
+}
+
+function localelessPath(pathname) {
+  const segs = pathname.split("/").filter(Boolean);
+  const stripped = pathLocale(pathname) ? segs.slice(1) : segs;
+  return ("/" + stripped.join("/")).replace(/\/$/, "") || "/";
+}
+
+// Si la misma página canónica existe en varios idiomas, deja solo la del idioma
+// primario del sitio (home, si no el más frecuente). En sitios monolingües no hace nada.
+function dedupeLocales(pages, startUrl, preferredLocale = null) {
+  const groups = new Map();
+  const localeCounts = new Map();
+  for (const page of pages) {
+    const u = new URL(page.url);
+    const loc = pathLocale(u.pathname);
+    const key = localelessPath(u.pathname);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ page, locale: loc });
+    if (loc) localeCounts.set(loc, (localeCounts.get(loc) || 0) + 1);
+  }
+
+  const availableLocales = [...localeCounts.entries()].sort((a, b) => b[1] - a[1]).map(([l]) => l);
+  const hasCrossLocaleDup = [...groups.values()].some(
+    (arr) => new Set(arr.filter((x) => x.locale).map((x) => x.locale)).size > 1
+  );
+  if (!hasCrossLocaleDup || localeCounts.size < 2) {
+    return { pages, primaryLocale: null, collapsed: 0, availableLocales };
+  }
+
+  // El usuario puede forzar el idioma canónico; si no, se autodetecta (home, luego más frecuente).
+  let primary = preferredLocale && localeCounts.has(preferredLocale) ? preferredLocale : null;
+  if (!primary) primary = pathLocale(new URL(startUrl).pathname);
+  if (!primary) primary = availableLocales[0];
+
+  const kept = [];
+  const keptKeys = new Set();
+  let collapsed = 0;
+  for (const page of pages) {
+    const key = localelessPath(new URL(page.url).pathname);
+    const arr = groups.get(key);
+    const distinct = new Set(arr.filter((x) => x.locale).map((x) => x.locale));
+    if (distinct.size <= 1) {
+      kept.push(page);
+      continue;
+    }
+    if (keptKeys.has(key)) {
+      collapsed++;
+      continue;
+    }
+    const preferred = arr.find((x) => x.locale === primary) || arr.find((x) => !x.locale) || arr[0];
+    if (page.url === preferred.page.url) {
+      kept.push(page);
+      keptKeys.add(key);
+    } else {
+      collapsed++;
+    }
+  }
+  return { pages: kept, primaryLocale: primary, collapsed, availableLocales };
 }
 
 function groupPages(pages) {
@@ -111,17 +217,46 @@ function groupPages(pages) {
   return grouped;
 }
 
-function renderSection(section, pages) {
+function renderSection(section, pages, ctx) {
   if (!pages.length) {
     return [];
   }
 
-  return [`## ${section}`, "", ...pages.map(formatPageLink), ""];
+  return [`## ${section}`, "", ...pages.map((page) => formatPageLink(page, ctx)), ""];
 }
 
-function formatPageLink(page) {
-  const title = escapeLinkText(cleanMarkdownText(page.title || new URL(page.url).pathname || page.url));
-  const description = cleanMarkdownText(summarizeDescription(page.description || page.text || ""));
+function labelFromSlug(url) {
+  const pathname = new URL(url).pathname;
+  const segs = pathname.split("/").filter(Boolean);
+  const stripped = pathLocale(pathname) ? segs.slice(1) : segs;
+  const last = stripped[stripped.length - 1] || new URL(url).hostname.replace(/^www\./, "");
+  return last
+    .replace(/\.\w+$/, "")
+    .replace(/[-_]+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatPageLink(page, ctx = { siteTitle: "", titleFreq: new Map(), usedDescriptions: new Set() }) {
+  let titleText = cleanMarkdownText(page.title || "");
+  const isDuplicateTitle =
+    !titleText || titleText === ctx.siteTitle || (ctx.titleFreq.get(titleText) || 0) > 1;
+  if (isDuplicateTitle) {
+    const slugLabel = labelFromSlug(page.url);
+    if (slugLabel) titleText = slugLabel;
+  }
+  const title = escapeLinkText(titleText || new URL(page.url).pathname || page.url);
+
+  let description = cleanMarkdownText(summarizeDescription(page.description || ""));
+  if (!description || ctx.usedDescriptions.has(description)) {
+    const alt = cleanMarkdownText(summarizeDescription(page.text || ""));
+    if (alt && !ctx.usedDescriptions.has(alt)) {
+      description = alt;
+    } else if (ctx.usedDescriptions.has(description)) {
+      description = "";
+    }
+  }
+  if (description) ctx.usedDescriptions.add(description);
 
   if (!description) {
     return `- [${title}](${page.url})`;
@@ -178,6 +313,10 @@ function scorePage(page, startUrl) {
   }
   if (/(tag|category|author|page\/\d+|search|login|signin|signup|cart|checkout)/.test(path)) {
     score -= 45;
+  }
+  // Legal/privacidad pesan menos: van a Optional, no deben competir por las primeras posiciones.
+  if (BOILERPLATE_PATH_RE.test(path)) {
+    score -= 60;
   }
   if ((page.description || "").length > 40) {
     score += 10;
