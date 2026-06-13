@@ -9,7 +9,7 @@ import { discoverSpaRoutes, looksLikeSpaShell } from "./spa.js";
 
 export async function generateFromWebsite(inputUrl, options = {}) {
   const crawlResult = await crawlSite(inputUrl, options);
-  return generateLlmsFiles(crawlResult);
+  return generateLlmsFiles(crawlResult, options.preferredLocale || null);
 }
 
 export async function crawlSite(inputUrl, options = {}) {

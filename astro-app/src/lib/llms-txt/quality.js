@@ -26,7 +26,10 @@ export function auditLlmsOutput(result) {
   const duplicateUrls = links.length - new Set(links.map((link) => link.url)).size;
   addCheck("duplicates", "Has no duplicate URLs", duplicateUrls === 0, "medium", `${duplicateUrls} duplicate URL(s) found.`);
 
-  const emptyDescriptions = links.filter((link) => !link.description).length;
+  // Las páginas legales viven en ## Optional y se ignoran a propósito: no penalizan calidad.
+  const meaningful = links.filter((link) => link.section !== "Optional");
+
+  const emptyDescriptions = meaningful.filter((link) => !link.description).length;
   addCheck(
     "descriptions",
     "Every link has a description",
@@ -47,7 +50,7 @@ export function auditLlmsOutput(result) {
     `${otherPages} link(s) are in Other Pages. Improve classification or URL selection.`
   );
 
-  const shortDescriptions = links.filter((link) => link.description && link.description.length < 35).length;
+  const shortDescriptions = meaningful.filter((link) => link.description && link.description.length < 35).length;
   addCheck(
     "description-depth",
     "Descriptions are specific enough",
@@ -56,7 +59,7 @@ export function auditLlmsOutput(result) {
     `${shortDescriptions} description(s) are very short.`
   );
 
-  const noisyDescriptions = links.filter((link) => /cookie|javascript|subscribe|newsletter|skip to content/i.test(link.description)).length;
+  const noisyDescriptions = meaningful.filter((link) => /cookie|javascript|subscribe|newsletter|skip to content/i.test(link.description)).length;
   addCheck("low-noise", "Descriptions avoid UI noise", noisyDescriptions === 0, "medium", `${noisyDescriptions} noisy description(s) found.`);
 
   addCheck(
@@ -75,6 +78,17 @@ export function auditLlmsOutput(result) {
     usefulSections > 0,
     "medium",
     "Include pages that explain services/products, resources/docs, proof, and articles."
+  );
+
+  // Aviso de sitio pobre: si casi no hay páginas de valor (lo demás es Optional/legal),
+  // el techo no es el llms.txt sino la web. Es informativo y marca dónde está la palanca.
+  const meaningfulLinks = links.filter((link) => link.section !== "Optional").length;
+  addCheck(
+    "site-depth",
+    "El sitio tiene suficientes páginas de valor",
+    meaningfulLinks >= 5,
+    "low",
+    "Tu web tiene pocas páginas indexables de valor; el llms.txt solo puede apuntar a lo que existe. Publicar más contenido (servicios, casos, recursos) hará crecer este archivo y tu visibilidad en IA."
   );
 
   const score = Math.max(

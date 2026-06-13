@@ -154,6 +154,10 @@ const softwareSchema = {
             <h2 id="output-title" class="mt-1 text-2xl font-black text-[#032149]">llms.txt</h2>
           </div>
           <div class="flex flex-wrap items-center gap-2">
+            <label id="locale-wrap" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500" hidden>
+              Idioma
+              <select id="locale-select" class="min-h-10 rounded-xl border border-slate-200 bg-white px-2 text-sm font-bold text-[#032149] outline-none focus:border-[#6351d5]"></select>
+            </label>
             <div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1" role="tablist" aria-label="Archivos generados">
               <button class="tab-button rounded-lg bg-white px-3 py-2 text-sm font-black text-[#032149] shadow-sm" type="button" role="tab" aria-selected="true" data-tab="llmsTxt">llms.txt</button>
               <button class="tab-button rounded-lg px-3 py-2 text-sm font-black text-slate-500" type="button" role="tab" aria-selected="false" data-tab="llmsFullTxt">llms-full.txt</button>
@@ -212,14 +216,17 @@ const softwareSchema = {
   const resultCta = document.querySelector("#result-cta");
   const copyButton = document.querySelector("#copy-button");
   const downloadButton = document.querySelector("#download-button");
+  const localeWrap = document.querySelector("#locale-wrap");
+  const localeSelect = document.querySelector("#locale-select");
   const tabButtons = [...document.querySelectorAll(".tab-button")];
+
+  const LOCALE_NAMES = { en: "Inglés", es: "Español", fr: "Francés", de: "Alemán", it: "Italiano", pt: "Portugués", nl: "Neerlandés", ca: "Catalán", eu: "Euskera", gl: "Gallego" };
 
   let result = null;
   let activeTab = "llmsTxt";
+  let preferredLocale = null;
 
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
+  async function generate() {
     setLoading(true);
     setStatus("loading", "Analizando sitemap, enlaces internos y rutas SPA...");
     renderPages([]);
@@ -230,7 +237,7 @@ const softwareSchema = {
       const response = await fetch("/api/llms-txt-generator/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: urlInput.value })
+        body: JSON.stringify({ url: urlInput.value, preferredLocale })
       });
 
       const raw = await response.text();
@@ -252,13 +259,17 @@ const softwareSchema = {
       activeTab = "llmsTxt";
       updateTabs();
       renderOutput();
+      renderLocalePicker(payload.stats);
       renderPages(payload.pages || []);
       renderQuality(payload.quality);
       renderResultCta(true);
       const spaDetail = payload.stats?.renderedPages
         ? ` Renderizado SPA en ${payload.stats.renderedPages} página${payload.stats.renderedPages === 1 ? "" : "s"}.`
         : "";
-      setStatus("success", `Generado con ${payload.stats.crawledPages} páginas. Calidad ${payload.quality?.score ?? "n/a"}/100.${spaDetail}`);
+      const localeDetail = payload.stats?.collapsedLocaleDuplicates
+        ? ` Se unificaron ${payload.stats.collapsedLocaleDuplicates} duplicado${payload.stats.collapsedLocaleDuplicates === 1 ? "" : "s"} de idioma.`
+        : "";
+      setStatus("success", `Generado con ${payload.stats.crawledPages} páginas. Calidad ${payload.quality?.score ?? "n/a"}/100.${spaDetail}${localeDetail}`);
     } catch (error) {
       result = null;
       output.textContent = `Error: ${error.message}`;
@@ -269,6 +280,31 @@ const softwareSchema = {
     } finally {
       setLoading(false);
     }
+  }
+
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    preferredLocale = null;
+    generate();
+  });
+
+  function renderLocalePicker(stats) {
+    const locales = stats?.availableLocales || [];
+    if (!localeWrap || !localeSelect) return;
+    if (locales.length < 2) {
+      localeWrap.hidden = true;
+      return;
+    }
+    const current = stats.primaryLocale || locales[0];
+    localeSelect.innerHTML = locales
+      .map((l) => `<option value="${l}"${l === current ? " selected" : ""}>${LOCALE_NAMES[l] || l.toUpperCase()}</option>`)
+      .join("");
+    localeWrap.hidden = false;
+  }
+
+  localeSelect?.addEventListener("change", () => {
+    preferredLocale = localeSelect.value;
+    generate();
   });
 
   for (const button of tabButtons) {

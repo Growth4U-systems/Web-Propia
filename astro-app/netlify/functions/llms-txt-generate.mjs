@@ -22,7 +22,7 @@ export async function handler(event) {
 
   try {
     const payload = parseRequest(event);
-    const result = await cachedGenerate(payload.url, payload.maxPages);
+    const result = await cachedGenerate(payload.url, payload.maxPages, payload.preferredLocale);
 
     if (payload.format === "txt" || payload.format === "llms") {
       return textResponse(result.llmsTxt);
@@ -51,6 +51,7 @@ function parseRequest(event) {
     return {
       url: body.url,
       maxPages: body.maxPages,
+      preferredLocale: normalizeLocale(body.preferredLocale),
       format: String(body.format || "json").toLowerCase()
     };
   }
@@ -59,24 +60,30 @@ function parseRequest(event) {
   return {
     url: params.url,
     maxPages: params.maxPages,
+    preferredLocale: normalizeLocale(params.preferredLocale),
     format: String(params.format || "json").toLowerCase()
   };
 }
 
-async function cachedGenerate(url, maxPages) {
+function normalizeLocale(value) {
+  const v = String(value || "").trim().toLowerCase();
+  return /^[a-z]{2}(?:-[a-z]{2})?$/.test(v) ? v : null;
+}
+
+async function cachedGenerate(url, maxPages, preferredLocale = null) {
   const defaultLimit = Number(process.env.LLMS_TXT_DEFAULT_MAX_PAGES || 25);
   const hardLimit = Number(process.env.LLMS_TXT_MAX_PAGES || 25);
   const renderedFallback = process.env.LLMS_TXT_RENDERED_FALLBACK !== "false";
   const maxRenderedPages = Number(process.env.LLMS_TXT_MAX_RENDERED_PAGES || 8);
   const limit = Math.max(5, Math.min(Number(maxPages || defaultLimit), hardLimit));
-  const cacheKey = JSON.stringify({ url: String(url || "").trim(), maxPages: limit, renderedFallback, maxRenderedPages });
+  const cacheKey = JSON.stringify({ url: String(url || "").trim(), maxPages: limit, renderedFallback, maxRenderedPages, preferredLocale: preferredLocale || "" });
   const cached = cache.get(cacheKey);
 
   if (cached) {
     return { ...cached, cached: true };
   }
 
-  const result = await runLimited(() => generateFromWebsite(url, { maxPages: limit, renderedFallback, maxRenderedPages }));
+  const result = await runLimited(() => generateFromWebsite(url, { maxPages: limit, renderedFallback, maxRenderedPages, preferredLocale }));
   cache.set(cacheKey, result);
   return result;
 }
