@@ -3,7 +3,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Footer from '../../../components/Footer.astro';
 
 import { getTranslations } from '../../../i18n/utils';
-import { BOOKING_LINK, TRUST_SCORE_URL } from '../../../lib/constants';
+import { BOOKING_LINK } from '../../../lib/constants';
 
 const t = getTranslations('en');
 
@@ -42,7 +42,7 @@ const benefits = [
           <a href="/en/success-stories/" class="text-white/80 hover:text-white transition-colors px-3 py-2 text-sm font-medium">Success Stories</a>
           <span class="text-white px-3 py-2 text-sm font-bold">Trust Score</span>
           <div class="w-px h-5 bg-white/20 mx-2"></div>
-          <a href={TRUST_SCORE_URL} class="lang-toggle flex items-center gap-1.5 text-white/70 hover:text-white px-2 py-1.5 text-xs font-semibold transition-colors">
+          <a href="/trust-score/compare" class="lang-toggle flex items-center gap-1.5 text-white/70 hover:text-white px-2 py-1.5 text-xs font-semibold transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
             ES
           </a>
