@@ -1,8 +1,7 @@
+import type { Context } from "@netlify/edge-functions";
+
 // Front door único de las apps internas bajo growth4u.io/herramientas/*.
-// - Trust Score: basePath /herramientas, rutas planas con guion
-//   (/herramientas/trust-score-competidores[-interna], -individual[-interna]).
-// - Sales Copilot: /herramientas/sales-copilot/* (strip → zurich).
-// - Redirige links viejos slash → nuevo esquema guion.
+// El hub /herramientas lo sirve Astro; el resto se proxea a las apps.
 function proxy(request: Request, target: string, host: string) {
   return fetch(target, {
     method: request.method,
@@ -12,11 +11,14 @@ function proxy(request: Request, target: string, host: string) {
   });
 }
 
-export default async (request: Request) => {
+export default async (request: Request, context: Context) => {
   const url = new URL(request.url);
   const p = url.pathname;
 
-  // Links viejos: [/herramientas]/trust-score/<modo>[/internal] → /herramientas/trust-score-<modo>[-interna]
+  // El hub lo sirve Astro (no proxear)
+  if (p === "/herramientas" || p === "/herramientas/") return context.next();
+
+  // Links viejos: [/herramientas]/trust-score/<modo>[/internal] → guion
   const m = p.match(/^(?:\/herramientas)?\/trust-score\/(compare|competidores|individual)(\/internal)?\/?$/);
   if (m) {
     const mode = m[1] === "compare" ? "competidores" : m[1];
@@ -24,7 +26,7 @@ export default async (request: Request) => {
     return Response.redirect(`${url.origin}/herramientas/trust-score-${mode}${suffix}${url.search}`, 301);
   }
 
-  // Sales Copilot → zurich (strip prefijo)
+  // Sales Copilot → zurich (strip)
   if (p === "/herramientas/sales-copilot" || p.startsWith("/herramientas/sales-copilot/")) {
     const rest = p.replace(/^\/herramientas\/sales-copilot/, "") || "/";
     return proxy(request, `https://zurich-ebon.vercel.app${rest}${url.search}`, "zurich-ebon.vercel.app");

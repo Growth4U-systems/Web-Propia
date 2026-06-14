@@ -37,7 +37,7 @@ export const COLORS = {
 } as const;
 
 // Trust Score Analyzer
-export const TRUST_SCORE_URL = '/trust-score/';
+export const TRUST_SCORE_URL = '/herramientas/trust-score-competidores';
 
 // OG Image generator — matches blog cover style (navy→teal gradient + title)
 export function generateOgImage(title: string): string {
