@@ -28,11 +28,6 @@
   function = "trust-score-proxy"
   path = "/trust-score/*"
 
-# G4U Video launcher proxy → Vercel via Edge Function (quita el prefijo /g4u-video)
-[[edge_functions]]
-  function = "g4u-video-proxy"
-  path = "/g4u-video/*"
-
 # Redirect old trust score URL to new one
 [[redirects]]
   from = "/recursos/trust-score/*"
@@ -44,13 +39,6 @@
 [[redirects]]
   from = "/trust-score"
   to = "/trust-score/"
-  status = 301
-  force = true
-
-# G4U Video sin slash final → canonica con slash (la edge function requiere /g4u-video/*)
-[[redirects]]
-  from = "/g4u-video"
-  to = "/g4u-video/"
   status = 301
   force = true
 
