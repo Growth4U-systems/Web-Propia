@@ -32,8 +32,12 @@ export default async (request: Request, context: Context) => {
     return proxy(request, `https://zurich-ebon.vercel.app${rest}${url.search}`, "zurich-ebon.vercel.app");
   }
 
-  // Resto de /herramientas/* → Trust Score (basePath /herramientas)
-  return proxy(request, `https://trust.growth4u.io${p}${url.search}`, "trust.growth4u.io");
+  // Resto de /herramientas/* → Trust Score: redirect a Vercel directo en vez de
+  // proxear por este edge function. El proxy cortaba la conexión a ~100s (techo del
+  // edge), abortando los análisis SSE largos del comparador. El redirect manda al
+  // cliente directo a trust.growth4u.io (Vercel, 180s, SSE sin buffering).
+  // 302 (temporal) durante el rollout; promover a 301 cuando esté validado.
+  return Response.redirect(`https://trust.growth4u.io${p}${url.search}`, 302);
 };
 
 export const config = { path: ["/herramientas/*", "/trust-score/*", "/trust-score"] };
