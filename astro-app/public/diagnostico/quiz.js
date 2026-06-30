@@ -35,7 +35,16 @@
   var stage = document.getElementById("g4uq-stage");
   var prog = document.getElementById("g4uq-progress");
   var back = document.getElementById("g4uq-back");
+  var mini = document.querySelector("#g4uq .g4uq-mini");
   if (!stage) return;
+
+  // Loader "Trust Score: analizando…" en el footer una vez que se ingresó la web.
+  function analyzing(web) {
+    if (!mini) return;
+    var dom = (web || "").replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+    mini.innerHTML = '<span style="display:inline-block;width:11px;height:11px;border:2px solid #DFD3BE;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;vertical-align:-1px;margin-right:7px"></span>Trust Score: analizando ' + dom + '…';
+    // TODO: cuando exista la función server-side, disparar acá el análisis real (no-cors) y resolver el loader al terminar.
+  }
 
   function setProg() { prog.style.width = Math.round(idx / (steps.length - 1) * 100) + "%"; }
   function go(n) { idx = Math.max(0, Math.min(steps.length - 1, n)); render(); }
@@ -72,7 +81,7 @@
       var n = document.getElementById("f-nombre"), ap = document.getElementById("f-apellido"), w = document.getElementById("f-web"), b = document.getElementById("g4uq-next");
       function chk() { b.disabled = !(n.value.trim() && ap.value.trim() && w.value.trim().length > 3); }
       n.oninput = ap.oninput = w.oninput = chk; chk();
-      b.onclick = function () { S.nombre = n.value.trim(); S.apellido = ap.value.trim(); S.web = normWeb(w.value.trim()); go(idx + 1); };
+      b.onclick = function () { S.nombre = n.value.trim(); S.apellido = ap.value.trim(); S.web = normWeb(w.value.trim()); analyzing(S.web); go(idx + 1); };
       return;
     }
     if (s.type === "capture2") {
