@@ -7,8 +7,10 @@
     GHL: "https://services.leadconnectorhq.com/hooks/BnXWP5dcLVMgUudLv10O/webhook-trigger/9bfa1bd9-7b61-4d4a-8151-28770109af5b",
     WA: "34614766892",
     CAL: "https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w",
+    BRIDGE: "https://growth4u.io/.netlify/functions/trust-score-bridge-background",
     REDIR: ""
   };
+  var WA_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex:0 0 auto"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
   var S = {};
   // opts: [valor, label, peso]. Escalas SIEMPRE de mayor a menor.
   var steps = [
@@ -43,7 +45,15 @@
     if (!mini) return;
     var dom = (web || "").replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
     mini.innerHTML = '<span style="display:inline-block;width:11px;height:11px;border:2px solid #DFD3BE;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;vertical-align:-1px;margin-right:7px"></span>Trust Score: analizando ' + dom + '…';
-    // TODO: cuando exista la función server-side, disparar acá el análisis real (no-cors) y resolver el loader al terminar.
+  }
+  function webDom() { return (S.web || "").replace(/^https?:\/\//i, "").replace(/\/.*$/, ""); }
+  // Banner prominente "Trust Score analizando…" para las pantallas posteriores a la web.
+  function bannerHtml() {
+    if (!S.web) return "";
+    return '<div style="display:flex;align-items:center;gap:11px;background:rgba(35,86,230,.07);border:1.5px solid rgba(35,86,230,.22);border-radius:9px;padding:12px 15px;margin-bottom:22px">' +
+      '<span style="display:inline-block;width:16px;height:16px;border:2.5px solid #C8D6FB;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;flex:0 0 auto"></span>' +
+      '<div style="line-height:1.3"><div style="font-family:var(--qfm,monospace);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2356E6">Trust Score · analizando ' + webDom() + '</div>' +
+      '<div style="font-size:13px;color:#6E6258;margin-top:2px">Mientras tanto, unas últimas preguntas 👇</div></div></div>';
   }
 
   function setProg() { prog.style.width = Math.round(idx / (steps.length - 1) * 100) + "%"; }
@@ -85,12 +95,16 @@
       return;
     }
     if (s.type === "capture2") {
-      stage.innerHTML = '<span class="g4uq-eyebrow">Último paso</span><h2>¿A dónde te mando tu Trust Score?</h2>' +
+      stage.innerHTML = bannerHtml() + '<span class="g4uq-eyebrow">Último paso</span><h2>¿A dónde te mando tu Trust Score?</h2>' +
         '<p class="g4uq-sub">Te llega por WhatsApp en cuanto el análisis termine.</p>' +
+        '<div style="background:rgba(36,28,22,.03);border:1.5px solid rgba(36,28,22,.18);border-radius:9px;padding:13px 16px;margin-bottom:22px">' +
+          '<div style="font-family:var(--qfm,monospace);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#A89B8C;margin-bottom:8px">Lo que vas a recibir</div>' +
+          '<div style="font-size:14px;color:#241C16;line-height:1.8">▸ Tu Trust Score <b>(0–100)</b><br>▸ Dónde te gana tu competencia<br>▸ Tu primer movimiento de mayor impacto</div>' +
+        '</div>' +
         '<div class="g4uq-field"><label>Email de trabajo</label><input id="f-email" type="email" placeholder="tu@empresa.com" value="' + (S.email || '') + '"></div>' +
         '<div class="g4uq-field"><label>Teléfono (WhatsApp)</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" value="' + (S.telefono || '') + '"></div>' +
-        '<button class="g4uq-cta wa" id="g4uq-finish" disabled>Generar mi Trust Score →</button>' +
-        '<p class="g4uq-hint">Elegís cómo seguir en el siguiente paso.</p>';
+        '<button class="g4uq-cta wa" id="g4uq-finish" disabled>' + WA_SVG + 'Quiero conocer mis resultados</button>' +
+        '<p class="g4uq-hint">Gratis · te lo enviamos por WhatsApp.</p>';
       var e = document.getElementById("f-email"), tel = document.getElementById("f-tel"), b2 = document.getElementById("g4uq-finish");
       function chk2() { b2.disabled = !(/.+@.+\..+/.test(e.value) && tel.value.trim().length >= 6); }
       e.oninput = tel.oninput = chk2; chk2();
@@ -100,13 +114,13 @@
     if (s.type === "submitting") {
       stage.innerHTML = '<div class="g4uq-center"><span class="g4uq-eyebrow">¡Listo!</span><h2>Estamos generando tu Trust Score.</h2>' +
         '<p class="g4uq-sub">¿Cómo preferís seguir?</p>' +
-        '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">Quiero analizar mis resultados →</a>' +
-        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada →</a></div>';
+        '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Quiero conocer mis resultados</a>' +
+        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Prefiero agendar una llamada →</a></div>';
       return;
     }
 
     var multi = s.type === "multi";
-    var h = '<span class="g4uq-eyebrow">Pregunta ' + qNum(idx) + ' / 6</span><h2>' + s.q + '</h2>' + (s.sub ? '<p class="g4uq-sub">' + s.sub + '</p>' : '') + '<div class="g4uq-opts">';
+    var h = bannerHtml() + '<span class="g4uq-eyebrow">Pregunta ' + qNum(idx) + ' / 6</span><h2>' + s.q + '</h2>' + (s.sub ? '<p class="g4uq-sub">' + s.sub + '</p>' : '') + '<div class="g4uq-opts">';
     s.opts.forEach(function (o) { h += optRow(o, multi, s.id); });
     h += '</div>';
     if (multi) h += '<button class="g4uq-cta" id="g4uq-next">Continuar →</button>';
@@ -146,6 +160,8 @@
       ts: new Date().toISOString()
     };
     if (C.GHL) { try { fetch(C.GHL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p), keepalive: true }); } catch (e) {} }
+    // Dispara el Trust Score bridge (discover→compare→link→GHL). Fire-and-forget, sin Content-Type → simple request (sin preflight CORS).
+    if (C.BRIDGE) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: S.apellido, phone: S.telefono }), keepalive: true }); } catch (e) {} }
     var msg = "Hola, soy " + S.nombre + " " + S.apellido + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.";
     var a = document.getElementById("g4uq-wa"); if (a) a.href = "https://wa.me/" + C.WA + "?text=" + encodeURIComponent(msg);
     var cl = document.getElementById("g4uq-cal"); if (cl) cl.href = C.CAL;
