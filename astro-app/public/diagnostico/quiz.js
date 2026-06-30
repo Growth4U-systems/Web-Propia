@@ -84,14 +84,17 @@
     if (s.type === "capture1") {
       stage.innerHTML = '<span class="g4uq-eyebrow">Ya casi</span><h2>¿A nombre de quién va el diagnóstico?</h2>' +
         '<p class="g4uq-sub">Tu web es lo que analizamos para tu Trust Score.</p>' +
-        '<div class="g4uq-field"><label>Nombre</label><input id="f-nombre" type="text" placeholder="Nombre" value="' + (S.nombre || '') + '"></div>' +
-        '<div class="g4uq-field"><label>Apellido</label><input id="f-apellido" type="text" placeholder="Apellido" value="' + (S.apellido || '') + '"></div>' +
+        '<div style="display:flex;gap:12px">' +
+          '<div class="g4uq-field" style="flex:1 1 0;min-width:0"><label>Nombre</label><input id="f-nombre" type="text" placeholder="Nombre" value="' + (S.nombre || '') + '"></div>' +
+          '<div class="g4uq-field" style="flex:1 1 0;min-width:0"><label>Apellido</label><input id="f-apellido" type="text" placeholder="Apellido" value="' + (S.apellido || '') + '"></div>' +
+        '</div>' +
+        '<div class="g4uq-field"><label>Nombre de tu empresa</label><input id="f-empresa" type="text" placeholder="Tu empresa" value="' + (S.empresa || '') + '"></div>' +
         '<div class="g4uq-field"><label>Web de tu empresa</label><input id="f-web" type="url" placeholder="https://tuempresa.com" value="' + (S.web || '') + '"></div>' +
         '<button class="g4uq-cta" id="g4uq-next" disabled>Continuar →</button>';
-      var n = document.getElementById("f-nombre"), ap = document.getElementById("f-apellido"), w = document.getElementById("f-web"), b = document.getElementById("g4uq-next");
-      function chk() { b.disabled = !(n.value.trim() && ap.value.trim() && w.value.trim().length > 3); }
-      n.oninput = ap.oninput = w.oninput = chk; chk();
-      b.onclick = function () { S.nombre = n.value.trim(); S.apellido = ap.value.trim(); S.web = normWeb(w.value.trim()); analyzing(S.web); go(idx + 1); };
+      var n = document.getElementById("f-nombre"), ap = document.getElementById("f-apellido"), emp = document.getElementById("f-empresa"), w = document.getElementById("f-web"), b = document.getElementById("g4uq-next");
+      function chk() { b.disabled = !(n.value.trim() && ap.value.trim() && emp.value.trim() && w.value.trim().length > 3); }
+      n.oninput = ap.oninput = emp.oninput = w.oninput = chk; chk();
+      b.onclick = function () { S.nombre = n.value.trim(); S.apellido = ap.value.trim(); S.empresa = emp.value.trim(); S.web = normWeb(w.value.trim()); analyzing(S.web); go(idx + 1); };
       return;
     }
     if (s.type === "capture2") {
@@ -150,7 +153,7 @@
     var sc = score();
     var qs; try { qs = new URLSearchParams(window.location.search); } catch (e) { qs = { get: function () { return ""; } }; }
     var p = {
-      nombre: S.nombre, apellido: S.apellido, email: S.email, phone: S.telefono, web: S.web,
+      nombre: S.nombre, apellido: S.apellido, empresa: S.empresa, email: S.email, phone: S.telefono, web: S.web,
       segmento: S.segmento, facturacion: S.facturacion, canales: (S.canales || []).join(","),
       dolor: (S.dolor || []).join(","), inversion: S.inversion, equipo: S.equipo, timing: S.timing,
       faint_score: sc.total, tier: sc.tier, source: "quiz-alarife",
