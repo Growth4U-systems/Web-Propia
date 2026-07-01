@@ -45,8 +45,6 @@ async function streamEvents(resp: Response, onEvent: (ev: any) => void) {
   }
 }
 
-const withProto = (w: string) => (/^https?:\/\//i.test(w) ? w : "https://" + w);
-
 export default async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
 
@@ -63,13 +61,16 @@ export default async (req: Request) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: web }),
     });
-    let competitors: string[] = [];
+    // compare espera competitors como objetos { url: "<dominio>" } (dominio pelado, sin protocolo).
+    let competitors: { url: string }[] = [];
     await streamEvents(dc, (ev) => {
-      if (ev?.type === "competitors" && Array.isArray(ev.competitors)) {
-        competitors = ev.competitors
+      // El evento "competitors" trae la lista en ev.data (no ev.competitors).
+      const arr = ev?.type === "competitors" ? (ev.data || ev.competitors) : null;
+      if (Array.isArray(arr)) {
+        competitors = arr
           .map((c: any) => c?.website || c?.url || (typeof c === "string" ? c : ""))
           .filter(Boolean)
-          .map(withProto);
+          .map((w: string) => ({ url: String(w).replace(/^https?:\/\//i, "") }));
       }
     });
     competitors = competitors.slice(0, 4);
