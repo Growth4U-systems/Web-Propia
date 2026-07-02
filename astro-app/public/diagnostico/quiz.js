@@ -83,7 +83,7 @@
     if (s.type === "intro") {
       stage.innerHTML = '<span class="g4uq-eyebrow">Diagnóstico · Trust Score</span>' +
         '<h2>¿Te recomienda la IA, o recomienda a tu competencia?</h2>' +
-        '<p class="g4uq-sub">Google y las IAs ya deciden a quién ven tus clientes. Te hacemos unas preguntas para entender tu negocio, analizamos tu web y te damos tu Trust Score en 2 minutos: dónde estás, qué te frena y el movimiento de mayor impacto. La verdad, cierres o no con nosotros.</p>' +
+        '<p class="g4uq-sub">El <b>Trust Score</b> es tu nota de 0 a 100 de cuánta confianza genera tu marca en Google y en las IAs (ChatGPT, Perplexity…) frente a tu competencia. Te hacemos unas preguntas, analizamos tu web y te lo damos en 2 minutos: dónde estás, qué te frena y tu movimiento de mayor impacto. La verdad, cierres o no con nosotros.</p>' +
         '<button class="g4uq-cta" id="g4uq-start">Quiero mi Trust Score →</button>' +
         '<p class="g4uq-hint">Gratis · 2 min · sin llamadas. Te lo enviamos por WhatsApp.</p>';
       document.getElementById("g4uq-start").onclick = function () { go(idx + 1); };
