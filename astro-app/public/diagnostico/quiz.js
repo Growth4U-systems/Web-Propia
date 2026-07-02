@@ -118,7 +118,7 @@
       stage.innerHTML = '<div class="g4uq-center"><span class="g4uq-eyebrow">¡Listo!</span><h2>Estamos generando tu Trust Score.</h2>' +
         '<p class="g4uq-sub">¿Cómo preferís seguir?</p>' +
         '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Quiero conocer mis resultados</a>' +
-        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Prefiero agendar una llamada →</a></div>';
+        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada para ver mis resultados →</a></div>';
       return;
     }
 
