@@ -15,6 +15,8 @@
   // opts: [valor, label, peso]. Escalas SIEMPRE de mayor a menor.
   var steps = [
     { id: "intro", type: "intro" },
+    { id: "tieneweb", type: "tieneweb" },
+    { id: "webinput", type: "webinput" },
     { id: "segmento", q: "¿Qué tipo de empresa tenés?", sub: "Para afinar tu diagnóstico a tu caso.", type: "single",
       opts: [["saas", "SaaS / producto tech B2B", 10], ["ecommerce", "E-commerce / DTC", 6], ["servicios", "Servicios B2B / consultoría", 8], ["marketplace", "Marketplace / plataforma", 9], ["otro", "Otro", 3]] },
     { id: "facturacion", q: "¿Facturación anual aproximada?", sub: "Un rango está bien.", type: "single",
@@ -53,11 +55,17 @@
     return '<div style="display:flex;align-items:center;gap:11px;background:rgba(35,86,230,.07);border:1.5px solid rgba(35,86,230,.22);border-radius:9px;padding:12px 15px;margin-bottom:22px">' +
       '<span style="display:inline-block;width:16px;height:16px;border:2.5px solid #C8D6FB;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;flex:0 0 auto"></span>' +
       '<div style="line-height:1.3"><div style="font-family:var(--qfm,monospace);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2356E6">Trust Score · analizando ' + webDom() + '</div>' +
-      '<div style="font-size:13px;color:#6E6258;margin-top:2px">Mientras tanto, unas últimas preguntas 👇</div></div></div>';
+      '<div style="font-size:13px;color:#6E6258;margin-top:2px">Mientras tanto, te seguimos conociendo 👇</div></div></div>';
   }
 
   function setProg() { prog.style.width = Math.round(idx / (steps.length - 1) * 100) + "%"; }
-  function go(n) { idx = Math.max(0, Math.min(steps.length - 1, n)); render(); }
+  // Navega. Salta el paso "webinput" si el lead respondió que no tiene web.
+  function go(n) {
+    var dir = n >= idx ? 1 : -1;
+    n = Math.max(0, Math.min(steps.length - 1, n));
+    if (steps[n].type === "webinput" && S.tieneweb === "no") n = Math.max(0, Math.min(steps.length - 1, n + dir));
+    idx = n; render();
+  }
   back.onclick = function () { if (idx > 0) go(idx - 1); };
 
   function optRow(o, multi, sid) {
@@ -75,38 +83,69 @@
     if (s.type === "intro") {
       stage.innerHTML = '<span class="g4uq-eyebrow">Diagnóstico · Trust Score</span>' +
         '<h2>¿Te recomienda la IA, o recomienda a tu competencia?</h2>' +
-        '<p class="g4uq-sub">Google y las IAs ya deciden a quién ven tus clientes. Te hacemos 6 preguntas para entender tu negocio, analizamos tu web y te damos tu Trust Score en 2 minutos: dónde estás, qué te frena y el movimiento de mayor impacto. La verdad, cierres o no con nosotros.</p>' +
+        '<p class="g4uq-sub">Google y las IAs ya deciden a quién ven tus clientes. Te hacemos unas preguntas para entender tu negocio, analizamos tu web y te damos tu Trust Score en 2 minutos: dónde estás, qué te frena y el movimiento de mayor impacto. La verdad, cierres o no con nosotros.</p>' +
         '<button class="g4uq-cta" id="g4uq-start">Quiero mi Trust Score →</button>' +
         '<p class="g4uq-hint">Gratis · 2 min · sin llamadas. Te lo enviamos por WhatsApp.</p>';
       document.getElementById("g4uq-start").onclick = function () { go(idx + 1); };
       return;
     }
+    if (s.type === "tieneweb") {
+      stage.innerHTML = '<span class="g4uq-eyebrow">Empecemos</span><h2>¿Tenés web?</h2>' +
+        '<p class="g4uq-sub">Tu web es lo que analizamos para darte tu Trust Score.</p>' +
+        '<div class="g4uq-opts">' +
+          '<button class="g4uq-opt" data-v="si"><span class="g4uq-tick"></span>Sí, tengo web</button>' +
+          '<button class="g4uq-opt" data-v="no"><span class="g4uq-tick"></span>Todavía no</button>' +
+        '</div>';
+      Array.prototype.forEach.call(stage.querySelectorAll(".g4uq-opt"), function (btn) {
+        btn.onclick = function () {
+          S.tieneweb = btn.getAttribute("data-v");
+          if (S.tieneweb === "si") { go(idx + 1); }
+          else { S.web = ""; if (mini) mini.textContent = "Diagnóstico gratuito · 60 seg"; go(idx + 1); }
+        };
+      });
+      return;
+    }
+    if (s.type === "webinput") {
+      stage.innerHTML = '<span class="g4uq-eyebrow">Tu web</span><h2>Dejá tu web aquí</h2>' +
+        '<p class="g4uq-sub">Analizamos tu Trust Score mientras te seguimos conociendo un poco mejor.</p>' +
+        '<div class="g4uq-field"><label>Web de tu empresa</label><input id="f-web" type="url" placeholder="https://tuempresa.com" value="' + (S.web || '') + '"></div>' +
+        '<button class="g4uq-cta" id="g4uq-next" disabled>Analizar mi Trust Score →</button>';
+      var w = document.getElementById("f-web"), b = document.getElementById("g4uq-next");
+      function chkw() { b.disabled = !(w.value.trim().length > 3); }
+      w.oninput = chkw; chkw();
+      b.onclick = function () { S.web = normWeb(w.value.trim()); analyzing(S.web); go(idx + 1); };
+      return;
+    }
     if (s.type === "capture1") {
-      stage.innerHTML = '<span class="g4uq-eyebrow">Ya casi</span><h2>¿A nombre de quién va el diagnóstico?</h2>' +
-        '<p class="g4uq-sub">Tu web es lo que analizamos para tu Trust Score.</p>' +
+      stage.innerHTML = bannerHtml() + '<span class="g4uq-eyebrow">Ya casi</span><h2>¿A nombre de quién va el diagnóstico?</h2>' +
+        '<p class="g4uq-sub">Para personalizar tu resultado.</p>' +
         '<div style="display:flex;gap:12px">' +
           '<div class="g4uq-field" style="flex:1 1 0;min-width:0"><label>Nombre</label><input id="f-nombre" type="text" placeholder="Nombre" value="' + (S.nombre || '') + '"></div>' +
           '<div class="g4uq-field" style="flex:1 1 0;min-width:0"><label>Apellido</label><input id="f-apellido" type="text" placeholder="Apellido" value="' + (S.apellido || '') + '"></div>' +
         '</div>' +
         '<div class="g4uq-field"><label>Nombre de tu empresa</label><input id="f-empresa" type="text" placeholder="Tu empresa" value="' + (S.empresa || '') + '"></div>' +
-        '<div class="g4uq-field"><label>Web de tu empresa</label><input id="f-web" type="url" placeholder="https://tuempresa.com" value="' + (S.web || '') + '"></div>' +
         '<button class="g4uq-cta" id="g4uq-next" disabled>Continuar →</button>';
-      var n = document.getElementById("f-nombre"), ap = document.getElementById("f-apellido"), emp = document.getElementById("f-empresa"), w = document.getElementById("f-web"), b = document.getElementById("g4uq-next");
-      function chk() { b.disabled = !(n.value.trim() && ap.value.trim() && emp.value.trim() && w.value.trim().length > 3); }
-      n.oninput = ap.oninput = emp.oninput = w.oninput = chk; chk();
-      b.onclick = function () { S.nombre = n.value.trim(); S.apellido = ap.value.trim(); S.empresa = emp.value.trim(); S.web = normWeb(w.value.trim()); analyzing(S.web); go(idx + 1); };
+      var n = document.getElementById("f-nombre"), ap = document.getElementById("f-apellido"), emp = document.getElementById("f-empresa"), b = document.getElementById("g4uq-next");
+      function chk() { b.disabled = !(n.value.trim() && ap.value.trim() && emp.value.trim()); }
+      n.oninput = ap.oninput = emp.oninput = chk; chk();
+      b.onclick = function () { S.nombre = n.value.trim(); S.apellido = ap.value.trim(); S.empresa = emp.value.trim(); go(idx + 1); };
       return;
     }
     if (s.type === "capture2") {
-      stage.innerHTML = bannerHtml() + '<span class="g4uq-eyebrow">Último paso</span><h2>¿A dónde te mando tu Trust Score?</h2>' +
-        '<p class="g4uq-sub">Te llega por WhatsApp en cuanto el análisis termine.</p>' +
+      var preview = S.web
+        ? '<div style="font-size:14px;color:#241C16;line-height:1.8">▸ Tu Trust Score <b>(0–100)</b><br>▸ Dónde te gana tu competencia<br>▸ Tu primer movimiento de mayor impacto</div>'
+        : '<div style="font-size:14px;color:#241C16;line-height:1.8">▸ Una orientación clara para tu caso<br>▸ Tu primer movimiento de mayor impacto<br>▸ Qué construir primero</div>';
+      var head = S.web ? '¿A dónde te mando tu Trust Score?' : '¿A dónde te escribimos?';
+      var subc = S.web ? 'Te llega por WhatsApp en cuanto el análisis termine.' : 'Te escribimos por WhatsApp para orientarte.';
+      stage.innerHTML = bannerHtml() + '<span class="g4uq-eyebrow">Último paso</span><h2>' + head + '</h2>' +
+        '<p class="g4uq-sub">' + subc + '</p>' +
         '<div style="background:rgba(36,28,22,.03);border:1.5px solid rgba(36,28,22,.18);border-radius:9px;padding:13px 16px;margin-bottom:22px">' +
           '<div style="font-family:var(--qfm,monospace);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#A89B8C;margin-bottom:8px">Lo que vas a recibir</div>' +
-          '<div style="font-size:14px;color:#241C16;line-height:1.8">▸ Tu Trust Score <b>(0–100)</b><br>▸ Dónde te gana tu competencia<br>▸ Tu primer movimiento de mayor impacto</div>' +
+          preview +
         '</div>' +
         '<div class="g4uq-field"><label>Email de trabajo</label><input id="f-email" type="email" placeholder="tu@empresa.com" value="' + (S.email || '') + '"></div>' +
         '<div class="g4uq-field"><label>Teléfono (WhatsApp)</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" value="' + (S.telefono || '') + '"></div>' +
-        '<button class="g4uq-cta wa" id="g4uq-finish" disabled>' + WA_SVG + 'Quiero conocer mis resultados</button>' +
+        '<button class="g4uq-cta wa" id="g4uq-finish" disabled>' + WA_SVG + (S.web ? 'Quiero conocer mis resultados' : 'Quiero que me orienten') + '</button>' +
         '<p class="g4uq-hint">Gratis · te lo enviamos por WhatsApp.</p>';
       var e = document.getElementById("f-email"), tel = document.getElementById("f-tel"), b2 = document.getElementById("g4uq-finish");
       function chk2() { b2.disabled = !(/.+@.+\..+/.test(e.value) && tel.value.trim().length >= 6); }
@@ -115,15 +154,17 @@
       return;
     }
     if (s.type === "submitting") {
-      stage.innerHTML = '<div class="g4uq-center"><span class="g4uq-eyebrow">¡Listo!</span><h2>Estamos generando tu Trust Score.</h2>' +
-        '<p class="g4uq-sub">¿Cómo preferís seguir?</p>' +
-        '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Quiero conocer mis resultados</a>' +
-        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada para ver mis resultados →</a></div>';
+      var swHead = S.web
+        ? '<h2>Estamos generando tu Trust Score.</h2><p class="g4uq-sub">¿Cómo preferís seguir?</p>'
+        : '<h2>¡Gracias! Vamos a orientarte.</h2><p class="g4uq-sub">Como todavía no tenés web, lo vemos contigo. ¿Cómo preferís seguir?</p>';
+      stage.innerHTML = '<div class="g4uq-center"><span class="g4uq-eyebrow">¡Listo!</span>' + swHead +
+        '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + (S.web ? 'Quiero conocer mis resultados' : 'Hablar por WhatsApp') + '</a>' +
+        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada' + (S.web ? ' para ver mis resultados' : '') + ' →</a></div>';
       return;
     }
 
     var multi = s.type === "multi";
-    var h = bannerHtml() + '<span class="g4uq-eyebrow">Pregunta ' + qNum(idx) + ' / 6</span><h2>' + s.q + '</h2>' + (s.sub ? '<p class="g4uq-sub">' + s.sub + '</p>' : '') + '<div class="g4uq-opts">';
+    var h = bannerHtml() + '<span class="g4uq-eyebrow">Pregunta ' + qNum(idx) + ' / 7</span><h2>' + s.q + '</h2>' + (s.sub ? '<p class="g4uq-sub">' + s.sub + '</p>' : '') + '<div class="g4uq-opts">';
     s.opts.forEach(function (o) { h += optRow(o, multi, s.id); });
     h += '</div>';
     if (multi) h += '<button class="g4uq-cta" id="g4uq-next">Continuar →</button>';
@@ -156,16 +197,18 @@
       nombre: S.nombre, apellido: S.apellido, empresa: S.empresa, email: S.email, phone: S.telefono, web: S.web,
       segmento: S.segmento, facturacion: S.facturacion, canales: (S.canales || []).join(","),
       dolor: (S.dolor || []).join(","), inversion: S.inversion, equipo: S.equipo, timing: S.timing,
-      faint_score: sc.total, tier: sc.tier, source: "quiz-alarife",
+      faint_score: sc.total, tier: sc.tier, tieneweb: S.tieneweb || (S.web ? "si" : "no"), source: "quiz-alarife",
       origen: qs.get("origen") || qs.get("from") || "",
       utm_source: qs.get("utm_source") || "", utm_medium: qs.get("utm_medium") || "", utm_campaign: qs.get("utm_campaign") || "",
       referrer: document.referrer || "", landing: window.location.href,
       ts: new Date().toISOString()
     };
     if (C.GHL) { try { fetch(C.GHL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p), keepalive: true }); } catch (e) {} }
-    // Dispara el Trust Score bridge (discover→compare→link→GHL). Fire-and-forget, sin Content-Type → simple request (sin preflight CORS).
-    if (C.BRIDGE) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: S.apellido, phone: S.telefono }), keepalive: true }); } catch (e) {} }
-    var msg = "Hola, soy " + S.nombre + " " + S.apellido + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.";
+    // Dispara el Trust Score bridge (discover→compare→link→GHL) solo si hay web. Fire-and-forget, sin Content-Type → simple request (sin preflight CORS).
+    if (C.BRIDGE && S.web) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: S.apellido, phone: S.telefono }), keepalive: true }); } catch (e) {} }
+    var msg = S.web
+      ? ("Hola, soy " + S.nombre + " " + S.apellido + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.")
+      : ("Hola, soy " + S.nombre + " " + S.apellido + " de " + S.empresa + ". Completé el diagnóstico Growth4U (todavía sin web) y quiero que me orienten.");
     var a = document.getElementById("g4uq-wa"); if (a) a.href = "https://wa.me/" + C.WA + "?text=" + encodeURIComponent(msg);
     var cl = document.getElementById("g4uq-cal"); if (cl) cl.href = C.CAL;
   }
