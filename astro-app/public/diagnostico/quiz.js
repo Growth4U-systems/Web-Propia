@@ -28,8 +28,8 @@
       opts: [["noconv", "Genero tráfico pero no convierte", 4], ["uncanal", "Dependo de un solo canal", 4], ["saturado", "El equipo va apagando fuegos", 3], ["agencias", "Agencias que solo entregan tareas sueltas", 4], ["nomido", "No sé qué funciona porque no lo mido", 3], ["cac", "El CAC se me dispara", 4]] },
     { id: "inversion", q: "¿Cuánto invertís en marketing al mes?", sub: "Equipo + agencias + herramientas.", type: "single",
       opts: [["gt30k", "Más de 30K €", 25], ["10a30k", "10K – 30K €", 20], ["3a10k", "3K – 10K €", 10], ["lt3k", "Menos de 3K €", 0]] },
-    { id: "equipo", q: "¿Cómo es tu equipo de marketing?", sub: "", type: "single",
-      opts: [["cmo", "Equipo + CMO", 10], ["sindir", "Equipo, pero sin dirección senior", 7], ["gen", "1 generalista", 4], ["sin", "No tengo equipo dedicado", 2]] },
+    { id: "equipo", q: "¿Cómo es tu equipo de marketing hoy?", sub: "", type: "single",
+      opts: [["cmo", "Equipo + CMO / dirección", 10], ["sindir", "Equipo, pero sin dirección senior", 7], ["gen", "1 generalista o freelance", 4], ["sin", "Nadie dedicado a marketing", 2]] },
     { id: "timing", q: "¿Cuándo querés resolverlo?", sub: "", type: "single",
       opts: [["ya", "Ya, es urgente", 20], ["3m", "En los próximos 3 meses", 14], ["6m", "En 3 – 6 meses", 7], ["expl", "Solo estoy mirando", 0]] },
     { id: "capture2", type: "capture2" },
@@ -151,7 +151,7 @@
         '</div>' +
         '<div class="g4uq-field"><label>Email de trabajo</label><input id="f-email" type="email" placeholder="tu@empresa.com" value="' + (S.email || '') + '"></div>' +
         '<div class="g4uq-field"><label>Teléfono (WhatsApp)</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" value="' + (S.telefono || '') + '"></div>' +
-        '<button class="g4uq-cta wa" id="g4uq-finish" disabled>' + WA_SVG + 'Quiero conocer mis resultados</button>' +
+        '<button class="g4uq-cta wa" id="g4uq-finish" disabled>' + WA_SVG + 'Ver mis resultados →</button>' +
         '<p class="g4uq-hint">Gratis · te lo enviamos por WhatsApp.</p>';
       var e = document.getElementById("f-email"), tel = document.getElementById("f-tel"), b2 = document.getElementById("g4uq-finish");
       function chk2() { b2.disabled = !(/.+@.+\..+/.test(e.value) && tel.value.trim().length >= 6); }
