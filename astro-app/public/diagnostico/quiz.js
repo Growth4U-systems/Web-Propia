@@ -116,7 +116,7 @@
       var cs = S.competidores || ["", "", ""];
       var nocomp = !!S.nocomp;
       stage.innerHTML = '<span class="g4uq-eyebrow">Tu web</span><h2>Deja tu web aquí</h2>' +
-        '<p class="g4uq-sub">Analizamos tu Trust Score mientras te seguimos conociendo un poco mejor.</p>' +
+        '<p class="g4uq-sub">Para calcular bien tu Trust Score empezamos por tu web. Déjala aquí y la analizamos frente a tu competencia mientras seguimos con las preguntas.</p>' +
         '<div class="g4uq-field"><label>Web de tu empresa</label><input id="f-web" type="url" placeholder="https://tuempresa.com" value="' + (S.web || '') + '"></div>' +
         '<div class="g4uq-field" style="margin-bottom:6px"><label>Tus competidores directos</label></div>' +
         '<div id="comp-wrap"' + (nocomp ? ' style="display:none"' : '') + '>' +
