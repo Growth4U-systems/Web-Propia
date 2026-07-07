@@ -18,7 +18,6 @@
     { id: "intro", type: "intro" },
     { id: "tieneweb", type: "tieneweb" },
     { id: "webinput", type: "webinput" },
-    { id: "competidores", type: "competidores" },
     { id: "segmento", q: "¿Qué tipo de empresa tienes?", sub: "Para afinar tu diagnóstico a tu caso.", type: "single",
       opts: [["saas", "SaaS / producto tech", 10], ["fintech", "Fintech", 10], ["marketplace", "Marketplace / plataforma", 9], ["serviciosb2b", "Servicios B2B / consultoría", 8], ["b2c", "B2C / consumo / e-commerce", 7], ["otro", "Otro", 3]] },
     { id: "facturacion", q: "¿Facturación anual aproximada?", sub: "Un rango está bien.", type: "single",
@@ -64,7 +63,7 @@
 
   function setProg() {
     var id = steps[idx].id, pct;
-    var pmap = { intro: 0, tieneweb: 8, webinput: 14, competidores: 20, capture: 92, done: 100, webhelp: 12, noconvert: 100 };
+    var pmap = { intro: 0, tieneweb: 8, webinput: 16, capture: 92, done: 100, webhelp: 12, noconvert: 100 };
     if (pmap[id] != null) pct = pmap[id];
     else pct = 26 + Math.round(qNum(idx) / 7 * 62); // preguntas 1..7 -> 26..88%
     prog.style.width = pct + "%";
@@ -114,26 +113,27 @@
       return;
     }
     if (s.type === "webinput") {
+      var cs = S.competidores || ["", "", ""];
+      var nocomp = !!S.nocomp;
       stage.innerHTML = '<span class="g4uq-eyebrow">Tu web</span><h2>Deja tu web aquí</h2>' +
         '<p class="g4uq-sub">Analizamos tu Trust Score mientras te seguimos conociendo un poco mejor.</p>' +
         '<div class="g4uq-field"><label>Web de tu empresa</label><input id="f-web" type="url" placeholder="https://tuempresa.com" value="' + (S.web || '') + '"></div>' +
+        '<div class="g4uq-field" style="margin-bottom:6px"><label>Tus competidores directos</label></div>' +
+        '<div id="comp-wrap"' + (nocomp ? ' style="display:none"' : '') + '>' +
+          '<div class="g4uq-field"><input id="f-c0" type="text" placeholder="Competidor 1 (web o nombre)" value="' + (cs[0] || '') + '"></div>' +
+          '<div class="g4uq-field"><input id="f-c1" type="text" placeholder="Competidor 2" value="' + (cs[1] || '') + '"></div>' +
+          '<div class="g4uq-field"><input id="f-c2" type="text" placeholder="Competidor 3" value="' + (cs[2] || '') + '"></div>' +
+        '</div>' +
+        '<label style="display:flex;align-items:center;gap:9px;font-size:14px;color:#6E6258;cursor:pointer;margin:2px 0 4px"><input type="checkbox" id="f-nocomp"' + (nocomp ? ' checked' : '') + '> No lo tengo claro (los detectamos nosotros)</label>' +
         '<button class="g4uq-cta" id="g4uq-next" disabled>Analizar mi Trust Score →</button>';
-      var w = document.getElementById("f-web"), b = document.getElementById("g4uq-next");
+      var w = document.getElementById("f-web"), b = document.getElementById("g4uq-next"), noc = document.getElementById("f-nocomp"), wrap = document.getElementById("comp-wrap");
       function chkw() { b.disabled = !(w.value.trim().length > 3); }
       w.oninput = chkw; chkw();
-      b.onclick = function () { S.web = normWeb(w.value.trim()); analyzing(S.web); go(idOf("competidores")); };
-      return;
-    }
-    if (s.type === "competidores") {
-      var cs = S.competidores || ["", "", ""];
-      stage.innerHTML = bannerHtml() + '<span class="g4uq-eyebrow">Tus competidores</span><h2>¿Quiénes son tus competidores directos?</h2>' +
-        '<p class="g4uq-sub">Comparamos tu Trust Score contra ellos. Si no los pones, los detectamos nosotros.</p>' +
-        '<div class="g4uq-field"><label>Competidor 1</label><input id="f-c0" type="text" placeholder="web o nombre" value="' + (cs[0] || '') + '"></div>' +
-        '<div class="g4uq-field"><label>Competidor 2</label><input id="f-c1" type="text" placeholder="web o nombre" value="' + (cs[1] || '') + '"></div>' +
-        '<div class="g4uq-field"><label>Competidor 3</label><input id="f-c2" type="text" placeholder="web o nombre" value="' + (cs[2] || '') + '"></div>' +
-        '<button class="g4uq-cta" id="g4uq-next">Continuar →</button>';
-      document.getElementById("g4uq-next").onclick = function () {
-        S.competidores = [document.getElementById("f-c0").value.trim(), document.getElementById("f-c1").value.trim(), document.getElementById("f-c2").value.trim()];
+      noc.onchange = function () { S.nocomp = noc.checked; wrap.style.display = noc.checked ? "none" : ""; };
+      b.onclick = function () {
+        S.web = normWeb(w.value.trim());
+        S.competidores = noc.checked ? [] : [document.getElementById("f-c0").value.trim(), document.getElementById("f-c1").value.trim(), document.getElementById("f-c2").value.trim()];
+        analyzing(S.web);
         go(idOf("segmento"));
       };
       return;
