@@ -6,7 +6,7 @@
   var C = {
     GHL: "https://services.leadconnectorhq.com/hooks/BnXWP5dcLVMgUudLv10O/webhook-trigger/9bfa1bd9-7b61-4d4a-8151-28770109af5b",
     WA: "34614766892",
-    CAL: "https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w",
+    CAL: "https://now.growth4u.io/widget/booking/9VRbPAQQnH5AF0jDOPNE",
     BRIDGE: "https://growth4u.io/.netlify/functions/trust-score-bridge-background",
     REDIR: ""
   };

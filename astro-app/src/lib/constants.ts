@@ -2,7 +2,7 @@ export const SITE_URL = 'https://growth4u.io';
 export const SITE_NAME = 'Growth4U';
 export const SITE_DESCRIPTION = 'Especialistas en Growth para Empresas Tech. Te ayudamos a crear un motor de crecimiento que perdura en el tiempo y reduce tu CAC apoyándonos en el valor de la confianza.';
 
-export const BOOKING_LINK = 'https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w';
+export const BOOKING_LINK = 'https://now.growth4u.io/widget/booking/9VRbPAQQnH5AF0jDOPNE';
 
 export const LOGO_IMAGE = 'https://i.imgur.com/imHxGWI.png';
 export const OG_IMAGE = `https://res.cloudinary.com/dsc0jsbkz/image/upload/l_text:arial_72_bold_center:Growth4U,co_white,g_center,w_1000,c_fit/brand/og-gradient-bg-v2`;
@@ -38,6 +38,19 @@ export const COLORS = {
 
 // Trust Score Analyzer
 export const TRUST_SCORE_URL = '/herramientas/trust-score-competidores';
+
+// WhatsApp — bot de GHL
+// Formato internacional, solo dígitos (sin +, sin espacios).
+export const WHATSAPP_NUMBER = '34614766892';
+export const WHATSAPP_TRUST_MESSAGE =
+  'Hola, acabo de hacer el Trust Score de mi marca y quiero entender mis resultados.';
+export const WHATSAPP_TRUST_MESSAGE_EN =
+  "Hi, I just ran the Trust Score for my brand and I'd like to understand my results.";
+
+/** Construye un enlace wa.me con mensaje pre-rellenado para el bot de WhatsApp de GHL. */
+export function whatsappLink(message: string = WHATSAPP_TRUST_MESSAGE): string {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
 
 // OG Image generator — matches blog cover style (navy→teal gradient + title)
 export function generateOgImage(title: string): string {

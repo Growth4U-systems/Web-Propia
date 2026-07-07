@@ -7,7 +7,7 @@ interface Props {
   fullContent: string;    // HTML — full content
 }
 
-const BOOKING_BASE = 'https://now.growth4u.io/widget/bookings/llamada-estrategica-alfonso-w';
+const BOOKING_BASE = 'https://now.growth4u.io/widget/booking/9VRbPAQQnH5AF0jDOPNE';
 
 // Gate liberado: el contenido completo se muestra siempre, sin pedir email.
 export default function StaticLeadMagnetGate({ excerpt, fullContent }: Props) {
