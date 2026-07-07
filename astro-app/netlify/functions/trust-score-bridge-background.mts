@@ -55,25 +55,38 @@ export default async (req: Request) => {
   if (!web || !email) return new Response("missing web/email", { status: 400, headers: CORS });
 
   try {
-    // 1) Descubrir competidores
-    const dc = await fetch(`${TRUST}/discover-competitors`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: web }),
-    });
     // compare espera competitors como objetos { url: "<dominio>" } (dominio pelado, sin protocolo).
-    let competitors: { url: string }[] = [];
-    await streamEvents(dc, (ev) => {
-      // El evento "competitors" trae la lista en ev.data (no ev.competitors).
-      const arr = ev?.type === "competitors" ? (ev.data || ev.competitors) : null;
-      if (Array.isArray(arr)) {
-        competitors = arr
-          .map((c: any) => c?.website || c?.url || (typeof c === "string" ? c : ""))
-          .filter(Boolean)
-          .map((w: string) => ({ url: String(w).replace(/^https?:\/\//i, "") }));
-      }
-    });
-    competitors = competitors.slice(0, 4);
+    const toComp = (v: any) => ({ url: String(v || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "") });
+
+    // 0) Competidores indicados por el usuario en el quiz (prioridad).
+    const userRaw: any[] = Array.isArray(body.competidores)
+      ? body.competidores
+      : String(body.competidores || "").split(",");
+    let competitors: { url: string }[] = userRaw
+      .map((c) => String(c || "").trim())
+      .filter(Boolean)
+      .map(toComp)
+      .slice(0, 4);
+
+    // 1) Auto-descubrir solo si el usuario no indicó ninguno.
+    if (!competitors.length) {
+      const dc = await fetch(`${TRUST}/discover-competitors`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: web }),
+      });
+      await streamEvents(dc, (ev) => {
+        // El evento "competitors" trae la lista en ev.data (no ev.competitors).
+        const arr = ev?.type === "competitors" ? (ev.data || ev.competitors) : null;
+        if (Array.isArray(arr)) {
+          competitors = arr
+            .map((c: any) => c?.website || c?.url || (typeof c === "string" ? c : ""))
+            .filter(Boolean)
+            .map(toComp);
+        }
+      });
+      competitors = competitors.slice(0, 4);
+    }
     if (!competitors.length) {
       console.warn("[bridge] sin competidores para", web);
       return new Response("no competitors", { status: 200, headers: CORS });
