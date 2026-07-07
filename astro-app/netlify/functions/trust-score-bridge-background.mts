@@ -55,18 +55,38 @@ export default async (req: Request) => {
   if (!web || !email) return new Response("missing web/email", { status: 400, headers: CORS });
 
   try {
-    // compare espera competitors como objetos { url: "<dominio>" } (dominio pelado, sin protocolo).
-    const toComp = (v: any) => ({ url: String(v || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "") });
+    // Limpia a dominio pelado (sin protocolo, sin path, sin www).
+    const bareDomain = (v: any) =>
+      String(v || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "").replace(/^www\./i, "");
+    // ¿Ya parece un dominio? (tiene punto y no tiene espacios)
+    const looksLikeDomain = (v: string) => /\./.test(v) && !/\s/.test(v);
+
+    // Resuelve un competidor a dominio. Si el usuario escribió un NOMBRE
+    // (ej: "Product hackers") lo pasa por Clearbit autocomplete (free, sin auth)
+    // -> producthackers.com. Si no logra un dominio válido, devuelve "" (se descarta).
+    const resolveDomain = async (raw: string): Promise<string> => {
+      const cleaned = bareDomain(raw);
+      if (looksLikeDomain(cleaned)) return cleaned;
+      try {
+        const r = await fetch(
+          `https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(raw)}`
+        );
+        const arr = await r.json();
+        const dom = Array.isArray(arr) && arr[0]?.domain ? String(arr[0].domain) : "";
+        return looksLikeDomain(dom) ? dom : "";
+      } catch {
+        return "";
+      }
+    };
 
     // 0) Competidores indicados por el usuario en el quiz (prioridad).
     const userRaw: any[] = Array.isArray(body.competidores)
       ? body.competidores
       : String(body.competidores || "").split(",");
-    let competitors: { url: string }[] = userRaw
-      .map((c) => String(c || "").trim())
-      .filter(Boolean)
-      .map(toComp)
-      .slice(0, 4);
+    const userNames = userRaw.map((c) => String(c || "").trim()).filter(Boolean).slice(0, 4);
+    let competitors: { url: string }[] = (
+      await Promise.all(userNames.map(async (n) => ({ url: await resolveDomain(n) })))
+    ).filter((c) => c.url);
 
     // 1) Auto-descubrir solo si el usuario no indicó ninguno.
     if (!competitors.length) {
@@ -82,7 +102,8 @@ export default async (req: Request) => {
           competitors = arr
             .map((c: any) => c?.website || c?.url || (typeof c === "string" ? c : ""))
             .filter(Boolean)
-            .map(toComp);
+            .map((v: any) => ({ url: bareDomain(v) }))
+            .filter((c: { url: string }) => c.url);
         }
       });
       competitors = competitors.slice(0, 4);
