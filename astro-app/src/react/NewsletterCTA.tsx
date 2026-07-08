@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { saveLeadMagnetLead } from '../lib/firebase-client';
 
-const BOOKING_LINK = 'https://now.growth4u.io/widget/booking/9VRbPAQQnH5AF0jDOPNE';
+const BOOKING_LINK = 'https://now.growth4u.io/widget/booking/pWyNHUVPawhN9o0uU63W';
 
 export default function NewsletterCTA() {
   const [step, setStep] = useState<'idle' | 'form' | 'done'>('idle');

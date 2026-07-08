@@ -73,7 +73,7 @@ export default function LeadMagnetGate({ magnetId, excerpt, contentUrl }: Props)
         <p className="text-white/70 text-sm font-medium uppercase tracking-wider mb-3">¿Quieres implementarlo en tu empresa tech?</p>
         <h3 className="text-2xl font-bold text-white mb-4">Hablamos 30 minutos y te digo dónde está tu mayor oportunidad</h3>
         <a
-          href="https://now.growth4u.io/widget/booking/9VRbPAQQnH5AF0jDOPNE"
+          href="https://now.growth4u.io/widget/booking/pWyNHUVPawhN9o0uU63W"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-[#3ecda5] hover:bg-[#35b894] text-white font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105 shadow-lg shadow-[#3ecda5]/30"

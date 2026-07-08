@@ -148,7 +148,7 @@ export default async (req: Request, context: Context) => {
   }
 
   const firstName = nombre.trim().split(/\s+/)[0] || "Hola";
-  const calendarUrl = "https://now.growth4u.io/widget/booking/9VRbPAQQnH5AF0jDOPNE";
+  const calendarUrl = "https://now.growth4u.io/widget/booking/pWyNHUVPawhN9o0uU63W";
 
   // Detect if this is a pack (contentUrl points to Google Drive) or a single doc (points to web)
   const isDrivePack = contentUrl.includes("drive.google.com/drive/folders");

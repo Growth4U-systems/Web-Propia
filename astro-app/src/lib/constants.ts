@@ -2,7 +2,7 @@ export const SITE_URL = 'https://growth4u.io';
 export const SITE_NAME = 'Growth4U';
 export const SITE_DESCRIPTION = 'Especialistas en Growth para Empresas Tech. Te ayudamos a crear un motor de crecimiento que perdura en el tiempo y reduce tu CAC apoyándonos en el valor de la confianza.';
 
-export const BOOKING_LINK = 'https://now.growth4u.io/widget/booking/9VRbPAQQnH5AF0jDOPNE';
+export const BOOKING_LINK = 'https://now.growth4u.io/widget/booking/pWyNHUVPawhN9o0uU63W';
 
 export const LOGO_IMAGE = 'https://i.imgur.com/imHxGWI.png';
 export const OG_IMAGE = `https://res.cloudinary.com/dsc0jsbkz/image/upload/l_text:arial_72_bold_center:Growth4U,co_white,g_center,w_1000,c_fit/brand/og-gradient-bg-v2`;
