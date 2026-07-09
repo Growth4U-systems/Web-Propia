@@ -62,10 +62,70 @@
   function webDom() { return (S.web || "").replace(/^https?:\/\//i, "").replace(/\/.*$/, ""); }
   function bannerHtml() {
     if (!S.web) return "";
-    return '<div style="display:flex;align-items:center;gap:11px;background:rgba(35,86,230,.07);border:1.5px solid rgba(35,86,230,.22);border-radius:9px;padding:12px 15px;margin-bottom:22px">' +
-      '<span style="display:inline-block;width:16px;height:16px;border:2.5px solid #C8D6FB;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;flex:0 0 auto"></span>' +
-      '<div style="line-height:1.3"><div style="font-family:var(--qfm,monospace);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2356E6">Trust Score · analizando ' + webDom() + '</div>' +
-      '<div style="font-size:13px;color:#6E6258;margin-top:2px">Mientras tanto, te seguimos conociendo 👇</div></div></div>';
+    var done = S.logStatus === "done";
+    var icon = done
+      ? '<span style="font-size:16px;flex:0 0 auto">✅</span>'
+      : '<span style="display:inline-block;width:16px;height:16px;border:2.5px solid #C8D6FB;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;flex:0 0 auto"></span>';
+    var title = done ? 'Trust Score · análisis de ' + webDom() + ' completado' : 'Trust Score · analizando ' + webDom();
+    return '<div style="display:flex;align-items:center;gap:11px;background:rgba(35,86,230,.07);border:1.5px solid rgba(35,86,230,.22);border-radius:9px;padding:12px 15px;margin-bottom:14px">' +
+      icon +
+      '<div style="line-height:1.3"><div style="font-family:var(--qfm,monospace);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2356E6">' + title + '</div>' +
+      '<div style="font-size:13px;color:#6E6258;margin-top:2px">' + (done ? 'Déjanos tus datos y te lo enviamos 👇' : 'Mientras tanto, te seguimos conociendo 👇') + '</div></div></div>' +
+      logPanelHtml();
+  }
+
+  /* Panel "Ver detalle técnico": log verbose en vivo del pipeline (transparencia
+   * total, como el self-serve). Persiste pantalla a pantalla (S.showDetail) y se
+   * alimenta por polling de /quiz-progress cada 4s. textContent (no innerHTML):
+   * las líneas traen títulos crawleados y no deben inyectar HTML. */
+  function logPanelHtml() {
+    if (!S.web || !S.session) return "";
+    var open = !!S.showDetail;
+    return '<div style="margin:0 0 22px">' +
+      '<button type="button" id="g4uq-logtoggle" style="background:none;border:none;cursor:pointer;font-family:var(--qfm,monospace);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#2356E6;padding:0">' + (open ? '▾ Ocultar detalle técnico' : '▸ Ver detalle técnico') + '</button>' +
+      '<div id="g4uq-logbox" style="' + (open ? '' : 'display:none;') + 'margin-top:9px;background:#241C16;color:#D8CDBC;font-family:var(--qfm,monospace);font-size:10.5px;line-height:1.55;border-radius:8px;padding:12px 14px;max-height:190px;overflow:auto;white-space:pre-wrap;word-break:break-word"></div>' +
+      '</div>';
+  }
+  function refreshLogDom() {
+    var box = document.getElementById("g4uq-logbox");
+    if (!box) return;
+    var ls = S.logLines || [];
+    var tail = S.logStatus === "done" ? "\n\n✅ Análisis completado. Tu diagnóstico llega por WhatsApp."
+      : S.logStatus === "error" ? "\n\n⚠ El análisis se ha detenido. Nuestro equipo lo revisa."
+      : "\n▍analizando…";
+    box.textContent = (ls.length ? ls.join("\n") : "Conectando con el motor de análisis…") + tail;
+    box.scrollTop = box.scrollHeight;
+  }
+  function bindLogPanel() {
+    var t = document.getElementById("g4uq-logtoggle");
+    if (!t) return;
+    t.onclick = function () {
+      S.showDetail = !S.showDetail;
+      var box = document.getElementById("g4uq-logbox");
+      if (box) box.style.display = S.showDetail ? "" : "none";
+      t.textContent = S.showDetail ? "▾ Ocultar detalle técnico" : "▸ Ver detalle técnico";
+      if (S.showDetail) { startProgressPoll(); refreshLogDom(); }
+    };
+    if (S.showDetail) { startProgressPoll(); refreshLogDom(); }
+  }
+  var pollTimer = null;
+  function startProgressPoll() {
+    if (pollTimer || !S.session || !C.TRUST) return;
+    var tick = function () {
+      if (!S.session) return;
+      fetch(C.TRUST + "/quiz-progress?session=" + encodeURIComponent(S.session))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) return;
+          S.logLines = d.lines || [];
+          S.logStatus = d.status;
+          refreshLogDom();
+          if (d.status === "done" || d.status === "error") { clearInterval(pollTimer); pollTimer = null; }
+        })
+        .catch(function () {});
+    };
+    tick();
+    pollTimer = setInterval(tick, 4000);
   }
 
   function setProg() {
@@ -205,21 +265,27 @@
       n.oninput = ap.oninput = emp.oninput = e.oninput = tel.oninput = sync; sync();
       go1.onclick = function () { if (!valid()) return; noweb ? submitNoWeb() : submit(); setTimeout(function () { go(idOf("done")); }, 60); };
       if (cal2) cal2.onclick = function () { if (!valid()) return; submit(); setTimeout(function () { go(idOf("done")); }, 60); };
+      bindLogPanel();
       return;
     }
     if (s.type === "done") {
       var noweb2 = S.tieneweb === "no";
+      var doneReady = S.logStatus === "done";
       stage.innerHTML = '<div class="g4uq-center"><span class="g4uq-eyebrow">¡Listo!</span>' +
         (noweb2
           ? '<h2>¡Gracias! Vamos a ayudarte.</h2><p class="g4uq-sub">Te contactamos por WhatsApp para ver cómo armamos tu web y tu presencia.</p>'
-          : '<h2>Estamos generando tu Trust Score.</h2><p class="g4uq-sub">Te llega por WhatsApp en ~5 minutos. Si no se abrió, entra aquí 👇</p>') +
+          : (doneReady
+            ? '<h2>Tu Trust Score está listo.</h2><p class="g4uq-sub">Te lo enviamos por WhatsApp ahora mismo. Si no se abrió, entra aquí 👇</p>'
+            : '<h2>Estamos generando tu Trust Score.</h2><p class="g4uq-sub">Te llega por WhatsApp en ~5 minutos. Si no se abrió, entra aquí 👇</p>')) +
         '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Abrir WhatsApp</a>' +
-        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada →</a></div>';
+        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada →</a></div>' +
+        (noweb2 ? '' : '<div style="margin-top:16px">' + logPanelHtml() + '</div>');
       var msg2 = S.web
         ? ("Hola, soy " + S.nombre + " " + S.apellido + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.")
         : ("Hola, soy " + S.nombre + " " + S.apellido + ". Completé el diagnóstico Growth4U (todavía sin web) y quiero que me orienten.");
       var a = document.getElementById("g4uq-wa"); if (a) a.href = "https://wa.me/" + C.WA + "?text=" + encodeURIComponent(msg2);
       var cl = document.getElementById("g4uq-cal"); if (cl) cl.href = C.CAL;
+      bindLogPanel();
       return;
     }
     if (s.type === "webhelp") {
@@ -250,6 +316,7 @@
     h += '</div>';
     if (multi) h += '<button class="g4uq-cta" id="g4uq-next">Continuar →</button>';
     stage.innerHTML = h;
+    bindLogPanel();
     var lastQ = idOf("timing");
     Array.prototype.forEach.call(stage.querySelectorAll(".g4uq-opt"), function (btn) {
       btn.onclick = function () {
@@ -315,6 +382,8 @@
     if (S.launchedSig === sig) return;
     S.launchedSig = sig;
     S.session = newSession();
+    S.logLines = []; S.logStatus = null;
+    if (S.showDetail) startProgressPoll();
     // Sin keepalive: la página no navega (los CTAs abren en _blank) y keepalive
     // + preflight CORS rompía en Chromium < 121. El guard del callback va por
     // firma capturada: un fallo de un lanzamiento viejo no anula uno nuevo.
