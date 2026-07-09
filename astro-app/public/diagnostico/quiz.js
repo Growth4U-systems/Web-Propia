@@ -1,14 +1,21 @@
 /* Growth4U — Quiz diagnóstico (assessment funnel FAINT / estilo Valley)
  * Canónico. Se carga en Alarife /diagnostico vía <script src>. Editá acá + redeploy growth4u.io.
  * El markup (#g4uq) y el CSS viven inline en el bloque rawHtml de Alarife (estables).
- * Config: GHL = Inbound Webhook · WA = bot WhatsApp · CAL = calendario llamada estratégica.
+ * Config: GHL = Inbound Webhook · WA = bot WhatsApp · CAL = calendario llamada estratégica ·
+ * TRUST = API del Trust Core (Diagnosys, Vercel).
+ * Trust Core: al dejar la web se dispara /quiz-diagnostico (el análisis corre
+ * mientras el lead responde las preguntas) y al capturar datos /quiz-lead asocia
+ * el lead a esa sesión; el servidor empuja trust_score + trust_score_link al
+ * webhook de GHL cuando ambos lados están (workflow -> WhatsApp con /d/{id}).
+ * El puente viejo de Netlify (trust-score-bridge-background) queda deployado
+ * solo como rollback; ya no se llama desde aquí.
  * Español de España (tú). Datos al final. Rama con-web y sin-web comparten las mismas preguntas. */
 (function () {
   var C = {
     GHL: "https://services.leadconnectorhq.com/hooks/BnXWP5dcLVMgUudLv10O/webhook-trigger/9bfa1bd9-7b61-4d4a-8151-28770109af5b",
     WA: "34614766892",
     CAL: "https://now.growth4u.io/widget/booking/pWyNHUVPawhN9o0uU63W",
-    BRIDGE: "https://growth4u.io/.netlify/functions/trust-score-bridge-background",
+    TRUST: "https://trust.growth4u.io/herramientas/api",
     REDIR: ""
   };
   var WA_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" style="flex:0 0 auto;fill:#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
@@ -55,10 +62,70 @@
   function webDom() { return (S.web || "").replace(/^https?:\/\//i, "").replace(/\/.*$/, ""); }
   function bannerHtml() {
     if (!S.web) return "";
-    return '<div style="display:flex;align-items:center;gap:11px;background:rgba(35,86,230,.07);border:1.5px solid rgba(35,86,230,.22);border-radius:9px;padding:12px 15px;margin-bottom:22px">' +
-      '<span style="display:inline-block;width:16px;height:16px;border:2.5px solid #C8D6FB;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;flex:0 0 auto"></span>' +
-      '<div style="line-height:1.3"><div style="font-family:var(--qfm,monospace);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2356E6">Trust Score · analizando ' + webDom() + '</div>' +
-      '<div style="font-size:13px;color:#6E6258;margin-top:2px">Mientras tanto, te seguimos conociendo 👇</div></div></div>';
+    var done = S.logStatus === "done";
+    var icon = done
+      ? '<span style="font-size:16px;flex:0 0 auto">✅</span>'
+      : '<span style="display:inline-block;width:16px;height:16px;border:2.5px solid #C8D6FB;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;flex:0 0 auto"></span>';
+    var title = done ? 'Trust Score · análisis de ' + webDom() + ' completado' : 'Trust Score · analizando ' + webDom();
+    return '<div style="display:flex;align-items:center;gap:11px;background:rgba(35,86,230,.07);border:1.5px solid rgba(35,86,230,.22);border-radius:9px;padding:12px 15px;margin-bottom:14px">' +
+      icon +
+      '<div style="line-height:1.3"><div style="font-family:var(--qfm,monospace);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2356E6">' + title + '</div>' +
+      '<div style="font-size:13px;color:#6E6258;margin-top:2px">' + (done ? 'Déjanos tus datos y te lo enviamos 👇' : 'Mientras tanto, te seguimos conociendo 👇') + '</div></div></div>' +
+      logPanelHtml();
+  }
+
+  /* Panel "Ver detalle técnico": log verbose en vivo del pipeline (transparencia
+   * total, como el self-serve). Persiste pantalla a pantalla (S.showDetail) y se
+   * alimenta por polling de /quiz-progress cada 4s. textContent (no innerHTML):
+   * las líneas traen títulos crawleados y no deben inyectar HTML. */
+  function logPanelHtml() {
+    if (!S.web || !S.session) return "";
+    var open = !!S.showDetail;
+    return '<div style="margin:0 0 22px">' +
+      '<button type="button" id="g4uq-logtoggle" style="background:none;border:none;cursor:pointer;font-family:var(--qfm,monospace);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#2356E6;padding:0">' + (open ? '▾ Ocultar detalle técnico' : '▸ Ver detalle técnico') + '</button>' +
+      '<div id="g4uq-logbox" style="' + (open ? '' : 'display:none;') + 'margin-top:9px;background:#241C16;color:#D8CDBC;font-family:var(--qfm,monospace);font-size:10.5px;line-height:1.55;border-radius:8px;padding:12px 14px;max-height:190px;overflow:auto;white-space:pre-wrap;word-break:break-word"></div>' +
+      '</div>';
+  }
+  function refreshLogDom() {
+    var box = document.getElementById("g4uq-logbox");
+    if (!box) return;
+    var ls = S.logLines || [];
+    var tail = S.logStatus === "done" ? "\n\n✅ Análisis completado. Tu diagnóstico llega por WhatsApp."
+      : S.logStatus === "error" ? "\n\n⚠ El análisis se ha detenido. Nuestro equipo lo revisa."
+      : "\n▍analizando…";
+    box.textContent = (ls.length ? ls.join("\n") : "Conectando con el motor de análisis…") + tail;
+    box.scrollTop = box.scrollHeight;
+  }
+  function bindLogPanel() {
+    var t = document.getElementById("g4uq-logtoggle");
+    if (!t) return;
+    t.onclick = function () {
+      S.showDetail = !S.showDetail;
+      var box = document.getElementById("g4uq-logbox");
+      if (box) box.style.display = S.showDetail ? "" : "none";
+      t.textContent = S.showDetail ? "▾ Ocultar detalle técnico" : "▸ Ver detalle técnico";
+      if (S.showDetail) { startProgressPoll(); refreshLogDom(); }
+    };
+    if (S.showDetail) { startProgressPoll(); refreshLogDom(); }
+  }
+  var pollTimer = null;
+  function startProgressPoll() {
+    if (pollTimer || !S.session || !C.TRUST) return;
+    var tick = function () {
+      if (!S.session) return;
+      fetch(C.TRUST + "/quiz-progress?session=" + encodeURIComponent(S.session))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) return;
+          S.logLines = d.lines || [];
+          S.logStatus = d.status;
+          refreshLogDom();
+          if (d.status === "done" || d.status === "error") { clearInterval(pollTimer); pollTimer = null; }
+        })
+        .catch(function () {});
+    };
+    tick();
+    pollTimer = setInterval(tick, 4000);
   }
 
   function setProg() {
@@ -114,25 +181,41 @@
     }
     if (s.type === "webinput") {
       var cs = S.competidores || ["", "", ""];
-      var nocomp = !!S.nocomp;
+      var mode = S.compmode || "";
       stage.innerHTML = '<span class="g4uq-eyebrow">Tu web</span><h2>Deja tu web aquí</h2>' +
-        '<p class="g4uq-sub">Para calcular bien tu Trust Score empezamos por tu web. Déjala aquí y la analizamos frente a tu competencia mientras seguimos con las preguntas.</p>' +
+        '<p class="g4uq-sub">Para calcular bien tu Trust Score empezamos por tu web. Déjala aquí y la analizamos frente a 5 competidores mientras seguimos con las preguntas.</p>' +
         '<div class="g4uq-field"><label>Web de tu empresa</label><input id="f-web" type="url" placeholder="https://tuempresa.com" value="' + (S.web || '') + '"></div>' +
-        '<div class="g4uq-field" style="margin-bottom:6px"><label>Tus competidores directos</label></div>' +
-        '<div id="comp-wrap"' + (nocomp ? ' style="display:none"' : '') + '>' +
+        '<div class="g4uq-field" style="margin-bottom:6px"><label>¿Y tus competidores?</label></div>' +
+        '<div class="g4uq-opts" style="margin-bottom:14px">' +
+          '<button class="g4uq-opt' + (mode === "mios" ? ' sel' : '') + '" type="button" data-m="mios"><span class="g4uq-tick">' + (mode === "mios" ? '✓' : '') + '</span>Los añado yo</button>' +
+          '<button class="g4uq-opt' + (mode === "auto" ? ' sel' : '') + '" type="button" data-m="auto"><span class="g4uq-tick">' + (mode === "auto" ? '✓' : '') + '</span>Elegidlos por mí</button>' +
+        '</div>' +
+        '<div id="comp-wrap"' + (mode === "mios" ? '' : ' style="display:none"') + '>' +
           '<div class="g4uq-field"><input id="f-c0" type="text" placeholder="Competidor 1 (web o nombre)" value="' + (cs[0] || '') + '"></div>' +
           '<div class="g4uq-field"><input id="f-c1" type="text" placeholder="Competidor 2" value="' + (cs[1] || '') + '"></div>' +
           '<div class="g4uq-field"><input id="f-c2" type="text" placeholder="Competidor 3" value="' + (cs[2] || '') + '"></div>' +
+          '<p class="g4uq-hint" style="text-align:left;margin:0 0 10px">Con los que dejes, completamos hasta 5 con los más relevantes de tu sector.</p>' +
         '</div>' +
-        '<label style="display:flex;align-items:center;gap:9px;font-size:14px;color:#6E6258;cursor:pointer;margin:2px 0 4px"><input type="checkbox" id="f-nocomp"' + (nocomp ? ' checked' : '') + '> No lo tengo claro (los detectamos nosotros)</label>' +
         '<button class="g4uq-cta" id="g4uq-next" disabled>Analizar mi Trust Score →</button>';
-      var w = document.getElementById("f-web"), b = document.getElementById("g4uq-next"), noc = document.getElementById("f-nocomp"), wrap = document.getElementById("comp-wrap");
-      function chkw() { b.disabled = !(w.value.trim().length > 3); }
+      var w = document.getElementById("f-web"), b = document.getElementById("g4uq-next"), wrap = document.getElementById("comp-wrap");
+      function chkw() { b.disabled = !(w.value.trim().length > 3 && S.compmode); }
       w.oninput = chkw; chkw();
-      noc.onchange = function () { S.nocomp = noc.checked; wrap.style.display = noc.checked ? "none" : ""; };
+      Array.prototype.forEach.call(stage.querySelectorAll(".g4uq-opt[data-m]"), function (btn) {
+        btn.onclick = function () {
+          S.compmode = btn.getAttribute("data-m");
+          Array.prototype.forEach.call(stage.querySelectorAll(".g4uq-opt[data-m]"), function (x) {
+            var on = x === btn;
+            x.className = "g4uq-opt" + (on ? " sel" : "");
+            x.querySelector(".g4uq-tick").textContent = on ? "✓" : "";
+          });
+          wrap.style.display = S.compmode === "mios" ? "" : "none";
+          chkw();
+        };
+      });
       b.onclick = function () {
         S.web = normWeb(w.value.trim());
-        S.competidores = noc.checked ? [] : [document.getElementById("f-c0").value.trim(), document.getElementById("f-c1").value.trim(), document.getElementById("f-c2").value.trim()];
+        S.competidores = S.compmode === "mios" ? [document.getElementById("f-c0").value.trim(), document.getElementById("f-c1").value.trim(), document.getElementById("f-c2").value.trim()] : [];
+        launchTrustCore();
         analyzing(S.web);
         go(idOf("segmento"));
       };
@@ -182,21 +265,27 @@
       n.oninput = ap.oninput = emp.oninput = e.oninput = tel.oninput = sync; sync();
       go1.onclick = function () { if (!valid()) return; noweb ? submitNoWeb() : submit(); setTimeout(function () { go(idOf("done")); }, 60); };
       if (cal2) cal2.onclick = function () { if (!valid()) return; submit(); setTimeout(function () { go(idOf("done")); }, 60); };
+      bindLogPanel();
       return;
     }
     if (s.type === "done") {
       var noweb2 = S.tieneweb === "no";
+      var doneReady = S.logStatus === "done";
       stage.innerHTML = '<div class="g4uq-center"><span class="g4uq-eyebrow">¡Listo!</span>' +
         (noweb2
           ? '<h2>¡Gracias! Vamos a ayudarte.</h2><p class="g4uq-sub">Te contactamos por WhatsApp para ver cómo armamos tu web y tu presencia.</p>'
-          : '<h2>Estamos generando tu Trust Score.</h2><p class="g4uq-sub">Te llega por WhatsApp en ~5 minutos. Si no se abrió, entra aquí 👇</p>') +
+          : (doneReady
+            ? '<h2>Tu Trust Score está listo.</h2><p class="g4uq-sub">Te lo enviamos por WhatsApp ahora mismo. Si no se abrió, entra aquí 👇</p>'
+            : '<h2>Estamos generando tu Trust Score.</h2><p class="g4uq-sub">Te llega por WhatsApp en ~5 minutos. Si no se abrió, entra aquí 👇</p>')) +
         '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Abrir WhatsApp</a>' +
-        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada →</a></div>';
+        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada →</a></div>' +
+        (noweb2 ? '' : '<div style="margin-top:16px">' + logPanelHtml() + '</div>');
       var msg2 = S.web
         ? ("Hola, soy " + S.nombre + " " + S.apellido + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.")
         : ("Hola, soy " + S.nombre + " " + S.apellido + ". Completé el diagnóstico Growth4U (todavía sin web) y quiero que me orienten.");
       var a = document.getElementById("g4uq-wa"); if (a) a.href = "https://wa.me/" + C.WA + "?text=" + encodeURIComponent(msg2);
       var cl = document.getElementById("g4uq-cal"); if (cl) cl.href = C.CAL;
+      bindLogPanel();
       return;
     }
     if (s.type === "webhelp") {
@@ -227,6 +316,7 @@
     h += '</div>';
     if (multi) h += '<button class="g4uq-cta" id="g4uq-next">Continuar →</button>';
     stage.innerHTML = h;
+    bindLogPanel();
     var lastQ = idOf("timing");
     Array.prototype.forEach.call(stage.querySelectorAll(".g4uq-opt"), function (btn) {
       btn.onclick = function () {
@@ -271,6 +361,41 @@
   }
   function postGHL(p) { if (C.GHL) { try { fetch(C.GHL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p), keepalive: true }); } catch (e) {} } }
 
+  function newSession() {
+    try {
+      var a = new Uint8Array(8);
+      crypto.getRandomValues(a);
+      return "q" + Array.prototype.map.call(a, function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+    } catch (e) {
+      return "q" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    }
+  }
+
+  /* Dispara el Trust Core (Diagnosys) en cuanto tenemos web + modo de competidores.
+   * El análisis corre server-side (~5 min) mientras el lead responde el quiz.
+   * Guard por firma: no relanzar con el mismo input (tope público por IP);
+   * si la llamada falla, se limpia la firma y submit() reintenta al final. */
+  function launchTrustCore() {
+    if (!C.TRUST || !S.web) return;
+    var comps = (S.competidores || []).filter(Boolean);
+    var sig = S.web + "|" + comps.join(",");
+    if (S.launchedSig === sig) return;
+    S.launchedSig = sig;
+    S.session = newSession();
+    S.logLines = []; S.logStatus = null;
+    if (S.showDetail) startProgressPoll();
+    // Sin keepalive: la página no navega (los CTAs abren en _blank) y keepalive
+    // + preflight CORS rompía en Chromium < 121. El guard del callback va por
+    // firma capturada: un fallo de un lanzamiento viejo no anula uno nuevo.
+    try {
+      fetch(C.TRUST + "/quiz-diagnostico", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session: S.session, url: S.web, competitors: comps })
+      }).then(function (r) { if (!r.ok && S.launchedSig === sig) S.launchedSig = null; },
+              function () { if (S.launchedSig === sig) S.launchedSig = null; });
+    } catch (e) { if (S.launchedSig === sig) S.launchedSig = null; }
+  }
+
   function submit() {
     var sc = score();
     var comps = (S.competidores || []).filter(Boolean);
@@ -281,7 +406,19 @@
       competidores: comps.join(", "), faint_score: sc.total, tier: sc.tier, tieneweb: "si", respuestas: resumenRespuestas(sc), source: "quiz-alarife"
     }, utmObj());
     postGHL(p);
-    if (C.BRIDGE && S.web) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: S.apellido, phone: S.telefono, competidores: comps }), keepalive: true }); } catch (e) {} }
+    // Asocia el lead a la sesión del Trust Core (reintenta el arranque si falló).
+    if (C.TRUST && S.web) {
+      if (!S.session || S.launchedSig === null) launchTrustCore();
+      try {
+        fetch(C.TRUST + "/quiz-lead", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            session: S.session, email: S.email, nombre: S.nombre, apellido: S.apellido,
+            empresa: S.empresa, phone: S.telefono, web: S.web
+          })
+        });
+      } catch (e) {}
+    }
   }
 
   function submitNoWeb() {
