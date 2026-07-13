@@ -94,7 +94,10 @@
   }
 
   /* Gauge ilustrativo de la intro. El valor es un EJEMPLO: en la intro el usuario aún no
-   * tiene score, por eso el caption lo marca como tal. */
+   * tiene score, por eso el caption lo marca como tal.
+   * OJO: el pintado va en `style` inline, NO en atributos de presentación (fill=/stroke=).
+   * Los atributos de presentación tienen especificidad 0 y el CSS del tema de Alarife los
+   * pisa (deja el path en stroke:none / fill:black), así que el arco no se vería. */
   function gaugeSvg(v) {
     var R = 120, CX = 160, CY = 158;
     var LEN = Math.PI * R; // longitud del semicírculo ≈ 377
@@ -104,9 +107,9 @@
       '<defs><linearGradient id="g4uqGrad" x1="0" y1="0" x2="1" y2="0">' +
         '<stop offset="0%" stop-color="#C0552B"/><stop offset="52%" stop-color="#B4903A"/><stop offset="100%" stop-color="#3E8E5A"/>' +
       '</linearGradient></defs>' +
-      '<path d="' + arc + '" fill="none" stroke="#E6DCC7" stroke-width="18" stroke-linecap="round"/>' +
-      '<path class="g4uq-gauge-arc" d="' + arc + '" fill="none" stroke="url(#g4uqGrad)" stroke-width="18" stroke-linecap="round" ' +
-        'stroke-dasharray="' + LEN.toFixed(1) + '" stroke-dashoffset="' + (LEN * (1 - v / 100)).toFixed(1) + '"/>' +
+      '<path d="' + arc + '" style="fill:none;stroke:#E6DCC7;stroke-width:18;stroke-linecap:round"/>' +
+      '<path class="g4uq-gauge-arc" d="' + arc + '" style="fill:none;stroke:url(#g4uqGrad);stroke-width:18;stroke-linecap:round;' +
+        'stroke-dasharray:' + LEN.toFixed(1) + ';stroke-dashoffset:' + (LEN * (1 - v / 100)).toFixed(1) + '"/>' +
       '<text x="' + (CX - R) + '" y="182" text-anchor="middle" style="' + tick + '">0</text>' +
       '<text x="' + CX + '" y="22" text-anchor="middle" style="' + tick + '">50</text>' +
       '<text x="' + (CX + R) + '" y="182" text-anchor="middle" style="' + tick + '">100</text>' +
