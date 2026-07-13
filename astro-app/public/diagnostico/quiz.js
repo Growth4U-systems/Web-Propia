@@ -114,7 +114,19 @@
       "#g4uq .g4uq-check input:checked+.g4uq-check-box{background:var(--qbl);border-color:var(--qbl)}" +
       "#g4uq .g4uq-check input:checked+.g4uq-check-box::after{content:'\\2713'}" +
       "#g4uq .g4uq-check:has(input:checked){border-color:var(--qbl);background:rgba(35,86,230,.06);box-shadow:4px 4px 0 rgba(35,86,230,.20)}" +
-      "#g4uq .g4uq-check input:focus-visible+.g4uq-check-box{outline:2px solid var(--qbl);outline-offset:2px}";
+      "#g4uq .g4uq-check input:focus-visible+.g4uq-check-box{outline:2px solid var(--qbl);outline-offset:2px}" +
+
+      /* Paso de datos: era el más largo de todos, lo apretamos. */
+      "#g4uq .g4uq-capstep .g4uq-sub{font-size:15px;margin-bottom:16px}" +
+      "#g4uq .g4uq-capstep .g4uq-field{margin-bottom:9px}" +
+      "#g4uq .g4uq-capstep .g4uq-field label{margin-bottom:5px}" +
+      "#g4uq .g4uq-capstep .g4uq-field input{padding:11px 13px;font-size:15px}" +
+      "#g4uq .g4uq-capstep .g4uq-cta{margin-top:15px;padding:13px}" +
+      "#g4uq .g4uq-capstep .g4uq-cta.g4uq-cta2{margin-top:9px}" +
+      "#g4uq .g4uq-capstep .g4uq-hint{margin-top:10px}" +
+      "#g4uq .g4uq-recibir{background:rgba(36,28,22,.03);border:1.5px solid rgba(36,28,22,.18);border-radius:9px;padding:11px 14px;margin-bottom:16px}" +
+      "#g4uq .g4uq-recibir-t{font-family:var(--qfm);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#A89B8C;margin-bottom:6px}" +
+      "#g4uq .g4uq-recibir-l{font-size:13.5px;color:var(--qi);line-height:1.65}";
     document.head.appendChild(st);
   }
 
@@ -268,43 +280,42 @@
       var head = noweb ? "Déjanos tus datos" : "Déjanos tus datos para tu diagnóstico";
       var sub = noweb ? "Te contactamos para ayudarte a crear tu web y tu presencia." : "Te preparamos tu Trust Score personalizado para ti y te lo enviamos.";
       var preview = noweb
-        ? '<div style="font-size:14px;color:#241C16;line-height:1.8">▸ Una orientación clara para tu caso<br>▸ Tu primer movimiento de mayor impacto<br>▸ Qué construir primero</div>'
-        : '<div style="font-size:14px;color:#241C16;line-height:1.8">▸ Tu Trust Score <b>(0–100)</b><br>▸ Dónde te gana tu competencia<br>▸ Tu primer movimiento de mayor impacto</div>';
-      stage.innerHTML = bannerHtml() + '<span class="g4uq-eyebrow">Último paso</span><h2>' + head + '</h2>' +
+        ? '▸ Una orientación clara para tu caso<br>▸ Tu primer movimiento de mayor impacto<br>▸ Qué construir primero'
+        : '▸ Tu Trust Score <b>(0–100)</b><br>▸ Dónde te gana tu competencia<br>▸ Tu primer movimiento de mayor impacto';
+      // Solo el nombre: el apellido no se usa para nada y alargaba el formulario.
+      stage.innerHTML = '<div class="g4uq-capstep">' + bannerHtml() +
+        '<span class="g4uq-eyebrow">Último paso</span><h2>' + head + '</h2>' +
         '<p class="g4uq-sub">' + sub + '</p>' +
-        '<div style="background:rgba(36,28,22,.03);border:1.5px solid rgba(36,28,22,.18);border-radius:9px;padding:13px 16px;margin-bottom:22px">' +
-          '<div style="font-family:var(--qfm,monospace);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#A89B8C;margin-bottom:8px">Lo que vas a recibir</div>' + preview +
-        '</div>' +
-        '<div style="display:flex;gap:12px">' +
-          '<div class="g4uq-field" style="flex:1 1 0;min-width:0"><label>Nombre</label><input id="f-nombre" type="text" placeholder="Nombre" value="' + (S.nombre || '') + '"></div>' +
-          '<div class="g4uq-field" style="flex:1 1 0;min-width:0"><label>Apellido</label><input id="f-apellido" type="text" placeholder="Apellido" value="' + (S.apellido || '') + '"></div>' +
-        '</div>' +
+        '<div class="g4uq-recibir"><div class="g4uq-recibir-t">Lo que vas a recibir</div>' +
+          '<div class="g4uq-recibir-l">' + preview + '</div></div>' +
+        '<div class="g4uq-field"><label>Nombre</label><input id="f-nombre" type="text" placeholder="Nombre" value="' + (S.nombre || '') + '"></div>' +
         '<div class="g4uq-field"><label>Nombre de tu empresa</label><input id="f-empresa" type="text" placeholder="Tu empresa" value="' + (S.empresa || '') + '"></div>' +
         '<div class="g4uq-field"><label>Email de trabajo</label><input id="f-email" type="email" placeholder="tu@empresa.com" value="' + (S.email || '') + '"></div>' +
         '<div class="g4uq-field"><label>Teléfono (WhatsApp)</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" value="' + (S.telefono || '') + '"></div>' +
         '<a class="g4uq-cta wa" id="g4uq-go" href="#" style="pointer-events:none;opacity:.4">' + WA_SVG + (noweb ? 'Quiero que me ayuden' : 'Quiero mis resultados') + '</a>' +
         (noweb ? '' : '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal2" href="#" style="pointer-events:none;opacity:.5">Prefiero agendar una llamada →</a>') +
-        '<p class="g4uq-hint">Gratis · te lo enviamos por WhatsApp.</p>';
-      var n = document.getElementById("f-nombre"), ap = document.getElementById("f-apellido"), emp = document.getElementById("f-empresa"),
+        '<p class="g4uq-hint">Gratis · te lo enviamos por WhatsApp.</p>' +
+      '</div>';
+      var n = document.getElementById("f-nombre"), emp = document.getElementById("f-empresa"),
           e = document.getElementById("f-email"), tel = document.getElementById("f-tel"),
           go1 = document.getElementById("g4uq-go"), cal2 = document.getElementById("g4uq-cal2");
-      function valid() { return n.value.trim() && ap.value.trim() && emp.value.trim() && /.+@.+\..+/.test(e.value) && tel.value.trim().length >= 6; }
+      function valid() { return n.value.trim() && emp.value.trim() && /.+@.+\..+/.test(e.value) && tel.value.trim().length >= 6; }
       function sync() {
-        S.nombre = n.value.trim(); S.apellido = ap.value.trim(); S.empresa = emp.value.trim(); S.email = e.value.trim(); S.telefono = tel.value.trim();
+        S.nombre = n.value.trim(); S.empresa = emp.value.trim(); S.email = e.value.trim(); S.telefono = tel.value.trim();
         var ok = valid();
         go1.style.pointerEvents = ok ? "auto" : "none"; go1.style.opacity = ok ? "1" : ".4";
         if (cal2) { cal2.style.pointerEvents = ok ? "auto" : "none"; cal2.style.opacity = ok ? "1" : ".5"; }
         if (ok) {
           if (noweb) { go1.href = C.CAL; go1.target = "_blank"; go1.rel = "noopener"; }
           else {
-            var msg = "Hola, soy " + S.nombre + " " + S.apellido + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.";
+            var msg = "Hola, soy " + S.nombre + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.";
             go1.href = "https://wa.me/" + C.WA + "?text=" + encodeURIComponent(msg);
             go1.target = "_blank"; go1.rel = "noopener";
             if (cal2) { cal2.href = C.CAL; cal2.target = "_blank"; cal2.rel = "noopener"; }
           }
         }
       }
-      n.oninput = ap.oninput = emp.oninput = e.oninput = tel.oninput = sync; sync();
+      n.oninput = emp.oninput = e.oninput = tel.oninput = sync; sync();
       // Guardamos el canal elegido para no volver a ofrecer en el frame final el que descartaron.
       go1.onclick = function () { if (!valid()) return; S.via = noweb ? "cal" : "wa"; noweb ? submitNoWeb() : submit(); setTimeout(function () { go(idOf("done")); }, 60); };
       if (cal2) cal2.onclick = function () { if (!valid()) return; S.via = "cal"; submit(); setTimeout(function () { go(idOf("done")); }, 60); };
@@ -328,8 +339,8 @@
           : '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Abrir WhatsApp</a>') +
       '</div>';
       var msg2 = S.web
-        ? ("Hola, soy " + S.nombre + " " + S.apellido + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.")
-        : ("Hola, soy " + S.nombre + " " + S.apellido + ". Completé el diagnóstico Growth4U (todavía sin web) y quiero que me orienten.");
+        ? ("Hola, soy " + S.nombre + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.")
+        : ("Hola, soy " + S.nombre + ". Completé el diagnóstico Growth4U (todavía sin web) y quiero que me orienten.");
       var a = document.getElementById("g4uq-wa"); if (a) a.href = "https://wa.me/" + C.WA + "?text=" + encodeURIComponent(msg2);
       var cl = document.getElementById("g4uq-cal"); if (cl) cl.href = C.CAL;
       return;
@@ -410,19 +421,19 @@
     var sc = score();
     var comps = (S.competidores || []).filter(Boolean);
     var p = Object.assign({
-      nombre: S.nombre, apellido: S.apellido, empresa: S.empresa, email: S.email, phone: S.telefono, web: S.web,
+      nombre: S.nombre, apellido: "", empresa: S.empresa, email: S.email, phone: S.telefono, web: S.web,
       segmento: lbl("segmento", S.segmento), facturacion: lbl("facturacion", S.facturacion), canales: lbls("canales"),
       dolor: lbls("dolor"), inversion: lbl("inversion", S.inversion), equipo: lbl("equipo", S.equipo), timing: lbl("timing", S.timing),
       competidores: comps.join(", "), faint_score: sc.total, tier: sc.tier, tieneweb: "si", respuestas: resumenRespuestas(sc), source: "quiz-alarife"
     }, utmObj());
     postGHL(p);
-    if (C.BRIDGE && S.web) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: S.apellido, phone: S.telefono, competidores: comps }), keepalive: true }); } catch (e) {} }
+    if (C.BRIDGE && S.web) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: "", phone: S.telefono, competidores: comps }), keepalive: true }); } catch (e) {} }
   }
 
   function submitNoWeb() {
     var sc = score();
     var p = Object.assign({
-      nombre: S.nombre, apellido: S.apellido, empresa: S.empresa, email: S.email, phone: S.telefono, web: "",
+      nombre: S.nombre, apellido: "", empresa: S.empresa, email: S.email, phone: S.telefono, web: "",
       segmento: lbl("segmento", S.segmento), facturacion: lbl("facturacion", S.facturacion), canales: lbls("canales"),
       dolor: lbls("dolor"), inversion: lbl("inversion", S.inversion), equipo: lbl("equipo", S.equipo), timing: lbl("timing", S.timing),
       faint_score: sc.total, tier: sc.tier, tieneweb: "no", quiere_web: "si",
