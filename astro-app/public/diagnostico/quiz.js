@@ -14,7 +14,9 @@
   var WA_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" style="flex:0 0 auto;fill:#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
   var S = {};
   var MAX_COMP = 5; // competidores máximos que puede añadir el usuario
-  // opts: [valor, label, peso]. Escalas SIEMPRE de mayor a menor, SALVO importes (facturación/inversión) que van de menor a mayor.
+  // opts: [valor, label, peso].
+  // Las preguntas de CANTIDAD (facturación, inversión, tamaño de equipo) van SIEMPRE de menor a mayor.
+  // Las de intensidad/encaje (segmento, timing) van de mayor a menor.
   var steps = [
     { id: "intro", type: "intro" },
     { id: "tieneweb", type: "tieneweb" },
@@ -30,7 +32,7 @@
     { id: "inversion", q: "¿Cuánto inviertes en marketing al mes?", sub: "Equipo + agencias + herramientas.", type: "single",
       opts: [["lt3k", "Menos de 3K €", 0], ["3a10k", "3K – 10K €", 10], ["10a30k", "10K – 30K €", 20], ["gt30k", "Más de 30K €", 25]] },
     { id: "equipo", q: "¿Cuántas personas hay en tu equipo de marketing?", sub: "", type: "single",
-      opts: [["gt5", "Más de 5 personas", 10], ["2a5", "2-5 personas", 7], ["1", "1 persona", 4], ["nadie", "Nadie dedicado a marketing", 2]] },
+      opts: [["nadie", "Nadie dedicado a marketing", 2], ["1", "1 persona", 4], ["2a5", "2-5 personas", 7], ["gt5", "Más de 5 personas", 10]] },
     { id: "timing", q: "¿Cuándo quieres resolverlo?", sub: "", type: "single",
       opts: [["ya", "Ya, es urgente", 20], ["3m", "En los próximos 3 meses", 14], ["6m", "En 3 – 6 meses", 7], ["expl", "Solo estoy mirando", 0]] },
     { id: "capture", type: "capture" },
@@ -71,10 +73,11 @@
     var st = document.createElement("style");
     st.id = "g4uq-hero-css";
     st.textContent =
+      "#g4uq .g4uq-card{transition:max-width .35s var(--qe)}" +
       "#g4uq.g4uq-wide .g4uq-card{max-width:1000px}" +
       "#g4uq .g4uq-hero{display:grid;grid-template-columns:1.02fr .98fr;gap:40px;align-items:center}" +
       "#g4uq .g4uq-hero-copy{min-width:0}" +
-      "#g4uq.g4uq-wide h2{font-size:42px;line-height:1.04;margin-bottom:14px}" +
+      "#g4uq .g4uq-hero-copy h2{font-size:42px;line-height:1.04;margin-bottom:14px}" +
       "#g4uq .g4uq-hero .g4uq-cta{width:auto;padding:15px 26px}" +
       "#g4uq .g4uq-hero .g4uq-hint{text-align:left}" +
       "#g4uq .g4uq-hero-viz{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}" +
@@ -86,7 +89,7 @@
       "@media(max-width:860px){" +
         "#g4uq .g4uq-hero{grid-template-columns:1fr;gap:26px}" +
         "#g4uq .g4uq-hero-viz{order:-1}" +
-        "#g4uq.g4uq-wide h2{font-size:30px}" +
+        "#g4uq .g4uq-hero-copy h2{font-size:30px}" +
         "#g4uq .g4uq-hero .g4uq-cta{width:100%}" +
         "#g4uq .g4uq-hero .g4uq-hint{text-align:center}" +
         "#g4uq .g4uq-gauge{max-width:260px}" +
@@ -126,7 +129,16 @@
       "#g4uq .g4uq-capstep .g4uq-hint{margin-top:10px}" +
       "#g4uq .g4uq-recibir{background:rgba(36,28,22,.03);border:1.5px solid rgba(36,28,22,.18);border-radius:9px;padding:11px 14px;margin-bottom:16px}" +
       "#g4uq .g4uq-recibir-t{font-family:var(--qfm);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#A89B8C;margin-bottom:6px}" +
-      "#g4uq .g4uq-recibir-l{font-size:13.5px;color:var(--qi);line-height:1.65}";
+      "#g4uq .g4uq-recibir-l{font-size:13.5px;color:var(--qi);line-height:1.65}" +
+      /* Último paso a 2 columnas: el contexto (qué recibes) a un lado, el formulario al otro. */
+      "#g4uq .g4uq-capgrid{display:grid;grid-template-columns:1fr 1fr;gap:38px;align-items:start}" +
+      "#g4uq .g4uq-capleft,#g4uq .g4uq-capright{min-width:0}" +
+      "#g4uq .g4uq-capstep .g4uq-recibir{margin-bottom:0}" +
+      "#g4uq .g4uq-capright .g4uq-cta{margin-top:16px}" +
+      "@media(max-width:860px){" +
+        "#g4uq .g4uq-capgrid{grid-template-columns:1fr;gap:20px}" +
+        "#g4uq .g4uq-capstep .g4uq-recibir{margin-bottom:2px}" +
+      "}";
     document.head.appendChild(st);
   }
 
@@ -188,7 +200,11 @@
     var isTerm = termId === "done" || termId === "noconvert";
     back.style.visibility = (hist.length > 0 && !isTerm) ? "visible" : "hidden";
     var s = steps[idx];
-    if (root) root.classList.toggle("g4uq-wide", s.type === "intro");
+    // Ancho: la intro y el último paso son pantallas de CONTENIDO (tienen algo que enseñar
+    // al lado del CTA/formulario). Las 7 preguntas se quedan estrechas a propósito: una
+    // decisión a la vez y sin nada que distraiga. El card transiciona el ancho para que el
+    // cambio se lea como intencionado y no como un salto.
+    if (root) root.classList.toggle("g4uq-wide", s.type === "intro" || s.type === "capture");
 
     if (s.type === "intro") {
       stage.innerHTML = '<div class="g4uq-hero">' +
@@ -284,17 +300,23 @@
         : '▸ Tu Trust Score <b>(0–100)</b><br>▸ Dónde te gana tu competencia<br>▸ Tu primer movimiento de mayor impacto';
       // Solo el nombre: el apellido no se usa para nada y alargaba el formulario.
       stage.innerHTML = '<div class="g4uq-capstep">' + bannerHtml() +
-        '<span class="g4uq-eyebrow">Último paso</span><h2>' + head + '</h2>' +
-        '<p class="g4uq-sub">' + sub + '</p>' +
-        '<div class="g4uq-recibir"><div class="g4uq-recibir-t">Lo que vas a recibir</div>' +
-          '<div class="g4uq-recibir-l">' + preview + '</div></div>' +
-        '<div class="g4uq-field"><label>Nombre</label><input id="f-nombre" type="text" placeholder="Nombre" value="' + (S.nombre || '') + '"></div>' +
-        '<div class="g4uq-field"><label>Nombre de tu empresa</label><input id="f-empresa" type="text" placeholder="Tu empresa" value="' + (S.empresa || '') + '"></div>' +
-        '<div class="g4uq-field"><label>Email de trabajo</label><input id="f-email" type="email" placeholder="tu@empresa.com" value="' + (S.email || '') + '"></div>' +
-        '<div class="g4uq-field"><label>Teléfono (WhatsApp)</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" value="' + (S.telefono || '') + '"></div>' +
-        '<a class="g4uq-cta wa" id="g4uq-go" href="#" style="pointer-events:none;opacity:.4">' + WA_SVG + (noweb ? 'Quiero que me ayuden' : 'Quiero mis resultados') + '</a>' +
-        (noweb ? '' : '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal2" href="#" style="pointer-events:none;opacity:.5">Prefiero agendar una llamada →</a>') +
-        '<p class="g4uq-hint">Gratis · te lo enviamos por WhatsApp.</p>' +
+        '<div class="g4uq-capgrid">' +
+          '<div class="g4uq-capleft">' +
+            '<span class="g4uq-eyebrow">Último paso</span><h2>' + head + '</h2>' +
+            '<p class="g4uq-sub">' + sub + '</p>' +
+            '<div class="g4uq-recibir"><div class="g4uq-recibir-t">Lo que vas a recibir</div>' +
+              '<div class="g4uq-recibir-l">' + preview + '</div></div>' +
+          '</div>' +
+          '<div class="g4uq-capright">' +
+            '<div class="g4uq-field"><label>Nombre</label><input id="f-nombre" type="text" placeholder="Nombre" value="' + (S.nombre || '') + '"></div>' +
+            '<div class="g4uq-field"><label>Nombre de tu empresa</label><input id="f-empresa" type="text" placeholder="Tu empresa" value="' + (S.empresa || '') + '"></div>' +
+            '<div class="g4uq-field"><label>Email de trabajo</label><input id="f-email" type="email" placeholder="tu@empresa.com" value="' + (S.email || '') + '"></div>' +
+            '<div class="g4uq-field"><label>Teléfono (WhatsApp)</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" value="' + (S.telefono || '') + '"></div>' +
+            '<a class="g4uq-cta wa" id="g4uq-go" href="#" style="pointer-events:none;opacity:.4">' + WA_SVG + (noweb ? 'Quiero que me ayuden' : 'Quiero mis resultados') + '</a>' +
+            (noweb ? '' : '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal2" href="#" style="pointer-events:none;opacity:.5">Prefiero agendar una llamada →</a>') +
+            '<p class="g4uq-hint">Gratis · te lo enviamos por WhatsApp.</p>' +
+          '</div>' +
+        '</div>' +
       '</div>';
       var n = document.getElementById("f-nombre"), emp = document.getElementById("f-empresa"),
           e = document.getElementById("f-email"), tel = document.getElementById("f-tel"),
