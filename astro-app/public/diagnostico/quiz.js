@@ -43,6 +43,7 @@
   var prog = document.getElementById("g4uq-progress");
   var back = document.getElementById("g4uq-back");
   var mini = document.querySelector("#g4uq .g4uq-mini");
+  var root = document.getElementById("g4uq");
   if (!stage) return;
 
   function idOf(id) { for (var i = 0; i < steps.length; i++) if (steps[i].id === id) return i; return 0; }
@@ -59,6 +60,60 @@
       '<span style="display:inline-block;width:16px;height:16px;border:2.5px solid #C8D6FB;border-top-color:#2356E6;border-radius:50%;animation:g4uqspin .8s linear infinite;flex:0 0 auto"></span>' +
       '<div style="line-height:1.3"><div style="font-family:var(--qfm,monospace);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2356E6">Trust Score · analizando ' + webDom() + '</div>' +
       '<div style="font-size:13px;color:#6E6258;margin-top:2px">Mientras tanto, te seguimos conociendo 👇</div></div></div>';
+  }
+
+  /* Hero de la intro (2 columnas + gauge). El CSS base del quiz vive en el rawHtml de
+   * Alarife y es estable; esto es aditivo y se inyecta desde aquí para que el hero viaje
+   * junto a su markup en un solo archivo. Si se estabiliza, moverlo al bloque de Alarife. */
+  function injectCss() {
+    if (document.getElementById("g4uq-hero-css")) return;
+    var st = document.createElement("style");
+    st.id = "g4uq-hero-css";
+    st.textContent =
+      "#g4uq.g4uq-wide .g4uq-card{max-width:1000px}" +
+      "#g4uq .g4uq-hero{display:grid;grid-template-columns:1.02fr .98fr;gap:40px;align-items:center}" +
+      "#g4uq .g4uq-hero-copy{min-width:0}" +
+      "#g4uq.g4uq-wide h2{font-size:42px;line-height:1.04;margin-bottom:14px}" +
+      "#g4uq .g4uq-hero .g4uq-cta{width:auto;padding:15px 26px}" +
+      "#g4uq .g4uq-hero .g4uq-hint{text-align:left}" +
+      "#g4uq .g4uq-hero-viz{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}" +
+      "#g4uq .g4uq-viz-note{font-family:var(--qfm);font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#B9AC9C;margin:6px 0 0;text-align:center}" +
+      "#g4uq .g4uq-gauge{width:100%;max-width:340px;height:auto;display:block}" +
+      "#g4uq .g4uq-gauge-arc{animation:g4uqfill 1.15s var(--qe) both}" +
+      "@keyframes g4uqfill{from{stroke-dashoffset:377}}" +
+      "@media(prefers-reduced-motion:reduce){#g4uq .g4uq-gauge-arc{animation:none}}" +
+      "@media(max-width:860px){" +
+        "#g4uq .g4uq-hero{grid-template-columns:1fr;gap:26px}" +
+        "#g4uq .g4uq-hero-viz{order:-1}" +
+        "#g4uq.g4uq-wide h2{font-size:30px}" +
+        "#g4uq .g4uq-hero .g4uq-cta{width:100%}" +
+        "#g4uq .g4uq-hero .g4uq-hint{text-align:center}" +
+        "#g4uq .g4uq-gauge{max-width:260px}" +
+      "}";
+    document.head.appendChild(st);
+  }
+
+  /* Gauge ilustrativo de la intro. El valor es un EJEMPLO: en la intro el usuario aún no
+   * tiene score, por eso el caption lo marca como tal. */
+  function gaugeSvg(v) {
+    var R = 120, CX = 160, CY = 158;
+    var LEN = Math.PI * R; // longitud del semicírculo ≈ 377
+    var arc = "M " + (CX - R) + " " + CY + " A " + R + " " + R + " 0 0 1 " + (CX + R) + " " + CY;
+    var tick = "font-family:var(--qfm);font-size:12px;font-weight:600;fill:#A89B8C";
+    return '<svg class="g4uq-gauge" viewBox="0 0 320 200" role="img" aria-label="Ejemplo de Trust Score: ' + v + ' sobre 100">' +
+      '<defs><linearGradient id="g4uqGrad" x1="0" y1="0" x2="1" y2="0">' +
+        '<stop offset="0%" stop-color="#C0552B"/><stop offset="52%" stop-color="#B4903A"/><stop offset="100%" stop-color="#3E8E5A"/>' +
+      '</linearGradient></defs>' +
+      '<path d="' + arc + '" fill="none" stroke="#E6DCC7" stroke-width="18" stroke-linecap="round"/>' +
+      '<path class="g4uq-gauge-arc" d="' + arc + '" fill="none" stroke="url(#g4uqGrad)" stroke-width="18" stroke-linecap="round" ' +
+        'stroke-dasharray="' + LEN.toFixed(1) + '" stroke-dashoffset="' + (LEN * (1 - v / 100)).toFixed(1) + '"/>' +
+      '<text x="' + (CX - R) + '" y="182" text-anchor="middle" style="' + tick + '">0</text>' +
+      '<text x="' + CX + '" y="22" text-anchor="middle" style="' + tick + '">50</text>' +
+      '<text x="' + (CX + R) + '" y="182" text-anchor="middle" style="' + tick + '">100</text>' +
+      '<text x="' + CX + '" y="146" text-anchor="middle" style="font-family:var(--qfd);font-weight:800;font-size:54px;fill:var(--qi);letter-spacing:-.03em">' + v +
+        '<tspan dx="3" style="font-weight:700;font-size:20px;fill:#A89B8C;letter-spacing:0">/100</tspan></text>' +
+      '<text x="' + CX + '" y="174" text-anchor="middle" style="font-family:var(--qfm);font-size:10.5px;font-weight:700;letter-spacing:.09em;fill:#A89B8C">TU TRUST SCORE</text>' +
+    '</svg>';
   }
 
   function setProg() {
@@ -86,13 +141,19 @@
     var isTerm = termId === "done" || termId === "noconvert";
     back.style.visibility = (hist.length > 0 && !isTerm) ? "visible" : "hidden";
     var s = steps[idx];
+    if (root) root.classList.toggle("g4uq-wide", s.type === "intro");
 
     if (s.type === "intro") {
-      stage.innerHTML = '<span class="g4uq-eyebrow">Diagnóstico · Trust Score</span>' +
-        '<h2>¿Te recomienda la IA, o recomienda a tu competencia?</h2>' +
-        '<p class="g4uq-sub">El <b>Trust Score</b> es tu nota de 0 a 100 de cuánta confianza genera tu marca en Google y en las IAs (ChatGPT, Perplexity…) frente a tu competencia. Te hacemos unas preguntas, analizamos tu web y te lo damos en 2 minutos: dónde estás, qué te frena y tu movimiento de mayor impacto. La verdad, cierres o no con nosotros.</p>' +
-        '<button class="g4uq-cta" id="g4uq-start">Quiero mi Trust Score →</button>' +
-        '<p class="g4uq-hint">Gratis · 2 min · sin llamadas. Te lo enviamos por WhatsApp.</p>';
+      stage.innerHTML = '<div class="g4uq-hero">' +
+          '<div class="g4uq-hero-copy">' +
+            '<span class="g4uq-eyebrow">Diagnóstico Trust Score · Gratis</span>' +
+            '<h2>Descubre tu<br>Trust Score</h2>' +
+            '<p class="g4uq-sub">Tus clientes deciden si confían en ti <b>antes</b> de hablar contigo. El <b>Trust Score</b> mide cómo te perciben Google, las IAs y tus compradores en ese primer momento — y es uno de los mejores predictores de que acaben comprándote.</p>' +
+            '<button class="g4uq-cta" id="g4uq-start">Quiero mi Trust Score →</button>' +
+            '<p class="g4uq-hint">Gratis · 2 min · sin llamadas. Te lo enviamos por WhatsApp.</p>' +
+          '</div>' +
+          '<div class="g4uq-hero-viz">' + gaugeSvg(74) + '<p class="g4uq-viz-note">Ejemplo ilustrativo</p></div>' +
+        '</div>';
       document.getElementById("g4uq-start").onclick = function () { go(idOf("tieneweb")); };
       return;
     }
@@ -296,5 +357,6 @@
     postGHL(p);
   }
 
+  injectCss();
   render();
 })();
