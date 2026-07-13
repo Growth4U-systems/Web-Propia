@@ -95,27 +95,34 @@
 
   /* Gauge ilustrativo de la intro. El valor es un EJEMPLO: en la intro el usuario aún no
    * tiene score, por eso el caption lo marca como tal.
-   * OJO: el pintado va en `style` inline, NO en atributos de presentación (fill=/stroke=).
-   * Los atributos de presentación tienen especificidad 0 y el CSS del tema de Alarife los
-   * pisa (deja el path en stroke:none / fill:black), así que el arco no se vería. */
+   *
+   * IMPORTANTE — por qué todo va en `style` inline:
+   * El bloque rawHtml de Alarife aplica `all: revert` a sus descendientes (.fp-xxxx *).
+   * Eso borra TODOS los atributos de presentación SVG (d, fill, stroke, text-anchor,
+   * stop-color…), porque cuentan como declaraciones de autor. Con el atributo `d`
+   * revertido el path se queda sin geometría (getTotalLength() = 0) y no se pinta nada.
+   * El style inline sí sobrevive, así que ahí van geometría y pintado.
+   * El atributo `d` se mantiene además para Firefox, que no soporta la propiedad CSS `d`
+   * (y por lo mismo tampoco se la revierte). */
   function gaugeSvg(v) {
     var R = 120, CX = 160, CY = 158;
     var LEN = Math.PI * R; // longitud del semicírculo ≈ 377
     var arc = "M " + (CX - R) + " " + CY + " A " + R + " " + R + " 0 0 1 " + (CX + R) + " " + CY;
-    var tick = "font-family:var(--qfm);font-size:12px;font-weight:600;fill:#A89B8C";
+    var base = "d:path('" + arc + "');fill:none;stroke-width:18;stroke-linecap:round;";
+    var tick = "font-family:var(--qfm);font-size:12px;font-weight:600;fill:#A89B8C;text-anchor:middle";
     return '<svg class="g4uq-gauge" viewBox="0 0 320 200" role="img" aria-label="Ejemplo de Trust Score: ' + v + ' sobre 100">' +
       '<defs><linearGradient id="g4uqGrad" x1="0" y1="0" x2="1" y2="0">' +
-        '<stop offset="0%" stop-color="#C0552B"/><stop offset="52%" stop-color="#B4903A"/><stop offset="100%" stop-color="#3E8E5A"/>' +
+        '<stop offset="0%" style="stop-color:#C0552B"/><stop offset="52%" style="stop-color:#B4903A"/><stop offset="100%" style="stop-color:#3E8E5A"/>' +
       '</linearGradient></defs>' +
-      '<path d="' + arc + '" style="fill:none;stroke:#E6DCC7;stroke-width:18;stroke-linecap:round"/>' +
-      '<path class="g4uq-gauge-arc" d="' + arc + '" style="fill:none;stroke:url(#g4uqGrad);stroke-width:18;stroke-linecap:round;' +
+      '<path d="' + arc + '" style="' + base + 'stroke:#E6DCC7"/>' +
+      '<path class="g4uq-gauge-arc" d="' + arc + '" style="' + base + 'stroke:url(#g4uqGrad);' +
         'stroke-dasharray:' + LEN.toFixed(1) + ';stroke-dashoffset:' + (LEN * (1 - v / 100)).toFixed(1) + '"/>' +
-      '<text x="' + (CX - R) + '" y="182" text-anchor="middle" style="' + tick + '">0</text>' +
-      '<text x="' + CX + '" y="22" text-anchor="middle" style="' + tick + '">50</text>' +
-      '<text x="' + (CX + R) + '" y="182" text-anchor="middle" style="' + tick + '">100</text>' +
-      '<text x="' + CX + '" y="146" text-anchor="middle" style="font-family:var(--qfd);font-weight:800;font-size:54px;fill:var(--qi);letter-spacing:-.03em">' + v +
+      '<text x="' + (CX - R) + '" y="182" style="' + tick + '">0</text>' +
+      '<text x="' + CX + '" y="22" style="' + tick + '">50</text>' +
+      '<text x="' + (CX + R) + '" y="182" style="' + tick + '">100</text>' +
+      '<text x="' + CX + '" y="146" style="font-family:var(--qfd);font-weight:800;font-size:54px;fill:var(--qi);letter-spacing:-.03em;text-anchor:middle">' + v +
         '<tspan dx="3" style="font-weight:700;font-size:20px;fill:#A89B8C;letter-spacing:0">/100</tspan></text>' +
-      '<text x="' + CX + '" y="174" text-anchor="middle" style="font-family:var(--qfm);font-size:10.5px;font-weight:700;letter-spacing:.09em;fill:#A89B8C">TU TRUST SCORE</text>' +
+      '<text x="' + CX + '" y="174" style="font-family:var(--qfm);font-size:10.5px;font-weight:700;letter-spacing:.09em;fill:#A89B8C;text-anchor:middle">TU TRUST SCORE</text>' +
     '</svg>';
   }
 
