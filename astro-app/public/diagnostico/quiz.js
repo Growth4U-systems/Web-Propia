@@ -13,6 +13,7 @@
   };
   var WA_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" style="flex:0 0 auto;fill:#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
   var S = {};
+  var MAX_COMP = 5; // competidores máximos que puede añadir el usuario
   // opts: [valor, label, peso]. Escalas SIEMPRE de mayor a menor, SALVO importes (facturación/inversión) que van de menor a mayor.
   var steps = [
     { id: "intro", type: "intro" },
@@ -89,7 +90,31 @@
         "#g4uq .g4uq-hero .g4uq-cta{width:100%}" +
         "#g4uq .g4uq-hero .g4uq-hint{text-align:center}" +
         "#g4uq .g4uq-gauge{max-width:260px}" +
-      "}";
+      "}" +
+
+      /* Paso de la web: más compacto, porque con 5 competidores el formulario se hacía largo. */
+      "#g4uq .g4uq-webstep .g4uq-sub{font-size:15px;margin-bottom:18px}" +
+      "#g4uq .g4uq-webstep .g4uq-field{margin-bottom:9px}" +
+      "#g4uq .g4uq-webstep .g4uq-field label{margin-bottom:5px}" +
+      "#g4uq .g4uq-webstep .g4uq-field input{padding:11px 13px;font-size:15px}" +
+      "#g4uq .g4uq-webstep .g4uq-cta{margin-top:16px;padding:13px}" +
+      "#g4uq .g4uq-fieldhint{display:block;font-family:var(--qfb);font-size:12.5px;font-weight:400;color:#A89B8C;margin-top:3px;text-transform:none;letter-spacing:0}" +
+      /* Fila de competidor con botón de quitar */
+      "#g4uq .g4uq-comprow{position:relative}" +
+      "#g4uq .g4uq-comprow input{padding-right:38px}" +
+      "#g4uq .g4uq-delcomp{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:none;background:none;color:#A89B8C;font-size:19px;line-height:1;cursor:pointer;border-radius:6px;padding:0}" +
+      "#g4uq .g4uq-delcomp:hover{background:rgba(36,28,22,.08);color:var(--qi)}" +
+      "#g4uq .g4uq-addcomp{display:inline-block;background:none;border:none;cursor:pointer;font-family:var(--qfm);font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--qbl);padding:2px 0 0;margin:0 0 11px}" +
+      "#g4uq .g4uq-addcomp:hover{text-decoration:underline}" +
+      /* Checkbox \"no lo tengo claro\": era diminuto, ahora es una opción con el mismo peso visual que las demás. */
+      "#g4uq .g4uq-check{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1.5px solid var(--ql);border-radius:9px;background:var(--qw);box-shadow:3px 3px 0 rgba(36,28,22,.10);font-family:var(--qfb);font-size:15px;font-weight:600;color:var(--qi);cursor:pointer;margin:2px 0 4px;transition:transform .14s var(--qe),box-shadow .14s var(--qe),border-color .14s}" +
+      "#g4uq .g4uq-check:hover{border-color:var(--qi);transform:translate(-2px,-2px);box-shadow:5px 5px 0 rgba(36,28,22,.14)}" +
+      "#g4uq .g4uq-check input{position:absolute;opacity:0;width:0;height:0}" +
+      "#g4uq .g4uq-check-box{width:21px;height:21px;border-radius:5px;border:1.5px solid var(--ql2);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;transition:.14s var(--qe)}" +
+      "#g4uq .g4uq-check input:checked+.g4uq-check-box{background:var(--qbl);border-color:var(--qbl)}" +
+      "#g4uq .g4uq-check input:checked+.g4uq-check-box::after{content:'\\2713'}" +
+      "#g4uq .g4uq-check:has(input:checked){border-color:var(--qbl);background:rgba(35,86,230,.06);box-shadow:4px 4px 0 rgba(35,86,230,.20)}" +
+      "#g4uq .g4uq-check input:focus-visible+.g4uq-check-box{outline:2px solid var(--qbl);outline-offset:2px}";
     document.head.appendChild(st);
   }
 
@@ -184,27 +209,56 @@
       return;
     }
     if (s.type === "webinput") {
-      var cs = S.competidores || ["", "", ""];
+      // Competidores: solo el nombre (el bridge ya resuelve nombre -> dominio antes de comparar).
+      var comps = (S.competidores && S.competidores.length ? S.competidores.slice(0, MAX_COMP) : ["", "", ""]);
+      while (comps.length < 3) comps.push("");
       var nocomp = !!S.nocomp;
-      stage.innerHTML = '<span class="g4uq-eyebrow">Tu web</span><h2>Deja tu web aquí</h2>' +
+      stage.innerHTML = '<div class="g4uq-webstep">' +
+        '<span class="g4uq-eyebrow">Tu web</span><h2>Deja tu web aquí</h2>' +
         '<p class="g4uq-sub">Para calcular bien tu Trust Score empezamos por tu web. Déjala aquí y la analizamos frente a tu competencia mientras seguimos con las preguntas.</p>' +
         '<div class="g4uq-field"><label>Web de tu empresa</label><input id="f-web" type="url" placeholder="https://tuempresa.com" value="' + (S.web || '') + '"></div>' +
-        '<div class="g4uq-field" style="margin-bottom:6px"><label>Tus competidores directos</label></div>' +
+        '<div class="g4uq-field" style="margin-bottom:7px"><label>Tus competidores directos</label>' +
+          '<span class="g4uq-fieldhint">Solo el nombre. Puedes añadir hasta ' + MAX_COMP + '.</span></div>' +
         '<div id="comp-wrap"' + (nocomp ? ' style="display:none"' : '') + '>' +
-          '<div class="g4uq-field"><input id="f-c0" type="text" placeholder="Competidor 1 (web o nombre)" value="' + (cs[0] || '') + '"></div>' +
-          '<div class="g4uq-field"><input id="f-c1" type="text" placeholder="Competidor 2" value="' + (cs[1] || '') + '"></div>' +
-          '<div class="g4uq-field"><input id="f-c2" type="text" placeholder="Competidor 3" value="' + (cs[2] || '') + '"></div>' +
+          '<div id="comp-list"></div>' +
+          '<button type="button" class="g4uq-addcomp" id="f-addcomp">+ Añadir competidor</button>' +
         '</div>' +
-        '<label style="display:flex;align-items:center;gap:9px;font-size:14px;color:#6E6258;cursor:pointer;margin:2px 0 4px"><input type="checkbox" id="f-nocomp"' + (nocomp ? ' checked' : '') + '> No lo tengo claro (los detectamos nosotros)</label>' +
-        '<button class="g4uq-cta" id="g4uq-next" disabled>Analizar mi Trust Score →</button>';
-      var w = document.getElementById("f-web"), b = document.getElementById("g4uq-next"), noc = document.getElementById("f-nocomp"), wrap = document.getElementById("comp-wrap");
+        '<label class="g4uq-check"><input type="checkbox" id="f-nocomp"' + (nocomp ? ' checked' : '') + '>' +
+          '<span class="g4uq-check-box"></span>' +
+          '<span>No lo tengo claro. <b>Detectadlos vosotros.</b></span></label>' +
+        '<button class="g4uq-cta" id="g4uq-next" disabled>Analizar mi Trust Score →</button>' +
+      '</div>';
+      var w = document.getElementById("f-web"), b = document.getElementById("g4uq-next"),
+          noc = document.getElementById("f-nocomp"), wrap = document.getElementById("comp-wrap"),
+          list = document.getElementById("comp-list"), addBtn = document.getElementById("f-addcomp");
+
+      function renderComps() {
+        list.innerHTML = comps.map(function (v, i) {
+          return '<div class="g4uq-field g4uq-comprow">' +
+            '<input type="text" data-i="' + i + '" placeholder="Competidor ' + (i + 1) + '" value="' + String(v || '').replace(/"/g, '&quot;') + '">' +
+            (comps.length > 1 ? '<button type="button" class="g4uq-delcomp" data-i="' + i + '" aria-label="Quitar competidor ' + (i + 1) + '">×</button>' : '') +
+          '</div>';
+        }).join('');
+        // Solo se re-renderiza al añadir/quitar; en oninput únicamente se actualiza el array,
+        // así el input no pierde el foco mientras se escribe.
+        Array.prototype.forEach.call(list.querySelectorAll('input'), function (inp) {
+          inp.oninput = function () { comps[+inp.getAttribute('data-i')] = inp.value; };
+        });
+        Array.prototype.forEach.call(list.querySelectorAll('.g4uq-delcomp'), function (btn) {
+          btn.onclick = function () { comps.splice(+btn.getAttribute('data-i'), 1); renderComps(); };
+        });
+        addBtn.style.display = comps.length >= MAX_COMP ? 'none' : '';
+      }
+      renderComps();
+      addBtn.onclick = function () { if (comps.length < MAX_COMP) { comps.push(''); renderComps(); } };
+
       function chkw() { b.disabled = !(w.value.trim().length > 3); }
       w.oninput = chkw; chkw();
       noc.onchange = function () { S.nocomp = noc.checked; wrap.style.display = noc.checked ? "none" : ""; };
       b.onclick = function () {
         S.web = normWeb(w.value.trim());
-        S.competidores = noc.checked ? [] : [document.getElementById("f-c0").value.trim(), document.getElementById("f-c1").value.trim(), document.getElementById("f-c2").value.trim()];
-        analyzing(S.web);
+        S.competidores = noc.checked ? [] : comps.map(function (x) { return String(x || '').trim(); }).filter(Boolean);
+        analyzing(S.web); // Solo visual. El bridge (créditos) NO se llama hasta submit().
         go(idOf("segmento"));
       };
       return;
@@ -251,18 +305,28 @@
         }
       }
       n.oninput = ap.oninput = emp.oninput = e.oninput = tel.oninput = sync; sync();
-      go1.onclick = function () { if (!valid()) return; noweb ? submitNoWeb() : submit(); setTimeout(function () { go(idOf("done")); }, 60); };
-      if (cal2) cal2.onclick = function () { if (!valid()) return; submit(); setTimeout(function () { go(idOf("done")); }, 60); };
+      // Guardamos el canal elegido para no volver a ofrecer en el frame final el que descartaron.
+      go1.onclick = function () { if (!valid()) return; S.via = noweb ? "cal" : "wa"; noweb ? submitNoWeb() : submit(); setTimeout(function () { go(idOf("done")); }, 60); };
+      if (cal2) cal2.onclick = function () { if (!valid()) return; S.via = "cal"; submit(); setTimeout(function () { go(idOf("done")); }, 60); };
       return;
     }
     if (s.type === "done") {
       var noweb2 = S.tieneweb === "no";
+      // El paso anterior ya les hizo elegir canal. Aquí NO repetimos el que descartaron:
+      // solo dejamos el enlace de recuperación del que eligieron, por si no se abrió la pestaña.
+      // (En la rama sin web el CTA ya llevaba al calendario, así que ese es su canal.)
+      var viaCal = noweb2 || S.via === "cal";
+      if (mini) mini.textContent = noweb2 ? "Gracias · te contactamos" : "Trust Score en camino";
+      var recuperar = viaCal ? "Si no se abrió el calendario, entra aquí 👇" : "Si no se abrió WhatsApp, entra aquí 👇";
       stage.innerHTML = '<div class="g4uq-center"><span class="g4uq-eyebrow">¡Listo!</span>' +
         (noweb2
-          ? '<h2>¡Gracias! Vamos a ayudarte.</h2><p class="g4uq-sub">Te contactamos por WhatsApp para ver cómo armamos tu web y tu presencia.</p>'
-          : '<h2>Estamos generando tu Trust Score.</h2><p class="g4uq-sub">Te llega por WhatsApp en ~5 minutos. Si no se abrió, entra aquí 👇</p>') +
-        '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Abrir WhatsApp</a>' +
-        '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Agendar una llamada →</a></div>';
+          ? '<h2>¡Gracias! Vamos a ayudarte.</h2><p class="g4uq-sub">Te contactamos para ver cómo armamos tu web y tu presencia. ' + recuperar + '</p>'
+          : '<h2>Estamos generando tu Trust Score.</h2><p class="g4uq-sub">' +
+            (viaCal ? 'Te lo enseñamos en la llamada. ' : 'Te llega por WhatsApp en ~5 minutos. ') + recuperar + '</p>') +
+        (viaCal
+          ? '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Abrir el calendario →</a>'
+          : '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Abrir WhatsApp</a>') +
+      '</div>';
       var msg2 = S.web
         ? ("Hola, soy " + S.nombre + " " + S.apellido + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.")
         : ("Hola, soy " + S.nombre + " " + S.apellido + ". Completé el diagnóstico Growth4U (todavía sin web) y quiero que me orienten.");
