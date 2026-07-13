@@ -158,7 +158,7 @@
           '<div class="g4uq-hero-copy">' +
             '<span class="g4uq-eyebrow">Diagnóstico Trust Score · Gratis</span>' +
             '<h2>Descubre tu<br>Trust Score</h2>' +
-            '<p class="g4uq-sub">Tus clientes deciden si confían en ti <b>antes</b> de hablar contigo. El <b>Trust Score</b> mide cómo te perciben Google, las IAs y tus compradores en ese primer momento — y es uno de los mejores predictores de que acaben comprándote.</p>' +
+            '<p class="g4uq-sub">Tus clientes deciden si confían en ti <b>antes</b> de hablar contigo. El <b>Trust Score</b> mide cómo te perciben Google, las IAs y tus compradores en ese primer momento. Es uno de los mejores predictores de que acaben comprándote.</p>' +
             '<button class="g4uq-cta" id="g4uq-start">Quiero mi Trust Score →</button>' +
             '<p class="g4uq-hint">Gratis · 2 min · sin llamadas. Te lo enviamos por WhatsApp.</p>' +
           '</div>' +
