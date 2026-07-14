@@ -52,6 +52,9 @@ export default async (req: Request) => {
   try { body = JSON.parse(await req.text()); } catch { /* tolerar text/plain */ }
   const web = String(body.web || "").trim();
   const email = String(body.email || "").trim();
+  // El `source` de la pieza que captó al lead (ej: "Lead Magnet: El Sistema CAC Sostenible").
+  // Lo manda el quiz. Ver el bloque de abajo: antes lo pisábamos y rompíamos la atribución.
+  const source = String(body.source || "").trim();
   if (!web || !email) return new Response("missing web/email", { status: 400, headers: CORS });
 
   try {
@@ -137,16 +140,27 @@ export default async (req: Request) => {
     const link = `https://trust.growth4u.io/herramientas/r/${reportId}`;
 
     // 3) Enviar a GHL (upsert por email vía webhook)
+    //
+    // OJO con `source`. El workflow de GHL mapea esta clave al campo nativo `source` del
+    // contacto. El bridge corre DESPUÉS del quiz, así que si mandamos un valor fijo aquí,
+    // machacamos el de la pieza que realmente captó al lead. Eso es justo lo que pasaba:
+    // todos los contactos acababan con source "trust-bridge" y la atribución por contenido
+    // era imposible.
+    //
+    // Ahora: si el quiz nos pasa su source, lo reenviamos tal cual. Si no nos pasa ninguno,
+    // NO mandamos la clave, para no pisar el que ya tenga el contacto.
+    const ghlPayload: Record<string, unknown> = {
+      email,
+      web,
+      trust_score_link: link,
+      trust_score: score,
+    };
+    if (source) ghlPayload.source = source;
+
     await fetch(GHL_WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        web,
-        trust_score_link: link,
-        trust_score: score,
-        source: "trust-bridge",
-      }),
+      body: JSON.stringify(ghlPayload),
     });
 
     console.log("[bridge] OK", email, "score:", score, link);

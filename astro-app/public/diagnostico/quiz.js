@@ -33,7 +33,14 @@
   // quiz se comporta como el diagnóstico de siempre (retrocompatible con /diagnostico-test).
   var CFG = (function () {
     var d = {
-      source: "quiz-alarife",
+      // Aterriza en el campo `source` del contacto de GHL. Una pieza = un source.
+      // Convención (prefijo + slug normalizado: minúsculas, sin acentos, kebab-case):
+      //   Lead magnet -> "LM-sistema-de-atribucion"
+      //   Artículo    -> "ART-unit-economics-fintech"
+      //   Blog        -> "BLOG-geo-para-fintechs"
+      //   Diagnóstico -> "DIAG-trust-score"
+      // Nada de acentos ni mayúsculas en el slug: filtrar en GHL se vuelve frágil.
+      source: "DIAG-trust-score",
       mode: "full",
       gauge: true,
       waMsg: "Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.",
@@ -533,7 +540,9 @@
       p.tieneweb = "si"; p.respuestas = resumenRespuestas(sc);
     }
     postGHL(Object.assign(p, utmObj()));
-    if (C.BRIDGE && S.web) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: "", phone: S.telefono, competidores: comps }), keepalive: true }); } catch (e) {} }
+    // El bridge corre DESPUÉS y también escribe en GHL. Si no le pasamos el source, manda el
+    // suyo fijo y machaca la atribución de la pieza. Se lo pasamos para que lo respete.
+    if (C.BRIDGE && S.web) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: "", phone: S.telefono, competidores: comps, source: CFG.source }), keepalive: true }); } catch (e) {} }
   }
 
   function submitNoWeb() {
