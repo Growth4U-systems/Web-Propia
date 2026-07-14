@@ -1,8 +1,25 @@
 /* Growth4U — Quiz diagnóstico (assessment funnel FAINT / estilo Valley)
- * Canónico. Se carga en Alarife /diagnostico vía <script src>. Editá acá + redeploy growth4u.io.
- * El markup (#g4uq) y el CSS viven inline en el bloque rawHtml de Alarife (estables).
- * Config: GHL = Inbound Webhook · WA = bot WhatsApp · CAL = calendario llamada estratégica.
- * Español de España (tú). Datos al final. Rama con-web y sin-web comparten las mismas preguntas. */
+ * RUNTIME COMPARTIDO. Una sola copia sirve a todas las páginas (diagnóstico, lead magnets,
+ * artículos, blog). Cada página lo personaliza con un bloque de config, NUNCA copiando el JS.
+ * El markup (#g4uq) y el CSS viven en el bloque rawHtml de Alarife.
+ *
+ * ── Cómo personalizarlo por página ──────────────────────────────────────────────
+ * Mete esto en el rawHtml, junto al #g4uq. Todo es opcional: lo que no pongas cae al
+ * default, así que una página sin config se comporta exactamente igual que siempre.
+ *
+ *   <script type="application/json" id="g4uq-config">
+ *   {
+ *     "source":  "lm-cac-sostenible",   // <- lo que llega a GHL. UNO por contenido.
+ *     "mode":    "gate",                // "full" = 7 preguntas · "gate" = solo captura
+ *     "gauge":   false,                 // el medidor solo tiene sentido en el diagnóstico
+ *     "intro":   { "eyebrow": "…", "title": "…", "sub": "…", "cta": "…", "hint": "…" },
+ *     "capture": { "title": "…", "sub": "…", "recibir": ["…","…","…"], "cta": "…" },
+ *     "done":    { "title": "…", "sub": "…" },
+ *     "waMsg":   "Quiero el sistema CAC Sostenible."
+ *   }
+ *   </script>
+ *
+ * Español de España (tú). Datos al final. Rama con-web y sin-web comparten las preguntas. */
 (function () {
   var C = {
     GHL: "https://services.leadconnectorhq.com/hooks/BnXWP5dcLVMgUudLv10O/webhook-trigger/9bfa1bd9-7b61-4d4a-8151-28770109af5b",
@@ -11,6 +28,49 @@
     BRIDGE: "https://growth4u.io/.netlify/functions/trust-score-bridge-background",
     REDIR: ""
   };
+
+  // Config de la página. Sin <script id="g4uq-config">, todo cae a estos defaults y el
+  // quiz se comporta como el diagnóstico de siempre (retrocompatible con /diagnostico-test).
+  var CFG = (function () {
+    var d = {
+      source: "quiz-alarife",
+      mode: "full",
+      gauge: true,
+      waMsg: "Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.",
+      intro: {
+        eyebrow: "Diagnóstico Trust Score · Gratis",
+        title: "Descubre tu<br>Trust Score",
+        sub: "Tus clientes deciden si confían en ti <b>antes</b> de hablar contigo. El <b>Trust Score</b> mide cómo te perciben Google, las IAs y tus compradores en ese primer momento. Es uno de los mejores predictores de que acaben comprándote.",
+        cta: "Quiero mi Trust Score →",
+        hint: "Gratis · 2 min · sin llamadas. Te lo enviamos por WhatsApp."
+      },
+      capture: {
+        title: "Déjanos tus datos para tu diagnóstico",
+        sub: "Te preparamos tu Trust Score personalizado para ti y te lo enviamos.",
+        recibir: ["Tu Trust Score <b>(0–100)</b>", "Dónde te gana tu competencia", "Tu primer movimiento de mayor impacto"],
+        cta: "Quiero mis resultados"
+      },
+      done: {
+        title: "Estamos generando tu Trust Score.",
+        sub: "Te llega por WhatsApp en ~5 minutos."
+      }
+    };
+    var el = document.getElementById("g4uq-config");
+    if (!el) return d;
+    try {
+      var o = JSON.parse(el.textContent);
+      for (var k in o) {
+        if (o[k] && typeof o[k] === "object" && !Array.isArray(o[k]) && d[k] && typeof d[k] === "object") {
+          for (var j in o[k]) d[k][j] = o[k][j];
+        } else { d[k] = o[k]; }
+      }
+    } catch (e) {
+      // Config rota: seguimos con los defaults en vez de dejar la página sin quiz.
+      if (window.console) console.warn("[g4uq] config inválida, usando defaults:", e.message);
+    }
+    return d;
+  })();
+  var GATE = CFG.mode === "gate"; // lead magnet: sin las 7 preguntas, solo captura
   var WA_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" style="flex:0 0 auto;fill:#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.247-.694.247-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
   var S = {};
   var MAX_COMP = 5; // competidores máximos que puede añadir el usuario
@@ -76,6 +136,7 @@
       "#g4uq .g4uq-card{transition:max-width .35s var(--qe)}" +
       "#g4uq.g4uq-wide .g4uq-card{max-width:1000px}" +
       "#g4uq .g4uq-hero{display:grid;grid-template-columns:1.02fr .98fr;gap:40px;align-items:center}" +
+      "#g4uq .g4uq-hero.g4uq-hero-solo{grid-template-columns:1fr}" + /* lead magnet: sin gauge */
       "#g4uq .g4uq-hero-copy{min-width:0}" +
       "#g4uq .g4uq-hero-copy h2{font-size:42px;line-height:1.04;margin-bottom:14px}" +
       "#g4uq .g4uq-hero .g4uq-cta{width:auto;padding:15px 26px}" +
@@ -177,7 +238,11 @@
 
   function setProg() {
     var id = steps[idx].id, pct;
-    var pmap = { intro: 0, tieneweb: 8, webinput: 16, capture: 92, done: 100, webhelp: 12, noconvert: 100 };
+    // En modo gate el recorrido es intro -> captura -> listo, así que la barra no puede
+    // usar los tramos del quiz completo.
+    var pmap = GATE
+      ? { intro: 0, capture: 55, done: 100 }
+      : { intro: 0, tieneweb: 8, webinput: 16, capture: 92, done: 100, webhelp: 12, noconvert: 100 };
     if (pmap[id] != null) pct = pmap[id];
     else pct = 26 + Math.round(qNum(idx) / 7 * 62); // preguntas 1..7 -> 26..88%
     prog.style.width = pct + "%";
@@ -204,20 +269,25 @@
     // al lado del CTA/formulario). Las 7 preguntas se quedan estrechas a propósito: una
     // decisión a la vez y sin nada que distraiga. El card transiciona el ancho para que el
     // cambio se lea como intencionado y no como un salto.
-    if (root) root.classList.toggle("g4uq-wide", s.type === "intro" || s.type === "capture");
+    // Sin gauge (lead magnet) la intro no tiene nada que enseñar al lado: se queda estrecha.
+    if (root) root.classList.toggle("g4uq-wide", (s.type === "intro" && CFG.gauge) || s.type === "capture");
 
     if (s.type === "intro") {
-      stage.innerHTML = '<div class="g4uq-hero">' +
+      // El gauge solo tiene sentido en el diagnóstico. En un lead magnet se apaga con
+      // "gauge": false y el hero pasa a una columna.
+      var viz = CFG.gauge
+        ? '<div class="g4uq-hero-viz">' + gaugeSvg(74) + '<p class="g4uq-viz-note">Ejemplo ilustrativo</p></div>'
+        : '';
+      stage.innerHTML = '<div class="g4uq-hero' + (CFG.gauge ? '' : ' g4uq-hero-solo') + '">' +
           '<div class="g4uq-hero-copy">' +
-            '<span class="g4uq-eyebrow">Diagnóstico Trust Score · Gratis</span>' +
-            '<h2>Descubre tu<br>Trust Score</h2>' +
-            '<p class="g4uq-sub">Tus clientes deciden si confían en ti <b>antes</b> de hablar contigo. El <b>Trust Score</b> mide cómo te perciben Google, las IAs y tus compradores en ese primer momento. Es uno de los mejores predictores de que acaben comprándote.</p>' +
-            '<button class="g4uq-cta" id="g4uq-start">Quiero mi Trust Score →</button>' +
-            '<p class="g4uq-hint">Gratis · 2 min · sin llamadas. Te lo enviamos por WhatsApp.</p>' +
-          '</div>' +
-          '<div class="g4uq-hero-viz">' + gaugeSvg(74) + '<p class="g4uq-viz-note">Ejemplo ilustrativo</p></div>' +
+            '<span class="g4uq-eyebrow">' + CFG.intro.eyebrow + '</span>' +
+            '<h2>' + CFG.intro.title + '</h2>' +
+            '<p class="g4uq-sub">' + CFG.intro.sub + '</p>' +
+            '<button class="g4uq-cta" id="g4uq-start">' + CFG.intro.cta + '</button>' +
+            '<p class="g4uq-hint">' + CFG.intro.hint + '</p>' +
+          '</div>' + viz +
         '</div>';
-      document.getElementById("g4uq-start").onclick = function () { go(idOf("tieneweb")); };
+      document.getElementById("g4uq-start").onclick = function () { go(idOf(GATE ? "capture" : "tieneweb")); };
       return;
     }
     if (s.type === "tieneweb") {
@@ -293,11 +363,13 @@
     }
     if (s.type === "capture") {
       var noweb = S.tieneweb === "no";
-      var head = noweb ? "Déjanos tus datos" : "Déjanos tus datos para tu diagnóstico";
-      var sub = noweb ? "Te contactamos para ayudarte a crear tu web y tu presencia." : "Te preparamos tu Trust Score personalizado para ti y te lo enviamos.";
+      // La copy del formulario la manda la página: tiene que hablar del contenido que se
+      // está descargando, no del Trust Score genérico.
+      var head = noweb ? "Déjanos tus datos" : CFG.capture.title;
+      var sub = noweb ? "Te contactamos para ayudarte a crear tu web y tu presencia." : CFG.capture.sub;
       var preview = noweb
         ? '▸ Una orientación clara para tu caso<br>▸ Tu primer movimiento de mayor impacto<br>▸ Qué construir primero'
-        : '▸ Tu Trust Score <b>(0–100)</b><br>▸ Dónde te gana tu competencia<br>▸ Tu primer movimiento de mayor impacto';
+        : (CFG.capture.recibir || []).map(function (x) { return '▸ ' + x; }).join('<br>');
       // Solo el nombre: el apellido no se usa para nada y alargaba el formulario.
       stage.innerHTML = '<div class="g4uq-capstep">' + bannerHtml() +
         '<div class="g4uq-capgrid">' +
@@ -312,7 +384,7 @@
             '<div class="g4uq-field"><label>Nombre de tu empresa</label><input id="f-empresa" type="text" placeholder="Tu empresa" value="' + (S.empresa || '') + '"></div>' +
             '<div class="g4uq-field"><label>Email de trabajo</label><input id="f-email" type="email" placeholder="tu@empresa.com" value="' + (S.email || '') + '"></div>' +
             '<div class="g4uq-field"><label>Teléfono (WhatsApp)</label><input id="f-tel" type="tel" placeholder="+34 600 000 000" value="' + (S.telefono || '') + '"></div>' +
-            '<a class="g4uq-cta wa" id="g4uq-go" href="#" style="pointer-events:none;opacity:.4">' + WA_SVG + (noweb ? 'Quiero que me ayuden' : 'Quiero mis resultados') + '</a>' +
+            '<a class="g4uq-cta wa" id="g4uq-go" href="#" style="pointer-events:none;opacity:.4">' + WA_SVG + (noweb ? 'Quiero que me ayuden' : CFG.capture.cta) + '</a>' +
             (noweb ? '' : '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal2" href="#" style="pointer-events:none;opacity:.5">Prefiero agendar una llamada →</a>') +
             '<p class="g4uq-hint">Gratis · te lo enviamos por WhatsApp.</p>' +
           '</div>' +
@@ -330,7 +402,7 @@
         if (ok) {
           if (noweb) { go1.href = C.CAL; go1.target = "_blank"; go1.rel = "noopener"; }
           else {
-            var msg = "Hola, soy " + S.nombre + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.";
+            var msg = waText();
             go1.href = "https://wa.me/" + C.WA + "?text=" + encodeURIComponent(msg);
             go1.target = "_blank"; go1.rel = "noopener";
             if (cal2) { cal2.href = C.CAL; cal2.target = "_blank"; cal2.rel = "noopener"; }
@@ -349,20 +421,20 @@
       // solo dejamos el enlace de recuperación del que eligieron, por si no se abrió la pestaña.
       // (En la rama sin web el CTA ya llevaba al calendario, así que ese es su canal.)
       var viaCal = noweb2 || S.via === "cal";
-      if (mini) mini.textContent = noweb2 ? "Gracias · te contactamos" : "Trust Score en camino";
+      if (mini) mini.textContent = noweb2 ? "Gracias · te contactamos" : (GATE ? "En camino" : "Trust Score en camino");
       var recuperar = viaCal ? "Si no se abrió el calendario, entra aquí 👇" : "Si no se abrió WhatsApp, entra aquí 👇";
       stage.innerHTML = '<div class="g4uq-center"><span class="g4uq-eyebrow">¡Listo!</span>' +
         (noweb2
           ? '<h2>¡Gracias! Vamos a ayudarte.</h2><p class="g4uq-sub">Te contactamos para ver cómo armamos tu web y tu presencia. ' + recuperar + '</p>'
-          : '<h2>Estamos generando tu Trust Score.</h2><p class="g4uq-sub">' +
-            (viaCal ? 'Te lo enseñamos en la llamada. ' : 'Te llega por WhatsApp en ~5 minutos. ') + recuperar + '</p>') +
+          : '<h2>' + CFG.done.title + '</h2><p class="g4uq-sub">' +
+            (viaCal ? 'Te lo enseñamos en la llamada. ' : CFG.done.sub + ' ') + recuperar + '</p>') +
         (viaCal
           ? '<a class="g4uq-cta g4uq-cta2" id="g4uq-cal" href="#" target="_blank" rel="noopener">Abrir el calendario →</a>'
           : '<a class="g4uq-cta wa" id="g4uq-wa" href="#" target="_blank" rel="noopener">' + WA_SVG + 'Abrir WhatsApp</a>') +
       '</div>';
-      var msg2 = S.web
-        ? ("Hola, soy " + S.nombre + " de " + S.web + ". Acabo de completar el diagnóstico Growth4U y quiero analizar mi Trust Score.")
-        : ("Hola, soy " + S.nombre + ". Completé el diagnóstico Growth4U (todavía sin web) y quiero que me orienten.");
+      var msg2 = noweb2
+        ? ("Hola, soy " + S.nombre + ". Completé el diagnóstico Growth4U (todavía sin web) y quiero que me orienten.")
+        : waText();
       var a = document.getElementById("g4uq-wa"); if (a) a.href = "https://wa.me/" + C.WA + "?text=" + encodeURIComponent(msg2);
       var cl = document.getElementById("g4uq-cal"); if (cl) cl.href = C.CAL;
       return;
@@ -439,16 +511,28 @@
   }
   function postGHL(p) { if (C.GHL) { try { fetch(C.GHL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p), keepalive: true }); } catch (e) {} } }
 
+  // Mensaje de WhatsApp. El "quiero X" concreto lo pone cada página vía CFG.waMsg.
+  function waText() {
+    return "Hola, soy " + (S.nombre || "") + (S.web ? " de " + S.web : "") + ". " + CFG.waMsg;
+  }
+
   function submit() {
-    var sc = score();
     var comps = (S.competidores || []).filter(Boolean);
-    var p = Object.assign({
-      nombre: S.nombre, apellido: "", empresa: S.empresa, email: S.email, phone: S.telefono, web: S.web,
-      segmento: lbl("segmento", S.segmento), facturacion: lbl("facturacion", S.facturacion), canales: lbls("canales"),
-      dolor: lbls("dolor"), inversion: lbl("inversion", S.inversion), equipo: lbl("equipo", S.equipo), timing: lbl("timing", S.timing),
-      competidores: comps.join(", "), faint_score: sc.total, tier: sc.tier, tieneweb: "si", respuestas: resumenRespuestas(sc), source: "quiz-alarife"
-    }, utmObj());
-    postGHL(p);
+    var p = {
+      nombre: S.nombre, apellido: "", empresa: S.empresa, email: S.email, phone: S.telefono,
+      web: S.web || "", source: CFG.source, mode: CFG.mode
+    };
+    // En modo gate (lead magnet) no se hacen las 7 preguntas. Mandar un FAINT de 0 metería
+    // leads falsamente "fríos" en GHL, así que el scoring solo viaja cuando existe de verdad.
+    if (!GATE) {
+      var sc = score();
+      p.segmento = lbl("segmento", S.segmento); p.facturacion = lbl("facturacion", S.facturacion);
+      p.canales = lbls("canales"); p.dolor = lbls("dolor"); p.inversion = lbl("inversion", S.inversion);
+      p.equipo = lbl("equipo", S.equipo); p.timing = lbl("timing", S.timing);
+      p.competidores = comps.join(", "); p.faint_score = sc.total; p.tier = sc.tier;
+      p.tieneweb = "si"; p.respuestas = resumenRespuestas(sc);
+    }
+    postGHL(Object.assign(p, utmObj()));
     if (C.BRIDGE && S.web) { try { fetch(C.BRIDGE, { method: "POST", body: JSON.stringify({ email: S.email, web: S.web, nombre: S.nombre, apellido: "", phone: S.telefono, competidores: comps }), keepalive: true }); } catch (e) {} }
   }
 
@@ -459,7 +543,8 @@
       segmento: lbl("segmento", S.segmento), facturacion: lbl("facturacion", S.facturacion), canales: lbls("canales"),
       dolor: lbls("dolor"), inversion: lbl("inversion", S.inversion), equipo: lbl("equipo", S.equipo), timing: lbl("timing", S.timing),
       faint_score: sc.total, tier: sc.tier, tieneweb: "no", quiere_web: "si",
-      respuestas: "Sin web · Quiere ayuda para crear su web · " + resumenRespuestas(sc), source: "quiz-alarife-sin-web"
+      respuestas: "Sin web · Quiere ayuda para crear su web · " + resumenRespuestas(sc),
+      source: CFG.source, mode: CFG.mode
     }, utmObj());
     postGHL(p);
   }
