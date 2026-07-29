@@ -24,6 +24,53 @@ const CORS = {
   "Access-Control-Allow-Headers": "content-type",
 };
 
+/**
+ * Pilar débil -> landing del hook.
+ * OJO: las claves internas del Trust Core ENGAÑAN. No fiarse del nombre:
+ *   brand_assets = reviews / prueba social   ·   borrowed_trust = PR / reputación
+ *   demand_engine = base técnica             ·   serp_trust = presencia en Google
+ * Mapa sacado del informe vivo (id="p-<key>" en trust.growth4u.io).
+ */
+const PILAR: Record<string, { label: string; landing: string }> = {
+  brand_assets:       { label: "Tus reviews y prueba social", landing: "https://growth4u.io/trust-score/reviews-y-prueba-social" },
+  geo_presence:       { label: "Tu presencia en las IAs",     landing: "https://growth4u.io/trust-score/presencia-en-ias" },
+  outbound_readiness: { label: "Una web que convierte",       landing: "https://growth4u.io/trust-score/web-que-convierte" },
+  borrowed_trust:     { label: "Lo que otros dicen de ti",    landing: "https://growth4u.io/trust-score/lo-que-otros-dicen" },
+  serp_trust:         { label: "Tu presencia en Google",      landing: "https://growth4u.io/trust-score/presencia-en-google" },
+  demand_engine:      { label: "Tu base técnica y medición",  landing: "https://growth4u.io/trust-score/base-tecnica-y-medicion" },
+};
+
+/** Dominio pelado, en minúsculas (para reconocer a la marca primaria en los eventos). */
+const bareDomainLc = (v: any) =>
+  String(v || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "").replace(/^www\./i, "").toLowerCase();
+
+/**
+ * El server ya ordena los pilares peor-primero en `top_gaps`; el [0] es el más débil.
+ * OJO: la forma de cada item de top_gaps no está documentada. Solo devolvemos un
+ * valor si es una CLAVE de pilar válida; si no, "" para caer al fallback por score
+ * (nunca devolver "[object Object]" ni un label, que romperían el `|| keyFromPillars`).
+ */
+const keyFromTopGaps = (o: any): string => {
+  const g = o?.top_gaps;
+  if (!Array.isArray(g) || !g.length) return "";
+  const raw = g[0]?.key ?? g[0]?.pillar ?? g[0];
+  const k = typeof raw === "string" ? raw : "";
+  return k in PILAR ? k : "";
+};
+
+/** Fallback: calcula el pilar de menor score desde {pillars|scores: {key:{score}|number}}. */
+const keyFromPillars = (o: any): string => {
+  const p = o?.pillars ?? o?.scores ?? null;
+  if (!p || typeof p !== "object") return "";
+  let best = "", bestScore = Infinity;
+  for (const [k, v] of Object.entries(p)) {
+    if (!(k in PILAR)) continue; // ignora cualquier clave que no sea un pilar
+    const s = typeof v === "number" ? v : (v as any)?.score;
+    if (typeof s === "number" && s < bestScore) { bestScore = s; best = k; }
+  }
+  return best;
+};
+
 /** Lee un stream SSE (`data: {...}\n\n`) y llama onEvent por cada evento JSON. */
 async function streamEvents(resp: Response, onEvent: (ev: any) => void) {
   if (!resp.body) return;
@@ -121,12 +168,29 @@ export default async (req: Request) => {
     });
     let reportId = "";
     let score: number | null = null;
+    let weakKey = "";
+    const primaryDomain = bareDomainLc(web);
+    // ¿este objeto de evento es la marca primaria (la del lead)?
+    const isPrimary = (o: any) =>
+      !!o && (o.is_primary || o.isPrimary || o.primary === true ||
+        (!!bareDomainLc(o.url || o.website || o.domain) &&
+          bareDomainLc(o.url || o.website || o.domain) === primaryDomain));
+
     await streamEvents(cmp, (ev) => {
+      const d = ev?.data ?? ev;
       if (ev?.type === "result") {
-        const d = ev.data ?? ev;
         reportId = d?.reportId || d?.report_id || reportId;
-        const ts = d?.primary?.trust_score ?? d?.primary?.score ?? d?.trust_score;
+        const p = d?.primary ?? d;
+        const ts = p?.trust_score ?? p?.score ?? d?.trust_score;
         if (typeof ts === "number") score = ts;
+        // el pilar débil puede venir en el result.primary...
+        const w = keyFromTopGaps(p) || keyFromPillars(p);
+        if (w) weakKey = w;
+      }
+      // ...o en los eventos por-marca (brand_done trae top_gaps del server)
+      if (isPrimary(d)) {
+        const w = keyFromTopGaps(d) || keyFromPillars(d);
+        if (w) weakKey = w;
       }
     });
     if (!reportId) {
@@ -135,6 +199,9 @@ export default async (req: Request) => {
     }
 
     const link = `https://trust.growth4u.io/herramientas/r/${reportId}`;
+    const pilar = weakKey && PILAR[weakKey] ? PILAR[weakKey] : null;
+    // Log para confirmar en producción qué trae el evento (weakKey crudo incluido).
+    console.log("[bridge] pilar_debil:", weakKey || "(sin datos por pilar en el result)", "->", pilar?.label || "");
 
     // 3) Enviar a GHL (upsert por email vía webhook)
     await fetch(GHL_WEBHOOK, {
@@ -145,11 +212,13 @@ export default async (req: Request) => {
         web,
         trust_score_link: link,
         trust_score: score,
+        pilar_debil: pilar?.label ?? "",
+        landing_pilar_debil: pilar?.landing ?? "",
         source: "trust-bridge",
       }),
     });
 
-    console.log("[bridge] OK", email, "score:", score, link);
+    console.log("[bridge] OK", email, "score:", score, "pilar:", pilar?.label || "-", link);
     return new Response("ok", { status: 200, headers: CORS });
   } catch (e) {
     console.error("[bridge] error", e);
