@@ -1,20 +1,20 @@
 /**
- * Pilar Débil — derive (Netlify background function)
+ * Pilar Débil — derive (Netlify function SÍNCRONA)
  * --------------------------------------------------
- * Para el SCAN INICIAL (el que hace el server de Diagnosys, no el bridge).
- * GHL ya tiene el informe del lead en `trust_score_link`. Esta función NO
- * re-analiza nada: lee ese informe, saca el pilar más flojo y escribe
- * pilar_debil + landing_pilar_debil en el contacto de GHL (upsert por email).
+ * Para el scan inicial. GHL hace un Custom Webhook (POST) a esta función con
+ * el link del informe, y la función DEVUELVE en la respuesta el pilar más flojo.
+ * GHL captura la respuesta y la mapea a los campos. No re-analiza nada (~1-2 s):
+ * solo lee el informe que ya existe (por su trust_score_link).
  *
- * GHL lo dispara cuando aterriza el scan inicial (tag trust-score / trust_score
- * seteado), con { email, report }.  report = el trust_score_link (o el id).
+ * Request  (POST, application/json):
+ *   { "report": "https://trust.growth4u.io/herramientas/d/<id>" }   // o el id pelado
+ * Response (200, application/json):
+ *   { "pilar_key": "brand_assets",
+ *     "pilar_debil": "Tus reviews y prueba social",
+ *     "landing_pilar_debil": "https://growth4u.io/trust-score/reviews-y-prueba-social" }
  *
- * El re-scan (día 60/120) ya escribe el pilar desde el bridge; esto cubre
- * el momento inicial sin depender del server.
+ * El re-scan (día 60/120) escribe el pilar por el bridge, no por aquí.
  */
-
-const GHL_WEBHOOK =
-  "https://services.leadconnectorhq.com/hooks/BnXWP5dcLVMgUudLv10O/webhook-trigger/9bfa1bd9-7b61-4d4a-8151-28770109af5b";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -35,18 +35,14 @@ const PILAR: Record<string, { label: string; landing: string }> = {
   demand_engine:      { label: "Tu base técnica y medición",  landing: "https://growth4u.io/trust-score/base-tecnica-y-medicion" },
 };
 
-/** De un link/id de informe saca la URL /d/{id} (o /r/{id}) que devuelve el HTML. */
+/** De un link/id de informe saca la URL /d/{id} que devuelve el HTML. */
 const reportUrl = (raw: string): string => {
   const v = String(raw || "").trim();
-  if (/^https?:\/\//i.test(v)) return v;                 // ya es un link completo
-  return `https://trust.growth4u.io/herramientas/d/${v}`; // era solo el id
+  if (/^https?:\/\//i.test(v)) return v;
+  return `https://trust.growth4u.io/herramientas/d/${v}`;
 };
 
-/**
- * Lee el HTML del informe y devuelve la clave del pilar más débil.
- * En el informe cada pilar es id="p-<key>" y lleva un rango (rk 01..06) en la
- * sección de gaps (peor primero). rk 01 = el más flojo.
- */
+/** Lee el HTML del informe y devuelve la clave del pilar más débil (rk 01 = peor). */
 const weakestFromReport = (html: string): string => {
   let best = "", bestRank = 99;
   for (const key of Object.keys(PILAR)) {
@@ -61,42 +57,35 @@ const weakestFromReport = (html: string): string => {
 };
 
 export default async (req: Request) => {
+  const json = (obj: any, status = 200) =>
+    new Response(JSON.stringify(obj), { status, headers: { ...CORS, "Content-Type": "application/json" } });
+
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
 
   let body: any = {};
   try { body = JSON.parse(await req.text()); } catch { /* tolerar text/plain */ }
-  const email = String(body.email || "").trim();
   const report = String(body.report || body.trust_score_link || body.reportId || body.report_id || "").trim();
-  if (!email || !report) return new Response("missing email/report", { status: 400, headers: CORS });
+  const email = String(body.email || "").trim(); // opcional, solo para el log
+
+  if (!report) return json({ error: "missing report", pilar_key: "", pilar_debil: "", landing_pilar_debil: "" }, 400);
 
   try {
     const res = await fetch(reportUrl(report), { redirect: "follow" });
     if (!res.ok) {
       console.warn("[pilar-derive] informe no accesible", res.status, report);
-      return new Response("report not reachable", { status: 200, headers: CORS });
+      return json({ pilar_key: "", pilar_debil: "", landing_pilar_debil: "" });
     }
     const html = await res.text();
     const key = weakestFromReport(html);
-    const pilar = key ? PILAR[key] : null;
-    console.log("[pilar-derive]", email, "pilar_debil:", key || "(no se pudo derivar del informe)");
-
-    if (!pilar) return new Response("no pillar", { status: 200, headers: CORS });
-
-    await fetch(GHL_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        pilar_debil: pilar.label,
-        landing_pilar_debil: pilar.landing,
-        source: "pilar-derive",
-      }),
+    const p = key ? PILAR[key] : null;
+    console.log("[pilar-derive]", email || "(sin email)", "->", key || "(no derivable)", p?.label || "");
+    return json({
+      pilar_key: key || "",
+      pilar_debil: p?.label ?? "",
+      landing_pilar_debil: p?.landing ?? "",
     });
-
-    console.log("[pilar-derive] OK", email, "->", pilar.label);
-    return new Response("ok", { status: 200, headers: CORS });
   } catch (e) {
     console.error("[pilar-derive] error", e);
-    return new Response("error", { status: 500, headers: CORS });
+    return json({ pilar_key: "", pilar_debil: "", landing_pilar_debil: "" });
   }
 };
