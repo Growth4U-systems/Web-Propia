@@ -25,19 +25,15 @@ const CORS = {
 };
 
 /**
- * Pilar débil -> landing del hook.
- * OJO: las claves internas del Trust Core ENGAÑAN. No fiarse del nombre:
- *   brand_assets = reviews / prueba social   ·   borrowed_trust = PR / reputación
- *   demand_engine = base técnica             ·   serp_trust = presencia en Google
- * Mapa sacado del informe vivo (id="p-<key>" en trust.growth4u.io).
+ * Pilar débil -> landing del hook. Modelo de 5 pilares (ago 2026): 1 cimiento + 4 de referente.
+ * Claves = las del informe vivo (id="p-<key>" en trust.growth4u.io). Actualizado desde el modelo viejo de 6.
  */
 const PILAR: Record<string, { label: string; landing: string }> = {
-  brand_assets:       { label: "Tus reviews y prueba social", landing: "https://growth4u.io/trust-score/reviews-y-prueba-social" },
-  geo_presence:       { label: "Tu presencia en las IAs",     landing: "https://growth4u.io/trust-score/presencia-en-ias" },
-  outbound_readiness: { label: "Una web que convierte",       landing: "https://growth4u.io/trust-score/web-que-convierte" },
-  borrowed_trust:     { label: "Lo que otros dicen de ti",    landing: "https://growth4u.io/trust-score/lo-que-otros-dicen" },
-  serp_trust:         { label: "Tu presencia en Google",      landing: "https://growth4u.io/trust-score/presencia-en-google" },
-  demand_engine:      { label: "Tu base técnica y medición",  landing: "https://growth4u.io/trust-score/base-tecnica-y-medicion" },
+  confianza_prestada: { label: "Lo que otros dicen de ti",  landing: "https://growth4u.io/trust-score/lo-que-otros-dicen" },
+  seo:                { label: "Tu visibilidad en Google",  landing: "https://growth4u.io/trust-score/visibilidad-en-google" },
+  geo:                { label: "Tu visibilidad en las IAs", landing: "https://growth4u.io/trust-score/visibilidad-en-ias" },
+  resenas:            { label: "Reseñas y prueba social",   landing: "https://growth4u.io/trust-score/resenas-y-prueba-social" },
+  nicho:              { label: "Conversaciones de nicho",   landing: "https://growth4u.io/trust-score/conversaciones-de-nicho" },
 };
 
 /** Dominio pelado, en minúsculas (para reconocer a la marca primaria en los eventos). */

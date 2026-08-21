@@ -23,16 +23,15 @@ const CORS = {
 };
 
 /**
- * Pilar débil -> landing. OJO: las claves internas ENGAÑAN.
- * brand_assets = reviews · borrowed_trust = PR · demand_engine = técnico.
+ * Pilar débil -> landing. Modelo de 5 pilares (ago 2026): 1 cimiento + 4 de referente.
+ * Claves = las del informe vivo (id="p-<key>"). Se actualizó desde el modelo viejo de 6.
  */
 const PILAR: Record<string, { label: string; landing: string }> = {
-  brand_assets:       { label: "Tus reviews y prueba social", landing: "https://growth4u.io/trust-score/reviews-y-prueba-social" },
-  geo_presence:       { label: "Tu presencia en las IAs",     landing: "https://growth4u.io/trust-score/presencia-en-ias" },
-  outbound_readiness: { label: "Una web que convierte",       landing: "https://growth4u.io/trust-score/web-que-convierte" },
-  borrowed_trust:     { label: "Lo que otros dicen de ti",    landing: "https://growth4u.io/trust-score/lo-que-otros-dicen" },
-  serp_trust:         { label: "Tu presencia en Google",      landing: "https://growth4u.io/trust-score/presencia-en-google" },
-  demand_engine:      { label: "Tu base técnica y medición",  landing: "https://growth4u.io/trust-score/base-tecnica-y-medicion" },
+  confianza_prestada: { label: "Lo que otros dicen de ti",  landing: "https://growth4u.io/trust-score/lo-que-otros-dicen" },
+  seo:                { label: "Tu visibilidad en Google",  landing: "https://growth4u.io/trust-score/visibilidad-en-google" },
+  geo:                { label: "Tu visibilidad en las IAs", landing: "https://growth4u.io/trust-score/visibilidad-en-ias" },
+  resenas:            { label: "Reseñas y prueba social",   landing: "https://growth4u.io/trust-score/resenas-y-prueba-social" },
+  nicho:              { label: "Conversaciones de nicho",   landing: "https://growth4u.io/trust-score/conversaciones-de-nicho" },
 };
 
 /** De un link/id de informe saca la URL /d/{id} que devuelve el HTML. */
