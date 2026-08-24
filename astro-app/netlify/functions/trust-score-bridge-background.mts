@@ -207,15 +207,18 @@ export default async (req: Request) => {
       email,
       web,
       trust_score_link: link,
-      trust_score: score,
       pilar_debil: pilar?.label ?? "",
       landing_pilar_debil: pilar?.landing ?? "",
       source: fase ? `trust-rescan-${fase}` : "trust-bridge",
     };
-    // Re-scan por fase: el score nuevo cae también en su campo de fase, para el delta.
     if (fase === "60" || fase === "120") {
+      // Re-scan por fase: el score nuevo cae SOLO en su campo de fase.
+      // NO se manda trust_score, para preservar el inicial (la base del delta).
       payload.fase = fase;
       payload[`trust_score_${fase}_dias`] = score;
+    } else {
+      // Scan / rollback manual: escribe el score actual.
+      payload.trust_score = score;
     }
     await fetch(GHL_WEBHOOK, {
       method: "POST",
