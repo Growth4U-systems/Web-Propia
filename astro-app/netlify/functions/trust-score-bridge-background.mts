@@ -95,6 +95,9 @@ export default async (req: Request) => {
   try { body = JSON.parse(await req.text()); } catch { /* tolerar text/plain */ }
   const web = String(body.web || "").trim();
   const email = String(body.email || "").trim();
+  // Fase del nurturing: "60" | "120" en el re-scan; "" en el scan inicial.
+  // Cuando viene, el score nuevo se manda también en trust_score_<fase>_dias.
+  const fase = String(body.fase || body.phase || "").trim();
   if (!web || !email) return new Response("missing web/email", { status: 400, headers: CORS });
 
   try {
@@ -200,21 +203,27 @@ export default async (req: Request) => {
     console.log("[bridge] pilar_debil:", weakKey || "(sin datos por pilar en el result)", "->", pilar?.label || "");
 
     // 3) Enviar a GHL (upsert por email vía webhook)
+    const payload: Record<string, unknown> = {
+      email,
+      web,
+      trust_score_link: link,
+      trust_score: score,
+      pilar_debil: pilar?.label ?? "",
+      landing_pilar_debil: pilar?.landing ?? "",
+      source: fase ? `trust-rescan-${fase}` : "trust-bridge",
+    };
+    // Re-scan por fase: el score nuevo cae también en su campo de fase, para el delta.
+    if (fase === "60" || fase === "120") {
+      payload.fase = fase;
+      payload[`trust_score_${fase}_dias`] = score;
+    }
     await fetch(GHL_WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        web,
-        trust_score_link: link,
-        trust_score: score,
-        pilar_debil: pilar?.label ?? "",
-        landing_pilar_debil: pilar?.landing ?? "",
-        source: "trust-bridge",
-      }),
+      body: JSON.stringify(payload),
     });
 
-    console.log("[bridge] OK", email, "score:", score, "pilar:", pilar?.label || "-", link);
+    console.log("[bridge] OK", email, "fase:", fase || "inicial", "score:", score, "pilar:", pilar?.label || "-", link);
     return new Response("ok", { status: 200, headers: CORS });
   } catch (e) {
     console.error("[bridge] error", e);
