@@ -1,19 +1,20 @@
 /**
  * Trust Score Bridge (Netlify background function)
  * --------------------------------------------------
- * El quiz /diagnostico postea aquí {email, web, ...} al completarse.
- * Esta función (server-side, sin CORS ni token):
- *   1) /api/discover-competitors {url}      -> competidores
- *   2) /api/compare {primary, competitors}  -> reportId (+ trust_score)
- *   3) arma el link  https://trust.growth4u.io/herramientas/r/<reportId>
- *      (OJO: /compare devuelve un informe de COMPARACIÓN -> ruta /r/{id};
- *       los informes de una sola empresa son /d/{id}, otro espacio de ids)
- *   4) POST {email, trust_score_link, trust_score} al webhook de GHL
- *      -> el workflow de Ramiro hace UPSERT por email (match) y setea el link.
+ * Re-scan del Trust Score (día 60/120) y rollback del scan inicial.
+ * GHL le postea {email, web, fase?} y esta función (server-side):
+ *   1) /api/diagnostico {url, engine:"v3", fill:true}  -> informe de 5 PILARES (/d/{id})
+ *   2) lee el informe /d/ y deriva el PILAR DÉBIL (id="p-<key>", rk 01 = el peor)
+ *   3) POST {email, trust_score, trust_score_link (/d/), pilar_debil, landing} al webhook de GHL
+ *      -> el workflow de Ramiro hace UPSERT por email y setea los campos.
  *
- * Es "-background": Netlify la corre hasta 15 min y responde 202 al instante,
- * así el quiz no espera (el análisis tarda minutos).
- * No guarda secretos: solo postea al webhook (mismo que el quiz).
+ * OJO (25 ago 2026): antes usaba /api/compare -> informe de COMPARACIÓN /r/ (modelo
+ * VIEJO de 6 dimensiones). Ahora usa /api/diagnostico engine v3 -> /d/ de 5 pilares,
+ * el MISMO formato que produce el quiz en vivo y que consumen las landings + pilar-derive.
+ *
+ * Es "-background": Netlify la corre hasta 15 min y responde 202 al instante.
+ * No guarda secretos: /api/diagnostico se llama público (con tope por IP; el re-scan
+ * es de bajo volumen) y solo postea al webhook de GHL (el mismo que el quiz).
  */
 
 const TRUST = "https://trust.growth4u.io/herramientas/api";
@@ -27,8 +28,8 @@ const CORS = {
 };
 
 /**
- * Pilar débil -> landing del hook. Modelo de 5 pilares (ago 2026): 1 cimiento + 4 de referente.
- * Claves = las del informe vivo (id="p-<key>" en trust.growth4u.io). Actualizado desde el modelo viejo de 6.
+ * Pilar débil -> landing del hook. Modelo de 5 pilares (v3): 1 cimiento + 4 de referente.
+ * Claves = las del informe vivo (id="p-<key>" en el /d/ de trust.growth4u.io).
  */
 const PILAR: Record<string, { label: string; landing: string }> = {
   confianza_prestada: { label: "Lo que otros dicen de ti",  landing: "https://growth4u.io/trust-score/lo-que-otros-dicen" },
@@ -38,33 +39,20 @@ const PILAR: Record<string, { label: string; landing: string }> = {
   nicho:              { label: "Conversaciones de nicho",   landing: "https://growth4u.io/trust-score/conversaciones-de-nicho" },
 };
 
-/** Dominio pelado, en minúsculas (para reconocer a la marca primaria en los eventos). */
-const bareDomainLc = (v: any) =>
-  String(v || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "").replace(/^www\./i, "").toLowerCase();
-
 /**
- * El server ya ordena los pilares peor-primero en `top_gaps`; el [0] es el más débil.
- * OJO: la forma de cada item de top_gaps no está documentada. Solo devolvemos un
- * valor si es una CLAVE de pilar válida; si no, "" para caer al fallback por score
- * (nunca devolver "[object Object]" ni un label, que romperían el `|| keyFromPillars`).
+ * Lee el HTML del informe /d/ (v3) y devuelve la clave del pilar más débil.
+ * Cada pilar es id="p-<key>" y trae su rank en class="rk">NN (01 = el peor).
+ * Misma lógica que la función pilar-derive. Si no encuentra nada, devuelve "".
  */
-const keyFromTopGaps = (o: any): string => {
-  const g = o?.top_gaps;
-  if (!Array.isArray(g) || !g.length) return "";
-  const raw = g[0]?.key ?? g[0]?.pillar ?? g[0];
-  const k = typeof raw === "string" ? raw : "";
-  return k in PILAR ? k : "";
-};
-
-/** Fallback: calcula el pilar de menor score desde {pillars|scores: {key:{score}|number}}. */
-const keyFromPillars = (o: any): string => {
-  const p = o?.pillars ?? o?.scores ?? null;
-  if (!p || typeof p !== "object") return "";
-  let best = "", bestScore = Infinity;
-  for (const [k, v] of Object.entries(p)) {
-    if (!(k in PILAR)) continue; // ignora cualquier clave que no sea un pilar
-    const s = typeof v === "number" ? v : (v as any)?.score;
-    if (typeof s === "number" && s < bestScore) { bestScore = s; best = k; }
+const weakestFromReport = (html: string): string => {
+  let best = "", bestRank = 99;
+  for (const key of Object.keys(PILAR)) {
+    const i = html.indexOf(`id="p-${key}"`);
+    if (i < 0) continue;
+    const block = html.slice(i, i + 400);
+    const m = block.match(/class="rk">(\d+)/);
+    const rank = m ? parseInt(m[1], 10) : 99;
+    if (rank < bestRank) { bestRank = rank; best = key; }
   }
   return best;
 };
@@ -106,12 +94,10 @@ export default async (req: Request) => {
     // Limpia a dominio pelado (sin protocolo, sin path, sin www).
     const bareDomain = (v: any) =>
       String(v || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "").replace(/^www\./i, "");
-    // ¿Ya parece un dominio? (tiene punto y no tiene espacios)
     const looksLikeDomain = (v: string) => /\./.test(v) && !/\s/.test(v);
 
     // Resuelve un competidor a dominio. Si el usuario escribió un NOMBRE
-    // (ej: "Product hackers") lo pasa por Clearbit autocomplete (free, sin auth)
-    // -> producthackers.com. Si no logra un dominio válido, devuelve "" (se descarta).
+    // (ej: "Product hackers") lo pasa por Clearbit autocomplete (free, sin auth).
     const resolveDomain = async (raw: string): Promise<string> => {
       const cleaned = bareDomain(raw);
       if (looksLikeDomain(cleaned)) return cleaned;
@@ -127,82 +113,49 @@ export default async (req: Request) => {
       }
     };
 
-    // 0) Competidores indicados por el usuario en el quiz (prioridad).
+    // Competidores indicados por el usuario en el quiz (opcional). `fill:true`
+    // completa hasta 5 con los más relevantes, así que si no hay, se descubren solos.
     const userRaw: any[] = Array.isArray(body.competidores)
       ? body.competidores
       : String(body.competidores || "").split(",");
     const userNames = userRaw.map((c) => String(c || "").trim()).filter(Boolean).slice(0, 4);
-    let competitors: { url: string }[] = (
+    const competitors: { url: string }[] = (
       await Promise.all(userNames.map(async (n) => ({ url: await resolveDomain(n) })))
     ).filter((c) => c.url);
 
-    // 1) Auto-descubrir solo si el usuario no indicó ninguno.
-    if (!competitors.length) {
-      const dc = await fetch(`${TRUST}/discover-competitors`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: web }),
-      });
-      await streamEvents(dc, (ev) => {
-        // El evento "competitors" trae la lista en ev.data (no ev.competitors).
-        const arr = ev?.type === "competitors" ? (ev.data || ev.competitors) : null;
-        if (Array.isArray(arr)) {
-          competitors = arr
-            .map((c: any) => c?.website || c?.url || (typeof c === "string" ? c : ""))
-            .filter(Boolean)
-            .map((v: any) => ({ url: bareDomain(v) }))
-            .filter((c: { url: string }) => c.url);
-        }
-      });
-      competitors = competitors.slice(0, 4);
-    }
-    if (!competitors.length) {
-      console.warn("[bridge] sin competidores para", web);
-      return new Response("no competitors", { status: 200, headers: CORS });
-    }
-
-    // 2) Comparar -> reportId (+ trust_score)
-    const cmp = await fetch(`${TRUST}/compare`, {
+    // 1) Diagnóstico v3 (5 pilares) -> informe /d/{id}
+    const dg = await fetch(`${TRUST}/diagnostico`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ primary: { url: web }, competitors }),
+      body: JSON.stringify({ url: web, engine: "v3", business: "Mixed", fill: true, competitors }),
     });
     let reportId = "";
+    let link = "";
     let score: number | null = null;
-    let weakKey = "";
-    const primaryDomain = bareDomainLc(web);
-    // ¿este objeto de evento es la marca primaria (la del lead)?
-    const isPrimary = (o: any) =>
-      !!o && (o.is_primary || o.isPrimary || o.primary === true ||
-        (!!bareDomainLc(o.url || o.website || o.domain) &&
-          bareDomainLc(o.url || o.website || o.domain) === primaryDomain));
-
-    await streamEvents(cmp, (ev) => {
-      const d = ev?.data ?? ev;
+    await streamEvents(dg, (ev) => {
       if (ev?.type === "result") {
-        reportId = d?.reportId || d?.report_id || reportId;
-        const p = d?.primary ?? d;
-        const ts = p?.trust_score ?? p?.score ?? d?.trust_score;
+        // El evento result trae {id, url(=/d/), reportId, trust_score, brand_name}.
+        const r = ev.data?.data ?? ev.data ?? ev;
+        reportId = r?.id || r?.reportId || reportId;
+        if (r?.url) link = String(r.url);
+        const ts = r?.trust_score;
         if (typeof ts === "number") score = ts;
-        // el pilar débil puede venir en el result.primary...
-        const w = keyFromTopGaps(p) || keyFromPillars(p);
-        if (w) weakKey = w;
-      }
-      // ...o en los eventos por-marca (brand_done trae top_gaps del server)
-      if (isPrimary(d)) {
-        const w = keyFromTopGaps(d) || keyFromPillars(d);
-        if (w) weakKey = w;
       }
     });
-    if (!reportId) {
-      console.warn("[bridge] sin reportId para", web);
+    if (!link && reportId) link = `https://trust.growth4u.io/herramientas/d/${reportId}`;
+    if (!link) {
+      console.warn("[bridge] sin informe /d/ para", web);
       return new Response("no report", { status: 200, headers: CORS });
     }
 
-    const link = `https://trust.growth4u.io/herramientas/r/${reportId}`;
+    // 2) Derivar el pilar débil leyendo el propio informe /d/ (rk 01 = el peor).
+    let weakKey = "";
+    try {
+      const rep = await fetch(link, { redirect: "follow" });
+      if (rep.ok) weakKey = weakestFromReport(await rep.text());
+    } catch { /* si no se puede leer, el pilar va vacío y GHL no lo pisa */ }
     const pilar = weakKey && PILAR[weakKey] ? PILAR[weakKey] : null;
-    // Log para confirmar en producción qué trae el evento (weakKey crudo incluido).
-    console.log("[bridge] pilar_debil:", weakKey || "(sin datos por pilar en el result)", "->", pilar?.label || "");
+    console.log("[bridge] pilar_debil:", weakKey || "(no derivable)", "->", pilar?.label || "");
 
     // 3) Enviar a GHL (upsert por email vía webhook)
     const payload: Record<string, unknown> = {
