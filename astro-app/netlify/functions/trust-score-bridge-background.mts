@@ -5,7 +5,7 @@
  * Esta función (server-side, sin CORS ni token):
  *   1) /api/discover-competitors {url}      -> competidores
  *   2) /api/compare {primary, competitors}  -> reportId (+ trust_score)
- *   3) arma el link  https://trust.growth4u.io/herramientas/r/<reportId>
+ *   3) arma el link  https://trust.growth4u.io/herramientas/d/<reportId>
  *   4) POST {email, trust_score_link, trust_score} al webhook de GHL
  *      -> el workflow de Ramiro hace UPSERT por email (match) y setea el link.
  *
@@ -197,7 +197,7 @@ export default async (req: Request) => {
       return new Response("no report", { status: 200, headers: CORS });
     }
 
-    const link = `https://trust.growth4u.io/herramientas/r/${reportId}`;
+    const link = `https://trust.growth4u.io/herramientas/d/${reportId}`;
     const pilar = weakKey && PILAR[weakKey] ? PILAR[weakKey] : null;
     // Log para confirmar en producción qué trae el evento (weakKey crudo incluido).
     console.log("[bridge] pilar_debil:", weakKey || "(sin datos por pilar en el result)", "->", pilar?.label || "");
