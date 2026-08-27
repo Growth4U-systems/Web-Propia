@@ -1,7 +1,4 @@
-/**
- * Compatibility URL for the existing GHL day-60 Custom Webhook.
- * Netlify detects the -background suffix and immediately acknowledges with 202.
- */
-import { createTrustScoreRescanHandler } from "./trust-score-rescan-core.mts";
+/** Legacy day-60 background worker alias. Do not configure this URL in GHL. */
+import { createWorkerHandler } from "./trust-score-rescan-core.mts";
 
-export default createTrustScoreRescanHandler("60");
+export default createWorkerHandler("60");
