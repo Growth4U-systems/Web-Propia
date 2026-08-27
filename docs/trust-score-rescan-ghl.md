@@ -1,108 +1,176 @@
-# Trust Score re-scan: decisión técnica para GHL (día 60 y 120)
+# Trust Score re-scan en GHL: dos hooks por fase
 
-## Estado: respuesta directa bloqueada con la arquitectura actual
+## Arquitectura desplegable (sin Inbound Webhook)
 
-La intención funcional confirmada por Ramiro es esta:
+Cada fase usa dos Custom Webhooks independientes:
 
-1. el workflow de día 60 o 120 llama a un **Custom Webhook**;
-2. esa misma petición espera a que termine el diagnóstico;
-3. la respuesta HTTP del propio Custom Webhook contiene el score y el enlace;
-4. GHL mapea esa respuesta, sin routing ni callback a un Inbound Webhook.
+1. **Kickoff síncrono**: valida, crea un job idempotente en Netlify Blobs y dispara el diagnóstico en una Netlify Background Function. Devuelve inmediatamente `202 application/json` con `job_id` y `status: "pending"`.
+2. **Consulta síncrona**: tras un Wait de GHL, recibe `job_id`. Devuelve `202 pending`, `200 completed` con el resultado final, `502 failed` o `410 expired`.
 
-**No se deben conectar a GHL las funciones actuales con sufijo `-background` esperando ese body.** En Netlify, el sufijo convierte la función en background: el cliente recibe inmediatamente una respuesta vacía `202 Accepted`, mientras el trabajo continúa aparte. Netlify indica expresamente que estas funciones no devuelven resultados al cliente original.
+No existe callback a GHL. El worker guarda el resultado en el store durable `trust-score-rescan-jobs`, con expiración lógica de 24 horas. Las rutas están bloqueadas por fase y nunca devuelven ni actualizan el campo baseline `contact.trust_score`.
 
-Tampoco basta con crear una copia síncrona sin sufijo. El diagnóstico real consume el SSE de `/diagnostico` y tarda normalmente **2–5 minutos**, mientras que Netlify limita las funciones síncronas a **60 segundos, sin posibilidad de configurarlo**. Por tanto, una función síncrona de Netlify no puede sostener de forma fiable la petición hasta obtener el JSON final.
+## Prerrequisito de seguridad
 
-### Evidencia oficial
+Configurar en Netlify estas variables secretas de producción:
 
-- Netlify, límites de funciones: **“Synchronous execution limit: 60 seconds — Configurable? No”**.
-  https://docs.netlify.com/build/functions/configuration/#default-values
-- Netlify, background functions: se ejecutan hasta 15 minutos, pero la invocación devuelve primero un `202`; el cliente recibe una respuesta vacía inmediatamente y el resultado se envía normalmente a otro destino. También aclara que no devuelven respuestas ni soportan streaming de respuesta.
-  https://docs.netlify.com/build/functions/background-functions/#how-background-functions-work
-- HighLevel, Custom Webhook: la documentación oficial confirma que es una petición HTTP outbound y que existe la opción **Save response from this Webhook** en las cuentas que la tengan disponible. La página oficial consultada **no publica un timeout numérico** ni garantiza que una petición pueda permanecer abierta 2–5 minutos; por eso no se atribuye a GHL un límite inventado.
-  https://help.gohighlevel.com/support/solutions/articles/155000003305-workflow-action-custom-webhook
+```text
+TRUST_SCORE_RESCAN_SECRET=<valor aleatorio de al menos 20 caracteres>
+TRUST_SCORE_ADMIN_PASSWORD=<password de servicio de trust.growth4u.io>
+```
 
-El límite no configurable de Netlify ya es suficiente para bloquear la variante directa actual, independientemente de cuál sea el timeout interno de GHL o del plan de Netlify. El `netlify.toml` del repositorio no define una excepción de timeout, y la documentación indica que esa excepción no existe. No se pudo consultar el plan del proyecto desde la CLI porque este entorno no tiene sesión de Netlify; el plan no cambia el límite síncrono documentado.
+Usar exactamente el mismo valor en los cuatro Custom Webhooks de GHL mediante el header:
 
-## Contrato JSON deseado
+```text
+X-Trust-Score-Secret: <secreto>
+```
 
-Si en el futuro el diagnóstico termina por debajo del timeout de punta a punta, o se mueve a una infraestructura síncrona que soporte más de 5 minutos, los endpoints separados deben devolver `200 application/json` con uno de estos contratos:
+Sin `TRUST_SCORE_RESCAN_SECRET` las funciones fallan de forma cerrada con `401`; no se debe publicar el secreto en el body, la URL, este repositorio ni logs. `TRUST_SCORE_ADMIN_PASSWORD` solo viaja server-to-server como `x-admin-password` al analizador y nunca aparece en respuestas ni logs.
 
-### Día 60
+## Workflow día 60
+
+### Hook 1 — kickoff
+
+- Acción: **Custom Webhook**
+- Método: `POST`
+- URL: `https://growth4u.netlify.app/.netlify/functions/trust-score-rescan-60`
+- Headers:
+  - `Content-Type: application/json`
+  - `X-Trust-Score-Secret: <secreto compartido>`
+- Activar **Save response from this Webhook** y guardar `job_id`, `status`, `fase` y `expires_at` para las acciones posteriores.
+- Body:
 
 ```json
 {
+  "email": "{{contact.email}}",
+  "nombre": "{{contact.first_name}} {{contact.last_name}}",
+  "web": "{{contact.web}}",
+  "contact_id": "{{contact.id}}",
+  "idempotency_key": "{{contact.id}}-60",
+  "baseline_score": "{{contact.trust_score}}",
+  "competidores": "{{contact.competidores}}"
+}
+```
+
+`baseline_score` se usa únicamente para calcular `delta`; el backend no escribe ni devuelve `trust_score`.
+
+### Hook 2 — consulta
+
+- Añadir **Wait: 5 minutos**.
+- Acción: **Custom Webhook**
+- Método: `POST`
+- URL: `https://growth4u.netlify.app/.netlify/functions/trust-score-rescan-60-result`
+- Mismos headers de seguridad.
+- Activar **Save response from this Webhook**.
+- Body (usar el `job_id` guardado por el kickoff):
+
+```json
+{
+  "job_id": "{{webhook_response.job_id}}"
+}
+```
+
+Cuando la respuesta sea `200` / `status = completed`, mapear:
+
+- `trust_score_60_dias`
+- `trust_score_link`
+- `pilar_debil`
+- `landing_pilar_debil`
+- `delta`
+- `explicacion_cambio`
+
+No mapear `trust_score`.
+
+## Workflow día 120
+
+Es el mismo flujo con estas tres diferencias:
+
+1. Kickoff: `https://growth4u.netlify.app/.netlify/functions/trust-score-rescan-120`
+2. `idempotency_key`: `{{contact.id}}-120`
+3. Consulta: `https://growth4u.netlify.app/.netlify/functions/trust-score-rescan-120-result`
+
+Cuando finalice, mapear `trust_score_120_dias` y los campos comunes. No mapear `trust_score`.
+
+## Polling acotado en GHL
+
+Para ambas fases:
+
+1. Kickoff.
+2. Wait 5 minutos.
+3. Consulta #1.
+4. Si HTTP `202` o `status = pending|processing`: Wait 2 minutos y Consulta #2.
+5. Si sigue pendiente: Wait 2 minutos y Consulta #3.
+6. Si la tercera consulta sigue pendiente, termina por una rama de timeout observable; no crear un bucle infinito.
+7. HTTP `200 completed`: actualizar los campos de la fase.
+8. HTTP `502 failed`, `404` o `410 expired`: terminar por rama de error y registrar `job_id`/`error` para reintento manual.
+
+El máximo recomendado es **3 consultas durante 9 minutos**. El job sigue disponible durante 24 horas para diagnóstico o reintento controlado.
+
+## Contratos HTTP
+
+### Kickoff / replay idempotente — `202`
+
+```json
+{
+  "job_id": "8b6…",
+  "status": "pending",
+  "fase": "60",
+  "expires_at": "2026-08-28T12:00:00.000Z"
+}
+```
+
+Repetir el kickoff con la misma `idempotency_key` dentro de 24 horas devuelve el mismo `job_id` y añade `idempotent_replay: true`; no lanza otro scan.
+
+### Consulta pendiente — `202`
+
+```json
+{
+  "job_id": "8b6…",
+  "status": "processing",
+  "fase": "60",
+  "expires_at": "2026-08-28T12:00:00.000Z"
+}
+```
+
+### Resultado día 60 — `200`
+
+```json
+{
+  "job_id": "8b6…",
+  "status": "completed",
+  "fase": "60",
+  "expires_at": "2026-08-28T12:00:00.000Z",
   "email": "contacto@empresa.com",
   "web": "empresa.com",
-  "fase": "60",
   "trust_score_link": "https://trust.growth4u.io/herramientas/d/…",
   "trust_score_60_dias": 73,
   "pilar_debil": "Tu visibilidad en las IAs",
   "landing_pilar_debil": "https://growth4u.io/trust-score/visibilidad-en-ias",
-  "source": "trust-rescan-60"
+  "source": "trust-rescan-60",
+  "delta": 8,
+  "explicacion_cambio": "El Trust Score ha mejorado 8 puntos frente al inicial. El pilar más débil actual es Tu visibilidad en las IAs."
 }
 ```
 
-### Día 120
+Día 120 usa `fase: "120"`, `source: "trust-rescan-120"` y `trust_score_120_dias`.
 
-```json
-{
-  "email": "contacto@empresa.com",
-  "web": "empresa.com",
-  "fase": "120",
-  "trust_score_link": "https://trust.growth4u.io/herramientas/d/…",
-  "trust_score_120_dias": 73,
-  "pilar_debil": "Tu visibilidad en las IAs",
-  "landing_pilar_debil": "https://growth4u.io/trust-score/visibilidad-en-ias",
-  "source": "trust-rescan-120"
-}
-```
+## Rutas internas y compatibilidad
 
-Las rutas deben estar bloqueadas por fase y **nunca** devolver ni actualizar el campo baseline `trust_score`.
-
-## Estado de las rutas desplegadas
-
-Las rutas existentes son asíncronas y no cumplen el contrato de respuesta directa:
+Estas rutas son workers internos y **no deben configurarse en GHL**:
 
 - `/.netlify/functions/trust-score-rescan-60-background`
 - `/.netlify/functions/trust-score-rescan-120-background`
-- `/.netlify/functions/trust-score-bridge-background` (alias legacy de día 60)
+- `/.netlify/functions/trust-score-bridge-background` (alias legacy del worker día 60)
 
-Internamente esperan el SSE, construyen el payload correcto y llaman al Inbound Webhook existente. Esa implementación puede conservarse temporalmente por compatibilidad, pero **no debe configurarse como solución aprobada por Ramiro** ni presentarse como respuesta directa. No se crea una ruta síncrona engañosa que vaya a expirar a los 60 segundos.
+Todas requieren autenticación y un `job_id`; ya no llaman al Inbound Webhook anterior.
 
-## Alternativa mínima sin Inbound Webhook: kickoff + wait + fetch
+## Verificación local segura
 
-Para respetar la intención de “sin callback inbound”, el mínimo cambio fiable requiere desacoplar inicio y lectura del resultado mediante almacenamiento durable:
-
-1. **Custom Webhook — kickoff** a una ruta síncrona y rápida, bloqueada por fase. Valida, genera una clave determinista (`contact_id + fase`), encola el re-scan y responde en pocos segundos con `202` y `status: "pending"`.
-2. **Wait** de GHL durante 5 minutos. HighLevel documenta oficialmente que el Wait action puede pausar un contacto durante un periodo fijo:
-   https://help.gohighlevel.com/support/solutions/articles/155000002470-workflow-action-wait
-3. **Custom Webhook — fetch result** a una ruta síncrona, usando de nuevo `contact_id` y la fase. Lee el resultado durable y devuelve en esa misma respuesta el JSON final del contrato anterior.
-4. Si todavía está `pending`, repetir `Wait + fetch` con un máximo definido; si falla, terminar por una rama de error observable.
-
-Esto evita el Inbound Webhook y hace que **el último Custom Webhook** sí reciba el score directamente. Requiere, antes de implementarlo:
-
-- una cola o invocación background para el diagnóstico;
-- almacenamiento durable por `contact_id + fase`, con TTL, estados `pending/completed/failed` e idempotencia;
-- autenticación de kickoff/fetch para que los resultados no queden públicos;
-- confirmar en la cuenta concreta de GHL que la respuesta guardada del Custom Webhook se puede mapear a acciones posteriores. La documentación pública consultada confirma la captura de respuesta, pero no documenta de forma suficiente ese mapeo como garantía universal.
-
-Sin ese almacenamiento no existe nada que el segundo webhook pueda consultar; un `Wait` por sí solo no recupera el valor retornado por una background function.
-
-## Pruebas y seguridad
-
-Los tests actuales usan servidores HTTP locales para simular `/diagnostico`, el informe y el callback; comprueban el bloqueo por fase y que nunca aparece el baseline `trust_score`:
+Los tests usan emails y webs reservados de QA, un servidor HTTP local para simular `/diagnostico`/informe, store en memoria y un adaptador HTTP real. No tocan contactos GHL ni el upstream productivo.
 
 ```bash
 cd astro-app
 npm run test:trust-score
+npm run build
 ```
 
-No ejecutar pruebas de producción con emails, webs o contactos reales. Una futura implementación `kickoff + fetch` debe probarse en Deploy Preview con upstream y almacenamiento de QA, verificando al menos:
-
-- `pending → completed` para día 60 y día 120;
-- JSON exacto y `Content-Type: application/json`;
-- aislamiento por contacto/fase y autenticación;
-- idempotencia y expiración;
-- ausencia de callback Inbound;
-- ausencia total del campo baseline `trust_score`.
+Cobertura: `pending → completed` para 60/120, contrato JSON, delta, bloqueo por fase, ausencia de `trust_score`, autenticación, validación, idempotencia, expiración y prueba HTTP local.
