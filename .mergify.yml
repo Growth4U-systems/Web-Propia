@@ -1,0 +1,35 @@
+# Web-Propia: entrada automática a la cola de merge (política común de Growth4U,
+# ver Growth4U-systems/.github/.mergify.yml). Un PR listo contra main, desde una
+# rama de este repo, se encola solo cuando los previews están en verde y se
+# mergea con squash.
+extends: .github
+
+# Regla `default` completa: Mergify sustituye la regla del mismo nombre de
+# .github, no la fusiona, así que aquí van también los valores comunes.
+queue_rules:
+  - name: default
+    batch_size: 1
+    merge_method: squash
+    update_method: merge
+    checks_timeout: 60 minutes
+    branch_protection_injection_mode: queue
+    queue_conditions:
+      - base = main
+      - -draft
+      # Repo público: solo entran ramas del propio repo, nunca un PR desde un fork.
+      # Es la única frontera de seguridad real de esta política.
+      - head-repo-full-name = Growth4U-systems/Web-Propia
+      # No hay Actions de CI en PRs; los checks son los previews de Netlify (dos
+      # sites) y Vercel, que se reportan en cada push. Si un build falla, no entra.
+      - check-success = netlify/growth4u/deploy-preview
+      - check-success = netlify/growth4u-admin/deploy-preview
+      - check-success = Vercel
+
+merge_protections_settings:
+  # Entrada automática (equivale a marcar "Queue this pull request"). Lo que no
+  # cumpla esto sigue pudiendo encolarse a mano con el checkbox.
+  auto_merge_conditions:
+    - base = main
+    - -draft
+    - author != dependabot[bot]
+    - head-repo-full-name = Growth4U-systems/Web-Propia
