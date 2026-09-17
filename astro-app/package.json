@@ -6,7 +6,6 @@
     "dev": "astro dev",
     "build": "node scripts/sync-cache.mjs && astro build",
     "preview": "astro preview",
-    "test:trust-score": "node --test tests/trust-score-rescan.test.mjs",
     "astro": "astro"
   },
   "dependencies": {
