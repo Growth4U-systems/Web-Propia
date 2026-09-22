@@ -32,7 +32,7 @@
   var C = {
     GHL: "https://services.leadconnectorhq.com/hooks/BnXWP5dcLVMgUudLv10O/webhook-trigger/9bfa1bd9-7b61-4d4a-8151-28770109af5b",
     WA: "34614766892",
-    CAL: "https://now.growth4u.io/widget/booking/pWyNHUVPawhN9o0uU63W",
+    CAL: "https://now.growth4u.io/widget/booking/rrhknRfZa54PSN0pfsBf",
     TRUST: "https://trust.growth4u.io/herramientas/api",
     REDIR: ""
   };
