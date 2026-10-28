@@ -7,8 +7,6 @@
  * mientras el lead responde las preguntas) y al capturar datos /quiz-lead asocia
  * el lead a esa sesión; el servidor empuja trust_score + trust_score_link al
  * webhook de GHL cuando ambos lados están (workflow -> WhatsApp con /d/{id}).
- * El puente viejo de Netlify (trust-score-bridge-background) queda deployado
- * solo como rollback; ya no se llama desde aquí.
  *
  * ── RUNTIME COMPARTIDO ──────────────────────────────────────────────────────────
  * Una sola copia sirve a TODAS las páginas (diagnóstico, lead magnets, artículos,
