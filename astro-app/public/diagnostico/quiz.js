@@ -61,7 +61,7 @@
       },
       done: {
         title: "Estamos generando tu Trust Score.",
-        sub: "Te llega por WhatsApp en ~5 minutos."
+        sub: "Te llega por WhatsApp en unos minutos."
       }
     };
     var el = document.getElementById("g4uq-config");
